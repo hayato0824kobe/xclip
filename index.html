@@ -237,6 +237,15 @@ main { padding: 2.5rem 3rem; min-width: 0; }
 .ld span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes ldp { 0%,80%,100% { transform: scale(0.5); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
+/* AREA SELECT */
+.area-select { width:100%; background:var(--off); border:1px solid var(--line); border-radius:4px; color:var(--ink); padding:0.45rem 0.65rem; font-size:0.78rem; font-family:'Noto Sans JP',sans-serif; outline:none; cursor:pointer; transition:border-color 0.2s; }
+.area-select:focus { border-color:var(--ink); }
+
+/* TAG TREE */
+.tag-parent-row { margin-bottom:0.15rem; }
+.tag-child-row { padding-left:1.2rem; position:relative; }
+.tag-child-row::before { content:''; position:absolute; left:0.5rem; top:50%; width:0.5rem; height:1px; background:var(--line); }
+
 /* TYPE BUTTONS */
 .type-btn { background: var(--off); border: 1.5px solid var(--line); border-radius: 20px; color: var(--ink2); padding: 0.4rem 1rem; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; font-family: 'Noto Sans JP', sans-serif; }
 .type-btn:hover { border-color: var(--ink); color: var(--ink); }
@@ -286,6 +295,9 @@ main { padding: 2.5rem 3rem; min-width: 0; }
   </div>
 </header>
 
+<!-- REMINDER BANNER -->
+<div id="reminderBanner" style="display:none;position:sticky;top:64px;z-index:99;background:#fff8e1;border-bottom:2px solid #f59e0b;padding:0.6rem 2rem;align-items:center;gap:1rem;flex-wrap:wrap"></div>
+
 <div class="wrap">
   <aside class="sidebar">
     <div class="sb-section">
@@ -295,6 +307,19 @@ main { padding: 2.5rem 3rem; min-width: 0; }
       <button class="filter-btn"        id="fMemo"   onclick="setFilter('memo')">メモあり  <span class="fc" id="cMemo">0</span></button>
       <button class="filter-btn"        id="fImg"    onclick="setFilter('img')">画像あり  <span class="fc" id="cImg">0</span></button>
     </div>
+
+    <div class="sb-section">
+      <div class="sb-head">📍 エリア</div>
+      <div id="areaFilterWrap">
+        <select class="area-select" id="countrySelect" onchange="setCountryFilter(this.value)">
+          <option value="">国を選択...</option>
+        </select>
+        <select class="area-select" id="prefSelect" onchange="setPrefFilter(this.value)" style="display:none;margin-top:0.4rem">
+          <option value="">都道府県を選択...</option>
+        </select>
+      </div>
+    </div>
+
     <div class="sb-section">
       <div class="sb-head">Tags</div>
       <div id="sideTagList"></div>
@@ -306,6 +331,16 @@ main { padding: 2.5rem 3rem; min-width: 0; }
     <div class="sb-section">
       <div class="sb-head">Manage Tags</div>
       <div id="tagMgrList"></div>
+      <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--line)">
+        <div class="fl" style="margin-bottom:0.5rem">サブカテゴリーを追加</div>
+        <select class="area-select" id="parentTagSelect" style="margin-bottom:0.4rem">
+          <option value="">親タグを選択...</option>
+        </select>
+        <div class="add-tag-row">
+          <input type="text" id="newSubTagIn" placeholder="サブタグ名..." maxlength="20">
+          <button onclick="addSubTag()">追加</button>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -370,10 +405,23 @@ main { padding: 2.5rem 3rem; min-width: 0; }
           </div>
           <div class="fg-full"><label class="fl">タグ</label><div class="tag-picker" id="formPicker"></div></div>
           <div class="fg-full">
-            <label class="fl">📍 エリア（場所名）</label>
-            <div style="display:flex;gap:0.5rem">
-              <input type="text" class="fi" id="fArea" placeholder="例: 東京・渋谷、大阪・梅田..." style="flex:1">
-              <button type="button" class="btn-ghost" onclick="geocodeArea()" style="white-space:nowrap;font-size:0.75rem">位置取得</button>
+            <label class="fl">📍 エリア</label>
+            <div class="fg" style="margin-bottom:0.5rem">
+              <div>
+                <label class="fl">国</label>
+                <input type="text" class="fi" id="fCountry" placeholder="例: 日本、アメリカ...">
+              </div>
+              <div>
+                <label class="fl">都道府県</label>
+                <input type="text" class="fi" id="fPrefecture" placeholder="例: 東京都、大阪府...">
+              </div>
+              <div class="fg-full">
+                <label class="fl">詳細な場所名</label>
+                <div style="display:flex;gap:0.5rem">
+                  <input type="text" class="fi" id="fArea" placeholder="例: 渋谷、梅田..." style="flex:1">
+                  <button type="button" class="btn-ghost" onclick="geocodeArea()" style="white-space:nowrap;font-size:0.75rem">位置取得</button>
+                </div>
+              </div>
             </div>
             <input type="hidden" id="fLat">
             <input type="hidden" id="fLng">
@@ -403,9 +451,6 @@ main { padding: 2.5rem 3rem; min-width: 0; }
     <div id="postsWrap"></div>
   </main>
 </div>
-
-<!-- REMINDER BANNER -->
-<div id="reminderBanner" style="display:none;position:sticky;top:64px;z-index:99;background:#fff8e1;border-bottom:2px solid #f59e0b;padding:0.6rem 2rem;display:none;align-items:center;gap:1rem;flex-wrap:wrap"></div>
 
 <!-- REMINDER MODAL -->
 <div class="overlay" id="reminderModal">
@@ -492,6 +537,7 @@ async function sb(path, method='GET', body=null){
 // ── STATE ──────────────────────────────────────
 let posts=[], tags=[], curFilter='all', tagFilter=null, viewMode='grid';
 let editId=null, fSel=new Set(), eSel=new Set();
+let areaFilter = { country: null, prefecture: null };
 const COLORS=['#3b82f6','#8b5cf6','#e11d48','#d97706','#059669','#dc2626','#0891b2','#65a30d','#9333ea','#ea580c'];
 
 // ── INIT ───────────────────────────────────────
@@ -506,7 +552,9 @@ async function init(){
       id:r.id, url:r.url||'', author:r.author||'', handle:r.handle||'',
       content:r.content||'', memo:r.memo||'', image:r.image||'',
       tags:r.tags||[], createdAt:r.created_at||0,
-      area:r.area||'', lat:r.lat||null, lng:r.lng||null
+      area:r.area||'', lat:r.lat||null, lng:r.lng||null,
+      country:r.country||'', prefecture:r.prefecture||'',
+      type:r.type||'x', summary:r.summary||''
     }));
     tags = rawTags;
     if(!tags.length){
@@ -530,22 +578,117 @@ function renderAll(){ renderSide(); renderPickers(); renderMgr(); renderPosts();
 
 // ── SIDEBAR ────────────────────────────────────
 function renderSide(){
-  document.getElementById('sideTagList').innerHTML = tags.map(t=>`
-    <div class="tag-filter-row${tagFilter===t.id?' active':''}" onclick="toggleTagFilter('${t.id}')">
-      <div class="t-dot" style="background:${t.color}"></div>
-      <span class="t-name">${esc(t.name)}</span>
-      <span class="t-cnt">${posts.filter(p=>p.tags&&p.tags.includes(t.id)).length}</span>
-    </div>`).join('');
+  // タグをツリー表示（親→子）
+  const parentTags = tags.filter(t=>!t.parent_id);
+  const childTags  = tags.filter(t=> t.parent_id);
+
+  let html = '';
+  parentTags.forEach(pt => {
+    const children = childTags.filter(c=>c.parent_id===pt.id);
+    const ptActive = tagFilter===pt.id;
+    html += `<div class="tag-parent-row">
+      <div class="tag-filter-row${ptActive?' active':''}" onclick="toggleTagFilter('${pt.id}')" style="color:${pt.color}">
+        <div class="t-dot" style="background:${pt.color}"></div>
+        <span class="t-name">${esc(pt.name)}</span>
+        <span class="t-cnt">${posts.filter(p=>p.tags&&p.tags.includes(pt.id)).length}</span>
+      </div>`;
+    children.forEach(ct => {
+      const ctActive = tagFilter===ct.id;
+      html += `<div class="tag-child-row">
+        <div class="tag-filter-row${ctActive?' active':''}" onclick="toggleTagFilter('${ct.id}')" style="color:${ct.color}">
+          <div class="t-dot" style="background:${ct.color};width:5px;height:5px"></div>
+          <span class="t-name" style="font-size:0.76rem">${esc(ct.name)}</span>
+          <span class="t-cnt">${posts.filter(p=>p.tags&&p.tags.includes(ct.id)).length}</span>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('sideTagList').innerHTML = html;
+
+  // エリアフィルターのセレクトを更新
+  renderAreaFilter();
+}
+
+function renderAreaFilter(){
+  // 国一覧を収集
+  const countries = [...new Set(posts.map(p=>p.country).filter(Boolean))].sort();
+  const cSel = document.getElementById('countrySelect');
+  const cur = cSel.value;
+  cSel.innerHTML = '<option value="">国を選択...</option>' +
+    countries.map(c=>`<option value="${esc(c)}"${cur===c?' selected':''}>${esc(c)}</option>`).join('');
+
+  // 都道府県フィルター
+  const prefSel = document.getElementById('prefSelect');
+  if(areaFilter.country){
+    const prefs = [...new Set(posts.filter(p=>p.country===areaFilter.country).map(p=>p.prefecture).filter(Boolean))].sort();
+    prefSel.style.display = prefs.length ? 'block' : 'none';
+    prefSel.innerHTML = '<option value="">都道府県を選択...</option>' +
+      prefs.map(pr=>`<option value="${esc(pr)}"${areaFilter.prefecture===pr?' selected':''}>${esc(pr)}</option>`).join('');
+  } else {
+    prefSel.style.display = 'none';
+    prefSel.value = '';
+  }
+}
+
+function setCountryFilter(val){
+  areaFilter.country = val||null;
+  areaFilter.prefecture = null;
+  renderAreaFilter();
+  renderPosts();
+}
+
+function setPrefFilter(val){
+  areaFilter.prefecture = val||null;
+  renderPosts();
 }
 
 function renderMgr(){
-  document.getElementById('tagMgrList').innerHTML = tags.map(t=>`
-    <div class="tag-mgr-row">
-      <div class="t-dot" style="background:${t.color}"></div>
-      <span class="tn" id="tn_${t.id}">${esc(t.name)}</span>
-      <button class="tag-del" onclick="startRenameTag('${t.id}')" title="名前を変更">✏️</button>
-      <button class="tag-del" onclick="delTag('${t.id}')" title="削除">✕</button>
-    </div>`).join('');
+  const parentTags = tags.filter(t=>!t.parent_id);
+  const childTags  = tags.filter(t=> t.parent_id);
+  let html = '';
+  parentTags.forEach(pt => {
+    const children = childTags.filter(c=>c.parent_id===pt.id);
+    html += `<div class="tag-mgr-row">
+      <div class="t-dot" style="background:${pt.color}"></div>
+      <span class="tn">${esc(pt.name)}</span>
+      <button class="tag-del" onclick="startRenameTag('${pt.id}')" title="名前を変更">✏️</button>
+      <button class="tag-del" onclick="delTag('${pt.id}')" title="削除">✕</button>
+    </div>`;
+    children.forEach(ct => {
+      html += `<div class="tag-mgr-row" style="padding-left:1.5rem;background:var(--off);border-radius:4px;margin-bottom:2px">
+        <div class="t-dot" style="background:${ct.color};width:5px;height:5px"></div>
+        <span class="tn" style="font-size:0.75rem;color:var(--ink3)">└ ${esc(ct.name)}</span>
+        <button class="tag-del" onclick="startRenameTag('${ct.id}')" title="名前を変更">✏️</button>
+        <button class="tag-del" onclick="delTag('${ct.id}')" title="削除">✕</button>
+      </div>`;
+    });
+  });
+  document.getElementById('tagMgrList').innerHTML = html;
+
+  // 親タグセレクトを更新
+  const psel = document.getElementById('parentTagSelect');
+  if(psel){
+    psel.innerHTML = '<option value="">親タグを選択...</option>' +
+      parentTags.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  }
+}
+
+async function addSubTag(){
+  const parentId = document.getElementById('parentTagSelect').value;
+  const name = document.getElementById('newSubTagIn').value.trim();
+  if(!parentId){ toast('親タグを選択してください','err'); return; }
+  if(!name){ toast('サブタグ名を入力してください','err'); return; }
+  if(tags.find(t=>t.name===name)){ toast('同じ名前のタグが存在します','err'); return; }
+  const parent = tags.find(t=>t.id===parentId);
+  const t = { id:'t'+Date.now(), name, color: parent?.color||COLORS[tags.length%COLORS.length], parent_id: parentId };
+  try {
+    await sb('tags','POST',t);
+    tags.push(t);
+    document.getElementById('newSubTagIn').value='';
+    renderAll();
+    toast(`「${parent?.name}」に「${name}」を追加しました`,'ok');
+  } catch(e){ toast('エラー: '+e.message,'err'); }
 }
 
 // ── TAG RENAME ────────────────────────────────
@@ -659,45 +802,56 @@ async function fetchFromUrl(){
     status.style.display = 'block';
     status.textContent = '🔍 記事情報を取得中...';
     try {
-      // OGP情報をAllOrigins経由で取得
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-      const r = await fetch(proxyUrl);
-      const d = await r.json();
-      const html = d.contents || '';
+      // 複数プロキシでフォールバック
+      let html = '';
+      const proxies = [
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+      ];
+      for(const proxyUrl of proxies){
+        try {
+          const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+          if(proxyUrl.includes('allorigins')){
+            const d = await r.json();
+            html = d.contents || '';
+          } else {
+            html = await r.text();
+          }
+          if(html) break;
+        } catch(e){ continue; }
+      }
+
+      if(!html) throw new Error('取得失敗');
+
       const doc = new DOMParser().parseFromString(html, 'text/html');
 
-      // タイトル取得
       const title =
-        doc.querySelector('meta[property="og:title"]')?.content ||
+        doc.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+        doc.querySelector('meta[name="twitter:title"]')?.getAttribute('content') ||
         doc.querySelector('title')?.textContent || '';
-      // 説明文取得
       const desc =
-        doc.querySelector('meta[property="og:description"]')?.content ||
-        doc.querySelector('meta[name="description"]')?.content || '';
-      // サイト名取得
+        doc.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
+        doc.querySelector('meta[name="twitter:description"]')?.getAttribute('content') ||
+        doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
       const site =
-        doc.querySelector('meta[property="og:site_name"]')?.content || '';
-      // OGP画像取得
+        doc.querySelector('meta[property="og:site_name"]')?.getAttribute('content') || '';
       const img =
-        doc.querySelector('meta[property="og:image"]')?.content || '';
-      // 著者取得
+        doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+        doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') || '';
       const author =
-        doc.querySelector('meta[name="author"]')?.content ||
-        doc.querySelector('meta[property="article:author"]')?.content || '';
+        doc.querySelector('meta[name="author"]')?.getAttribute('content') ||
+        doc.querySelector('meta[property="article:author"]')?.getAttribute('content') || '';
 
-      if(title) document.getElementById('fTitle').value = title;
-      if(site)  document.getElementById('fSite').value  = site;
+      if(title)  document.getElementById('fTitle').value  = title;
+      if(site)   document.getElementById('fSite').value   = site;
       if(author) document.getElementById('fAuthorWeb').value = author;
-      if(desc)  document.getElementById('fContent').value = desc;
-      if(img){
-        document.getElementById('fImgUrl').value = img;
-        prevImgUrl();
-      }
+      if(desc)   document.getElementById('fContent').value = desc;
+      if(img){ document.getElementById('fImgUrl').value = img; prevImgUrl(); }
 
       status.textContent = '✓ 記事情報を取得しました。要約中...';
 
       // Claude APIで要約
-      const textToSummarize = (title ? 'タイトル: '+title+'\n' : '') + (desc||'');
+      const textToSummarize = [title, desc].filter(Boolean).join('\n');
       if(textToSummarize.trim()){
         try {
           const cr = await fetch('https://api.anthropic.com/v1/messages', {
@@ -774,6 +928,8 @@ async function savePost(){
     image: document.getElementById('fImgUrl').value.trim(),
     tags: [...fSel],
     area: document.getElementById('fArea').value.trim()||null,
+    country: document.getElementById('fCountry').value.trim()||null,
+    prefecture: document.getElementById('fPrefecture').value.trim()||null,
     lat: parseFloat(document.getElementById('fLat').value)||null,
     lng: parseFloat(document.getElementById('fLng').value)||null,
     type: currentType,
@@ -787,7 +943,7 @@ async function savePost(){
 }
 
 function clearForm(){
-  ['urlIn','fAuthor','fHandle','fTitle','fSite','fAuthorWeb','fContent','fSummary','fMemo','fImgUrl','fArea','fLat','fLng'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['urlIn','fAuthor','fHandle','fTitle','fSite','fAuthorWeb','fContent','fSummary','fMemo','fImgUrl','fArea','fCountry','fPrefecture','fLat','fLng'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('imgPrev').style.display='none';
   document.getElementById('imgPh').style.display='flex';
   document.getElementById('fAreaStatus').textContent='';
@@ -887,17 +1043,22 @@ function getFiltered(){
     if(curFilter==='recent' && now-p.createdAt>wk) return false;
     if(curFilter==='memo' && !p.memo) return false;
     if(curFilter==='img' && !p.image) return false;
+    if(areaFilter.country && p.country!==areaFilter.country) return false;
+    if(areaFilter.prefecture && p.prefecture!==areaFilter.prefecture) return false;
     return true;
   });
 }
 
 function renderPosts(){
+  if(viewMode==='map'){ renderMap(); return; }
   const wrap=document.getElementById('postsWrap');
+  document.getElementById('mapWrap').style.display='none';
+  wrap.style.display='block';
   const filtered=getFiltered();
   document.getElementById('resultInfo').textContent=filtered.length+' clips';
   if(!filtered.length){
     wrap.className='';
-    wrap.innerHTML=`<div class="empty"><div class="empty-mark">—</div><h3>投稿がありません</h3><p>URLを貼り付けて投稿を追加してみましょう</p></div>`;
+    wrap.innerHTML=`<div class="empty"><div class="empty-mark">—</div><h3>投稿がありません</h3><p>クリップを追加してみましょう</p></div>`;
     return;
   }
   if(viewMode==='grid'){ wrap.className='posts-grid'; wrap.innerHTML=filtered.map(cardHTML).join(''); }
@@ -1077,16 +1238,28 @@ let mapMarkers = [];
 
 async function geocodeArea(){
   const area = document.getElementById('fArea').value.trim();
-  if(!area){ toast('エリア名を入力してください','err'); return; }
+  const country = document.getElementById('fCountry').value.trim();
+  const query = [area, country].filter(Boolean).join(', ');
+  if(!query){ toast('場所名を入力してください','err'); return; }
   const status = document.getElementById('fAreaStatus');
   status.textContent = '検索中...';
   try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(area)}&format=json&limit=1`);
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&addressdetails=1`);
     const d = await r.json();
     if(!d.length){ status.textContent = '場所が見つかりませんでした'; return; }
+    const addr = d[0].address || {};
     document.getElementById('fLat').value = d[0].lat;
     document.getElementById('fLng').value = d[0].lon;
-    status.textContent = `✓ 位置を取得: ${d[0].display_name.slice(0,40)}...`;
+    // 国を自動入力
+    if(!document.getElementById('fCountry').value && addr.country){
+      document.getElementById('fCountry').value = addr.country;
+    }
+    // 都道府県を自動入力
+    if(!document.getElementById('fPrefecture').value){
+      const pref = addr.state || addr.province || addr.region || '';
+      if(pref) document.getElementById('fPrefecture').value = pref;
+    }
+    status.textContent = `✓ 位置を取得しました`;
   } catch(e){ status.textContent = 'エラーが発生しました'; }
 }
 
