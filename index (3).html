@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XCLIP</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Libre+Baskerville:ital@0;1&family=Noto+Sans+JP:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --white: #ffffff;
+  --off: #f7f6f3;
+  --paper: #faf9f6;
+  --ink: #111111;
+  --ink2: #444444;
+  --ink3: #999999;
+  --line: #e0ddd6;
+  --line2: #ebebeb;
+  --accent: #d4502a;
+  --accent-light: #f5e8e3;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.08);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,0.12);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* HEADER */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(250,249,246,0.93);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+}
+.header-inner {
+  max-width: 1400px; margin: 0 auto;
+  padding: 0 2.5rem; height: 64px;
+  display: flex; align-items: center; gap: 2rem;
+}
+.logo { display: flex; flex-direction: column; line-height: 1; text-decoration: none; flex-shrink: 0; }
+.logo-main { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.5rem; color: var(--ink); letter-spacing: -0.03em; }
+.logo-main em { color: var(--accent); font-style: normal; }
+.logo-sub { font-family: 'DM Mono', monospace; font-size: 0.55rem; letter-spacing: 0.18em; color: var(--ink3); text-transform: uppercase; margin-top: 2px; }
+.header-rule { flex: 1; height: 1px; background: var(--line); }
+.header-stats { display: flex; gap: 2rem; align-items: center; }
+.stat { text-align: right; }
+.stat-n { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700; color: var(--ink); line-height: 1; }
+.stat-l { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 0.12em; color: var(--ink3); text-transform: uppercase; }
+
+/* LAYOUT */
+.wrap { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 256px 1fr; min-height: calc(100vh - 64px); }
+
+/* SIDEBAR */
+.sidebar {
+  border-right: 1px solid var(--line);
+  padding: 2.5rem 1.5rem;
+  position: sticky; top: 64px;
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+  background: var(--white);
+}
+.sb-section { margin-bottom: 2.5rem; }
+.sb-head { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink3); padding-bottom: 0.75rem; border-bottom: 1px solid var(--line); margin-bottom: 0.75rem; }
+
+.filter-btn { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.5rem 0.7rem; background: transparent; border: none; border-radius: 4px; color: var(--ink2); cursor: pointer; font-family: 'Noto Sans JP', sans-serif; font-size: 0.82rem; font-weight: 300; text-align: left; transition: all 0.15s; margin-bottom: 2px; }
+.filter-btn:hover { background: var(--off); color: var(--ink); }
+.filter-btn.active { background: var(--ink); color: var(--white); }
+.filter-btn .fc { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 0.65rem; opacity: 0.6; }
+.filter-btn.active .fc { opacity: 0.7; }
+
+.tag-filter-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.7rem; border-radius: 4px; cursor: pointer; transition: background 0.15s; margin-bottom: 2px; }
+.tag-filter-row:hover { background: var(--off); }
+.tag-filter-row.active { background: var(--accent-light); }
+.t-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.t-name { font-size: 0.82rem; font-weight: 300; flex: 1; color: var(--ink2); }
+.tag-filter-row.active .t-name { color: var(--ink); font-weight: 500; }
+.t-cnt { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--ink3); }
+
+.add-tag-row { display: flex; gap: 0.4rem; margin-top: 0.75rem; }
+.add-tag-row input { flex: 1; background: var(--off); border: 1px solid var(--line); border-radius: 4px; color: var(--ink); padding: 0.45rem 0.65rem; font-size: 0.78rem; font-family: 'Noto Sans JP', sans-serif; outline: none; transition: border-color 0.2s; }
+.add-tag-row input:focus { border-color: var(--ink); }
+.add-tag-row input::placeholder { color: var(--ink3); }
+.add-tag-row button { background: var(--ink); border: none; border-radius: 4px; color: var(--white); padding: 0.45rem 0.8rem; font-size: 0.78rem; cursor: pointer; transition: background 0.15s; }
+.add-tag-row button:hover { background: var(--accent); }
+
+.tag-mgr-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.5rem; border-radius: 4px; transition: background 0.15s; margin-bottom: 2px; }
+.tag-mgr-row:hover { background: var(--off); }
+.tag-mgr-row .tn { font-size: 0.8rem; flex: 1; color: var(--ink2); }
+.tag-del { background: transparent; border: none; color: var(--ink3); cursor: pointer; font-size: 0.8rem; padding: 0.1rem 0.3rem; border-radius: 3px; transition: all 0.15s; }
+.tag-del:hover { color: var(--accent); background: var(--accent-light); }
+
+/* MAIN */
+main { padding: 2.5rem 3rem; min-width: 0; }
+
+/* ADD PANEL */
+.add-panel { background: var(--white); border: 1px solid var(--line); border-radius: 2px; margin-bottom: 2.5rem; overflow: hidden; box-shadow: var(--shadow-sm); }
+.add-panel-header { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.75rem; border-bottom: 1px solid var(--line2); cursor: pointer; user-select: none; transition: background 0.15s; }
+.add-panel-header:hover { background: var(--off); }
+.add-panel-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; }
+.add-panel-sub { font-size: 0.78rem; color: var(--ink3); font-weight: 300; }
+.panel-toggle { margin-left: auto; font-size: 0.8rem; color: var(--ink3); transition: transform 0.25s; }
+.panel-toggle.open { transform: rotate(180deg); }
+.add-panel-body { padding: 1.75rem; display: none; }
+.add-panel-body.open { display: block; }
+
+.url-row { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px dashed var(--line); }
+.url-field { flex: 1; background: var(--off); border: 1px solid var(--line); border-radius: 2px; color: var(--ink); padding: 0.75rem 1rem; font-family: 'DM Mono', monospace; font-size: 0.78rem; outline: none; transition: border-color 0.2s, background 0.2s; }
+.url-field:focus { border-color: var(--ink); background: var(--white); }
+.url-field::placeholder { color: var(--ink3); }
+.fetch-btn { background: var(--ink); border: none; border-radius: 2px; color: var(--white); padding: 0.75rem 1.5rem; font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.05em; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+.fetch-btn:hover { background: var(--accent); }
+.fetch-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--ink); }
+
+.fg { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+.fg-full { grid-column: 1 / -1; }
+.fl { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); display: block; margin-bottom: 0.4rem; }
+.fi, .fta { width: 100%; background: var(--off); border: 1px solid var(--line); border-radius: 2px; color: var(--ink); padding: 0.65rem 0.85rem; font-family: 'Noto Sans JP', sans-serif; font-size: 0.85rem; font-weight: 300; outline: none; transition: border-color 0.2s, background 0.2s; }
+.fi:focus, .fta:focus { border-color: var(--ink); background: var(--white); }
+.fi::placeholder, .fta::placeholder { color: var(--ink3); }
+.fta { resize: vertical; min-height: 90px; line-height: 1.65; }
+
+.img-area { border: 1.5px dashed var(--line); border-radius: 2px; position: relative; overflow: hidden; min-height: 110px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; background: var(--off); margin-top: 0.5rem; }
+.img-area:hover { border-color: var(--ink); background: var(--line2); }
+.img-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.img-area-placeholder { text-align: center; color: var(--ink3); font-size: 0.78rem; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.img-area-placeholder .icon { font-size: 1.5rem; }
+.img-area img { max-width: 100%; max-height: 200px; object-fit: cover; border-radius: 1px; }
+
+.tag-picker { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+.tp-pill { display: inline-flex; align-items: center; padding: 0.3rem 0.75rem; border-radius: 100px; font-size: 0.72rem; font-weight: 400; cursor: pointer; border: 1.5px solid; transition: all 0.15s; user-select: none; }
+.tp-pill.off { opacity: 0.35; background: transparent !important; }
+.tp-pill.on { opacity: 1; }
+
+.form-actions { display: flex; justify-content: flex-end; gap: 0.75rem; padding-top: 1.25rem; border-top: 1px solid var(--line2); }
+.btn-ghost { background: transparent; border: 1px solid var(--line); border-radius: 2px; color: var(--ink2); padding: 0.6rem 1.25rem; font-size: 0.82rem; cursor: pointer; transition: all 0.15s; font-family: 'Noto Sans JP', sans-serif; }
+.btn-ghost:hover { border-color: var(--ink); color: var(--ink); }
+.btn-solid { background: var(--ink); border: none; border-radius: 2px; color: var(--white); padding: 0.6rem 1.75rem; font-size: 0.82rem; cursor: pointer; transition: background 0.15s; font-family: 'Noto Sans JP', sans-serif; font-weight: 500; }
+.btn-solid:hover { background: var(--accent); }
+
+/* TOOLBAR */
+.toolbar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.search-wrap { flex: 1; position: relative; }
+.search-ico { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--ink3); font-size: 0.85rem; pointer-events: none; }
+.search-fi { width: 100%; background: var(--white); border: 1px solid var(--line); border-radius: 2px; color: var(--ink); padding: 0.6rem 1rem 0.6rem 2.4rem; font-family: 'Noto Sans JP', sans-serif; font-size: 0.85rem; font-weight: 300; outline: none; transition: border-color 0.2s; }
+.search-fi:focus { border-color: var(--ink); }
+.search-fi::placeholder { color: var(--ink3); }
+.view-toggle { display: flex; border: 1px solid var(--line); border-radius: 2px; overflow: hidden; background: var(--white); }
+.vt-btn { background: transparent; border: none; padding: 0.5rem 0.8rem; color: var(--ink3); cursor: pointer; font-size: 0.9rem; transition: all 0.15s; border-right: 1px solid var(--line); }
+.vt-btn:last-child { border-right: none; }
+.vt-btn:hover { background: var(--off); color: var(--ink); }
+.vt-btn.active { background: var(--ink); color: var(--white); }
+
+.result-info { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--ink3); letter-spacing: 0.06em; margin-bottom: 1.25rem; text-transform: uppercase; }
+
+/* CARDS */
+.posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
+.posts-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 2px; background: var(--white); overflow: hidden; }
+
+.card { background: var(--white); border: 1px solid var(--line); border-radius: 2px; overflow: hidden; transition: box-shadow 0.2s, transform 0.2s; animation: cardIn 0.3s ease both; }
+.card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+@keyframes cardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.card-img { width: 100%; height: 170px; object-fit: cover; display: block; border-bottom: 1px solid var(--line); }
+.card-body { padding: 1.1rem 1.25rem; }
+.card-meta { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem; }
+.c-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--ink); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 0.85rem; color: var(--white); flex-shrink: 0; }
+.c-author { font-family: 'Playfair Display', serif; font-size: 0.9rem; font-weight: 700; color: var(--ink); }
+.c-handle { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--ink3); }
+.c-date { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--ink3); }
+.c-content { font-size: 0.83rem; line-height: 1.65; color: var(--ink2); margin-bottom: 0.75rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.c-memo { font-family: 'Libre Baskerville', serif; font-style: italic; font-size: 0.78rem; color: var(--accent); margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: var(--accent-light); border-left: 2px solid var(--accent); border-radius: 0 2px 2px 0; }
+.c-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.75rem; }
+.c-tag { padding: 0.18rem 0.55rem; border-radius: 100px; font-size: 0.65rem; font-weight: 500; letter-spacing: 0.02em; }
+.c-footer { display: flex; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--line2); gap: 0.5rem; }
+.c-link { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--ink3); text-decoration: none; transition: color 0.15s; }
+.c-link:hover { color: var(--accent); }
+.c-actions { margin-left: auto; display: flex; gap: 0.25rem; }
+.c-btn { background: transparent; border: 1px solid transparent; border-radius: 2px; color: var(--ink3); padding: 0.28rem 0.5rem; font-size: 0.72rem; cursor: pointer; transition: all 0.15s; }
+.c-btn:hover { background: var(--off); border-color: var(--line); color: var(--ink); }
+.c-btn.del:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+
+/* LIST */
+.list-row { display: grid; grid-template-columns: 100px 1fr; border-bottom: 1px solid var(--line2); animation: cardIn 0.25s ease both; transition: background 0.15s; }
+.list-row:last-child { border-bottom: none; }
+.list-row:hover { background: var(--off); }
+.list-img { width: 100%; height: 100%; min-height: 90px; object-fit: cover; border-right: 1px solid var(--line2); display: block; }
+.list-img-ph { width: 100%; min-height: 90px; display: flex; align-items: center; justify-content: center; background: var(--off); color: var(--ink3); font-size: 1.25rem; border-right: 1px solid var(--line2); }
+.list-body { padding: 0.9rem 1.25rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.list-top { display: flex; align-items: center; gap: 0.75rem; }
+.list-author { font-family: 'Playfair Display', serif; font-size: 0.9rem; font-weight: 700; }
+.list-handle { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--ink3); }
+.list-date { margin-left: auto; font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--ink3); }
+.list-content { font-size: 0.8rem; color: var(--ink2); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.list-bottom { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-top: auto; }
+
+/* EMPTY */
+.empty { grid-column: 1/-1; padding: 5rem 2rem; text-align: center; color: var(--ink3); }
+.empty-mark { font-family: 'Playfair Display', serif; font-size: 3rem; font-weight: 900; opacity: 0.1; margin-bottom: 1rem; color: var(--ink); }
+.empty h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--ink); margin-bottom: 0.4rem; }
+.empty p { font-size: 0.82rem; }
+
+/* MODAL */
+.overlay { position: fixed; inset: 0; background: rgba(17,17,17,0.55); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; }
+.overlay.open { display: flex; }
+.modal { background: var(--white); border: 1px solid var(--line); border-radius: 2px; width: 92%; max-width: 580px; max-height: 86vh; overflow-y: auto; padding: 2rem; position: relative; box-shadow: var(--shadow-lg); }
+.modal-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; }
+.modal-close { background: transparent; border: 1px solid var(--line); border-radius: 2px; color: var(--ink3); padding: 0.25rem 0.6rem; cursor: pointer; font-size: 0.85rem; transition: all 0.15s; }
+.modal-close:hover { border-color: var(--ink); color: var(--ink); }
+
+/* TOAST */
+.toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--ink); color: var(--white); padding: 0.75rem 1.5rem; border-radius: 2px; font-size: 0.82rem; z-index: 300; transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); pointer-events: none; box-shadow: var(--shadow-md); }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok { background: #1a6b3c; }
+.toast.err { background: var(--accent); }
+
+/* SCROLL */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+
+/* LOADING */
+.ld { display: inline-flex; gap: 3px; align-items: center; }
+.ld span { width: 5px; height: 5px; border-radius: 50%; background: var(--white); animation: ldp 1.2s infinite ease-in-out; }
+.ld span:nth-child(2) { animation-delay: 0.2s; }
+.ld span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes ldp { 0%,80%,100% { transform: scale(0.5); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); padding: 1.5rem; }
+  main { padding: 1.5rem; }
+  .fg { grid-template-columns: 1fr; }
+  .list-row { grid-template-columns: 80px 1fr; }
+  .header-inner { padding: 0 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <span class="logo-main">XC<em>L</em>IP</span>
+      <span class="logo-sub">Post Collector</span>
+    </a>
+    <div class="header-rule"></div>
+    <div class="header-stats">
+      <div class="stat">
+        <div class="stat-n" id="totalCount">0</div>
+        <div class="stat-l">Clips</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" id="tagCount">0</div>
+        <div class="stat-l">Tags</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <aside class="sidebar">
+    <div class="sb-section">
+      <div class="sb-head">Filter</div>
+      <button class="filter-btn active" id="fAll"    onclick="setFilter('all')">すべて    <span class="fc" id="cAll">0</span></button>
+      <button class="filter-btn"        id="fRecent" onclick="setFilter('recent')">最近追加  <span class="fc" id="cRec">0</span></button>
+      <button class="filter-btn"        id="fMemo"   onclick="setFilter('memo')">メモあり  <span class="fc" id="cMemo">0</span></button>
+      <button class="filter-btn"        id="fImg"    onclick="setFilter('img')">画像あり  <span class="fc" id="cImg">0</span></button>
+    </div>
+    <div class="sb-section">
+      <div class="sb-head">Tags</div>
+      <div id="sideTagList"></div>
+      <div class="add-tag-row">
+        <input type="text" id="newTagIn" placeholder="新しいタグ..." maxlength="20">
+        <button onclick="addTag()">追加</button>
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-head">Manage Tags</div>
+      <div id="tagMgrList"></div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="add-panel">
+      <div class="add-panel-header" onclick="togglePanel()">
+        <div>
+          <div class="add-panel-title">投稿を追加する</div>
+          <div class="add-panel-sub">X のURLを貼り付けて情報・画像を取得</div>
+        </div>
+        <span class="panel-toggle" id="panelToggle">▾</span>
+      </div>
+      <div class="add-panel-body" id="panelBody">
+        <div class="url-row">
+          <input type="text" class="url-field" id="urlIn" placeholder="https://x.com/username/status/123456789">
+          <button class="fetch-btn" id="fetchBtn" onclick="fetchFromUrl()">情報取得</button>
+        </div>
+        <div class="fg">
+          <div><label class="fl">投稿者名</label><input type="text" class="fi" id="fAuthor" placeholder="例: Taro Yamada"></div>
+          <div><label class="fl">ハンドル (@)</label><input type="text" class="fi" id="fHandle" placeholder="例: @taroyamada"></div>
+          <div class="fg-full"><label class="fl">投稿テキスト</label><textarea class="fta" id="fContent" placeholder="投稿の内容を入力..."></textarea></div>
+          <div class="fg-full"><label class="fl">メモ・コメント</label><input type="text" class="fi" id="fMemo" placeholder="自分だけのメモを残す..."></div>
+          <div class="fg-full">
+            <label class="fl">画像 URL</label>
+            <input type="text" class="fi" id="fImgUrl" placeholder="https://..." oninput="prevImgUrl()">
+            <div class="img-area" id="imgArea">
+              <input type="file" id="fImgFile" accept="image/*" onchange="handleFile(event)">
+              <div class="img-area-placeholder" id="imgPh"><div class="icon">↑</div><div>クリックして画像をアップロード</div></div>
+              <img id="imgPrev" style="display:none">
+            </div>
+          </div>
+          <div class="fg-full"><label class="fl">タグ</label><div class="tag-picker" id="formPicker"></div></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-ghost" onclick="clearForm()">クリア</button>
+          <button class="btn-solid" onclick="savePost()">保存する</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-ico">🔍</span>
+        <input class="search-fi" id="searchIn" placeholder="投稿を検索..." oninput="renderPosts()">
+      </div>
+      <div class="view-toggle">
+        <button class="vt-btn active" id="vGrid" onclick="setView('grid')" title="グリッド">⊞</button>
+        <button class="vt-btn"        id="vList" onclick="setView('list')" title="リスト">☰</button>
+      </div>
+    </div>
+    <div class="result-info" id="resultInfo"></div>
+    <div id="postsWrap"></div>
+  </main>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">投稿の詳細</span>
+      <button class="modal-close" onclick="closeDetail()">✕ 閉じる</button>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">投稿を編集</span>
+      <button class="modal-close" onclick="closeModal()">✕ 閉じる</button>
+    </div>
+    <div class="fg">
+      <div><label class="fl">投稿者名</label><input type="text" class="fi" id="eAuthor"></div>
+      <div><label class="fl">ハンドル</label><input type="text" class="fi" id="eHandle"></div>
+      <div class="fg-full"><label class="fl">投稿テキスト</label><textarea class="fta" id="eContent"></textarea></div>
+      <div class="fg-full"><label class="fl">メモ・コメント</label><input type="text" class="fi" id="eMemo"></div>
+      <div class="fg-full"><label class="fl">画像 URL</label><input type="text" class="fi" id="eImgUrl"></div>
+      <div class="fg-full"><label class="fl">タグ</label><div class="tag-picker" id="editPicker"></div></div>
+    </div>
+    <div class="form-actions" style="margin-top:1.25rem">
+      <button class="btn-ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn-solid" onclick="saveEdit()">更新する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Supabase ──────────────────────────────────
+const SB_URL = 'https://hpgcymyyugrzblvahkcc.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwZ2N5bXl5dWdyemJsdmFoa2NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MjAxOTEsImV4cCI6MjA4NzM5NjE5MX0.l2C4TWVU-CeMPB3Thz238z5qqeiOsFLhkm-GlOYVL8o';
+
+async function sb(path, method='GET', body=null){
+  const headers = {
+    'apikey': SB_KEY,
+    'Authorization': 'Bearer ' + SB_KEY,
+    'Content-Type': 'application/json'
+  };
+  if(method==='POST') headers['Prefer'] = 'return=representation,resolution=merge-duplicates';
+  if(method==='PATCH') headers['Prefer'] = 'return=representation';
+  const opts = { method, headers };
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch(SB_URL + '/rest/v1/' + path, opts);
+  if(!r.ok){ const e = await r.text(); throw new Error(e); }
+  const txt = await r.text();
+  return txt ? JSON.parse(txt) : [];
+}
+
+// ── STATE ──────────────────────────────────────
+let posts=[], tags=[], curFilter='all', tagFilter=null, viewMode='grid';
+let editId=null, fSel=new Set(), eSel=new Set();
+const COLORS=['#3b82f6','#8b5cf6','#e11d48','#d97706','#059669','#dc2626','#0891b2','#65a30d','#9333ea','#ea580c'];
+
+// ── INIT ───────────────────────────────────────
+async function init(){
+  toast('データを読み込み中...','');
+  try {
+    const [rawPosts, rawTags] = await Promise.all([
+      sb('posts?select=*&order=created_at.desc'),
+      sb('tags?select=*&order=name.asc')
+    ]);
+    posts = rawPosts.map(r=>({
+      id:r.id, url:r.url||'', author:r.author||'', handle:r.handle||'',
+      content:r.content||'', memo:r.memo||'', image:r.image||'',
+      tags:r.tags||[], createdAt:r.created_at||0
+    }));
+    tags = rawTags;
+    if(!tags.length){
+      const defs=['参考','インスピレーション','技術','デザイン','ニュース','お気に入り'];
+      for(let i=0;i<defs.length;i++){
+        const t={id:'t'+(Date.now()+i), name:defs[i], color:COLORS[i]};
+        await sb('tags','POST',t);
+        tags.push(t);
+      }
+    }
+    renderAll();
+    setTimeout(()=>{ document.getElementById('toast').className='toast'; }, 500);
+  } catch(e) {
+    toast('接続エラー: ' + e.message, 'err');
+    console.error(e);
+  }
+}
+
+function renderAll(){ renderSide(); renderPickers(); renderMgr(); renderPosts(); updateStats(); }
+
+// ── SIDEBAR ────────────────────────────────────
+function renderSide(){
+  document.getElementById('sideTagList').innerHTML = tags.map(t=>`
+    <div class="tag-filter-row${tagFilter===t.id?' active':''}" onclick="toggleTagFilter('${t.id}')">
+      <div class="t-dot" style="background:${t.color}"></div>
+      <span class="t-name">${esc(t.name)}</span>
+      <span class="t-cnt">${posts.filter(p=>p.tags&&p.tags.includes(t.id)).length}</span>
+    </div>`).join('');
+}
+
+function renderMgr(){
+  document.getElementById('tagMgrList').innerHTML = tags.map(t=>`
+    <div class="tag-mgr-row">
+      <div class="t-dot" style="background:${t.color}"></div>
+      <span class="tn" id="tn_${t.id}">${esc(t.name)}</span>
+      <button class="tag-del" onclick="startRenameTag('${t.id}')" title="名前を変更">✏️</button>
+      <button class="tag-del" onclick="delTag('${t.id}')" title="削除">✕</button>
+    </div>`).join('');
+}
+
+// ── TAG RENAME ────────────────────────────────
+function startRenameTag(id){
+  const t = tags.find(t=>t.id===id); if(!t) return;
+  const newName = prompt('新しいタグ名を入力してください', t.name);
+  if(!newName || newName.trim()==='' || newName.trim()===t.name) return;
+  if(tags.find(tt=>tt.name===newName.trim()&&tt.id!==id)){ toast('同じ名前のタグが存在します','err'); return; }
+  renameTag(id, newName.trim());
+}
+
+async function renameTag(id, newName){
+  try {
+    await sb('tags?id=eq.'+id, 'PATCH', { name: newName });
+    const t = tags.find(t=>t.id===id);
+    if(t) t.name = newName;
+    renderAll();
+    toast('タグ名を変更しました','ok');
+  } catch(e){ toast('エラー: '+e.message,'err'); }
+}
+
+// ── TAG PICKER ────────────────────────────────
+function renderPickers(){ renderPicker('formPicker',fSel); renderPicker('editPicker',eSel); }
+function renderPicker(id, sel){
+  const el = document.getElementById(id); if(!el) return;
+  el.innerHTML = tags.map(t=>`
+    <span class="tp-pill ${sel.has(t.id)?'on':'off'}"
+      style="border-color:${t.color};color:${t.color};${sel.has(t.id)?'background:'+t.color+'22':''}"
+      onclick="togglePill('${t.id}','${id}',this)">${esc(t.name)}</span>`).join('');
+}
+function togglePill(id, pickerId, el){
+  const sel = pickerId==='formPicker' ? fSel : eSel;
+  if(sel.has(id)){ sel.delete(id); el.className='tp-pill off'; el.style.background=''; }
+  else { sel.add(id); el.className='tp-pill on'; const t=tags.find(t=>t.id===id); el.style.background=t.color+'22'; }
+}
+function toggleTagFilter(id){ tagFilter=tagFilter===id?null:id; if(tagFilter){curFilter='all';updateFilterBtns();} renderAll(); }
+
+// ── TAGS CRUD ─────────────────────────────────
+async function addTag(){
+  const inp=document.getElementById('newTagIn'), name=inp.value.trim();
+  if(!name) return;
+  if(tags.find(t=>t.name===name)){ toast('同じ名前のタグが存在します','err'); return; }
+  const t = { id:'t'+Date.now(), name, color:COLORS[tags.length%COLORS.length] };
+  try {
+    await sb('tags','POST',t);
+    tags.push(t); inp.value=''; renderAll(); toast('タグ「'+name+'」を追加','ok');
+  } catch(e){ toast('エラー: '+e.message,'err'); }
+}
+
+async function delTag(id){
+  if(!confirm('このタグを削除しますか？')) return;
+  try {
+    await sb('tags?id=eq.'+id,'DELETE');
+    tags = tags.filter(t=>t.id!==id);
+    // 各投稿からタグを除去してDB更新
+    for(const p of posts){
+      if(p.tags && p.tags.includes(id)){
+        p.tags = p.tags.filter(x=>x!==id);
+        await sb('posts?id=eq.'+p.id,'PATCH',{tags:p.tags});
+      }
+    }
+    if(tagFilter===id) tagFilter=null;
+    renderAll(); toast('タグを削除しました');
+  } catch(e){ toast('エラー: '+e.message,'err'); }
+}
+
+// ── URL FETCH ────────────────────────────────
+async function fetchFromUrl(){
+  const url=document.getElementById('urlIn').value.trim();
+  if(!url){ toast('URLを入力してください','err'); return; }
+  const m=url.match(/(?:twitter\.com|x\.com)\/@?([\w]+)\/status\/(\d+)/);
+  if(!m){ toast('X(Twitter)のURLを入力してください','err'); return; }
+  const btn=document.getElementById('fetchBtn');
+  btn.disabled=true; btn.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
+  document.getElementById('fHandle').value='@'+m[1];
+  document.getElementById('fAuthor').value=m[1];
+  try{
+    const r=await fetch(`https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`);
+    const d=await r.json();
+    if(d.html){
+      const doc=new DOMParser().parseFromString(d.html,'text/html');
+      const txt=doc.querySelector('p')?.textContent||'';
+      document.getElementById('fContent').value=txt;
+      if(d.author_name) document.getElementById('fAuthor').value=d.author_name;
+    }
+  }catch(e){}
+  btn.disabled=false; btn.innerHTML='情報取得';
+  toast('URLから情報を取得しました。内容を確認してください','ok');
+}
+
+// ── IMAGE ─────────────────────────────────────
+function prevImgUrl(){
+  const u=document.getElementById('fImgUrl').value.trim();
+  const img=document.getElementById('imgPrev'), ph=document.getElementById('imgPh');
+  if(u){ img.src=u; img.style.display='block'; ph.style.display='none'; }
+  else { img.style.display='none'; ph.style.display='flex'; }
+}
+function handleFile(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=document.getElementById('imgPrev'), ph=document.getElementById('imgPh');
+    img.src=ev.target.result; img.style.display='block'; ph.style.display='none';
+    document.getElementById('fImgUrl').value=ev.target.result;
+  };
+  r.readAsDataURL(f);
+}
+
+// ── POSTS CRUD ────────────────────────────────
+async function savePost(){
+  const url=document.getElementById('urlIn').value.trim();
+  const content=document.getElementById('fContent').value.trim();
+  if(!url&&!content){ toast('URLまたは投稿内容を入力してください','err'); return; }
+  const now = Date.now();
+  const p = {
+    id: 'p'+now, url, created_at: now,
+    author: document.getElementById('fAuthor').value.trim()||'不明',
+    handle: document.getElementById('fHandle').value.trim(),
+    content, memo: document.getElementById('fMemo').value.trim(),
+    image: document.getElementById('fImgUrl').value.trim(),
+    tags: [...fSel]
+  };
+  try {
+    await sb('posts','POST', p);
+    posts.unshift({...p, createdAt: now});
+    clearForm(); renderAll(); toast('保存しました ✓','ok');
+  } catch(e){ toast('保存エラー: '+e.message,'err'); console.error(e); }
+}
+
+function clearForm(){
+  ['urlIn','fAuthor','fHandle','fContent','fMemo','fImgUrl'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('imgPrev').style.display='none';
+  document.getElementById('imgPh').style.display='flex';
+  fSel.clear(); renderPicker('formPicker',fSel);
+}
+
+async function delPost(id){
+  if(!confirm('この投稿を削除しますか？')) return;
+  try {
+    await sb('posts?id=eq.'+id,'DELETE');
+    posts=posts.filter(p=>p.id!==id); renderAll(); toast('削除しました');
+  } catch(e){ toast('エラー: '+e.message,'err'); }
+}
+
+function openEdit(id){
+  const p=posts.find(p=>p.id===id); if(!p) return;
+  editId=id;
+  document.getElementById('eAuthor').value=p.author;
+  document.getElementById('eHandle').value=p.handle;
+  document.getElementById('eContent').value=p.content;
+  document.getElementById('eMemo').value=p.memo||'';
+  document.getElementById('eImgUrl').value=p.image||'';
+  eSel=new Set(p.tags||[]);
+  renderPicker('editPicker',eSel);
+  document.getElementById('editModal').classList.add('open');
+}
+
+async function saveEdit(){
+  const p=posts.find(p=>p.id===editId); if(!p) return;
+  p.author=document.getElementById('eAuthor').value.trim()||'不明';
+  p.handle=document.getElementById('eHandle').value.trim();
+  p.content=document.getElementById('eContent').value.trim();
+  p.memo=document.getElementById('eMemo').value.trim();
+  p.image=document.getElementById('eImgUrl').value.trim();
+  p.tags=[...eSel];
+  try {
+    await sb('posts?id=eq.'+p.id,'PATCH',{
+      author:p.author, handle:p.handle, content:p.content,
+      memo:p.memo, image:p.image, tags:p.tags
+    });
+    closeModal(); renderAll(); toast('更新しました ✓','ok');
+  } catch(e){ toast('エラー: '+e.message,'err'); }
+}
+
+function closeModal(){ document.getElementById('editModal').classList.remove('open'); editId=null; }
+
+// ── 全文表示モーダル ──────────────────────────
+function openDetail(id){
+  const p=posts.find(p=>p.id===id); if(!p) return;
+  const tagS=(p.tags||[]).map(tid=>{const t=tags.find(t=>t.id===tid);return t?`<span class="c-tag" style="background:${t.color}18;color:${t.color}">${esc(t.name)}</span>`:''}).join('');
+  const d=p.createdAt?new Date(p.createdAt).toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'}):'';
+  document.getElementById('detailBody').innerHTML=`
+    ${p.image?`<img src="${esc(p.image)}" style="width:100%;border-radius:4px;margin-bottom:1rem;border:1px solid var(--line)" onerror="this.style.display='none'" alt="">`:''}
+    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+      <div class="c-avatar">${(p.author||'?').charAt(0).toUpperCase()}</div>
+      <div><div class="c-author">${esc(p.author)}</div><div class="c-handle">${esc(p.handle)}</div></div>
+      <div class="c-date" style="margin-left:auto">${d}</div>
+    </div>
+    ${p.content?`<div style="font-size:0.9rem;line-height:1.8;color:var(--ink2);margin-bottom:1rem;white-space:pre-wrap">${esc(p.content)}</div>`:''}
+    ${p.memo?`<div class="c-memo" style="margin-bottom:1rem">${esc(p.memo)}</div>`:''}
+    ${tagS?`<div class="c-tags" style="margin-bottom:1rem">${tagS}</div>`:''}
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+      ${p.url?`<a class="c-link" href="${esc(p.url)}" target="_blank" rel="noopener">↗ 元の投稿を開く</a>`:''}
+      <button class="c-btn edit" onclick="closeDetail();openEdit('${p.id}')" style="margin-left:auto">編集</button>
+    </div>`;
+  document.getElementById('detailModal').classList.add('open');
+}
+function closeDetail(){ document.getElementById('detailModal').classList.remove('open'); }
+
+// ── FILTER & RENDER ───────────────────────────
+function setFilter(f){ curFilter=f; tagFilter=null; updateFilterBtns(); renderAll(); }
+function updateFilterBtns(){
+  [['fAll','all'],['fRecent','recent'],['fMemo','memo'],['fImg','img']].forEach(([id,f])=>{
+    document.getElementById(id)?.classList.toggle('active', curFilter===f && !tagFilter);
+  });
+}
+function setView(v){
+  viewMode=v;
+  document.getElementById('vGrid').classList.toggle('active',v==='grid');
+  document.getElementById('vList').classList.toggle('active',v==='list');
+  renderPosts();
+}
+
+function getFiltered(){
+  const s=document.getElementById('searchIn')?.value.toLowerCase()||'';
+  const now=Date.now(), wk=7*864e5;
+  return posts.filter(p=>{
+    if(s && !((p.author||'').toLowerCase().includes(s)||(p.handle||'').toLowerCase().includes(s)||(p.content||'').toLowerCase().includes(s)||(p.memo||'').toLowerCase().includes(s))) return false;
+    if(tagFilter && !(p.tags&&p.tags.includes(tagFilter))) return false;
+    if(curFilter==='recent' && now-p.createdAt>wk) return false;
+    if(curFilter==='memo' && !p.memo) return false;
+    if(curFilter==='img' && !p.image) return false;
+    return true;
+  });
+}
+
+function renderPosts(){
+  const wrap=document.getElementById('postsWrap');
+  const filtered=getFiltered();
+  document.getElementById('resultInfo').textContent=filtered.length+' clips';
+  if(!filtered.length){
+    wrap.className='';
+    wrap.innerHTML=`<div class="empty"><div class="empty-mark">—</div><h3>投稿がありません</h3><p>URLを貼り付けて投稿を追加してみましょう</p></div>`;
+    return;
+  }
+  if(viewMode==='grid'){ wrap.className='posts-grid'; wrap.innerHTML=filtered.map(cardHTML).join(''); }
+  else { wrap.className='posts-list'; wrap.innerHTML=filtered.map(rowHTML).join(''); }
+  updateStats();
+}
+
+function cardHTML(p){
+  const tagS=(p.tags||[]).map(tid=>{const t=tags.find(t=>t.id===tid);return t?`<span class="c-tag" style="background:${t.color}18;color:${t.color}">${esc(t.name)}</span>`:''}).join('');
+  const d=p.createdAt?new Date(p.createdAt).toLocaleDateString('ja-JP',{month:'short',day:'numeric'}):'';
+  const preview = p.content && p.content.length>80 ? esc(p.content.slice(0,80))+'…' : esc(p.content||'');
+  return`<div class="card">
+    ${p.image?`<img class="card-img" src="${esc(p.image)}" onerror="this.style.display='none'" alt="">`: ''}
+    <div class="card-body">
+      <div class="card-meta">
+        <div class="c-avatar">${(p.author||'?').charAt(0).toUpperCase()}</div>
+        <div><div class="c-author">${esc(p.author)}</div><div class="c-handle">${esc(p.handle)}</div></div>
+        <div class="c-date">${d}</div>
+      </div>
+      ${p.content?`<div class="c-content">${preview}</div>`:''}
+      ${p.memo?`<div class="c-memo">${esc(p.memo)}</div>`:''}
+      ${tagS?`<div class="c-tags">${tagS}</div>`:''}
+      <div class="c-footer">
+        <button class="c-btn" onclick="openDetail('${p.id}')">全文表示</button>
+        ${p.url?`<a class="c-link" href="${esc(p.url)}" target="_blank" rel="noopener">↗ 元の投稿</a>`:''}
+        <div class="c-actions">
+          <button class="c-btn" onclick="openEdit('${p.id}')">編集</button>
+          <button class="c-btn del" onclick="delPost('${p.id}')">削除</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function rowHTML(p){
+  const tagS=(p.tags||[]).map(tid=>{const t=tags.find(t=>t.id===tid);return t?`<span class="c-tag" style="background:${t.color}18;color:${t.color}">${esc(t.name)}</span>`:''}).join('');
+  const d=p.createdAt?new Date(p.createdAt).toLocaleDateString('ja-JP',{month:'short',day:'numeric'}):'';
+  return`<div class="list-row">
+    ${p.image?`<img class="list-img" src="${esc(p.image)}" onerror="this.style.display='none'" alt="">`:`<div class="list-img-ph">—</div>`}
+    <div class="list-body">
+      <div class="list-top">
+        <span class="list-author">${esc(p.author)}</span>
+        <span class="list-handle">${esc(p.handle)}</span>
+        <span class="list-date">${d}</span>
+      </div>
+      ${p.content?`<div class="list-content">${esc(p.content)}</div>`:''}
+      ${p.memo?`<div class="c-memo" style="font-size:0.72rem;padding:0.3rem 0.6rem;margin:0">${esc(p.memo)}</div>`:''}
+      <div class="list-bottom">
+        ${tagS}
+        <button class="c-btn" onclick="openDetail('${p.id}')" style="font-size:0.68rem">全文</button>
+        ${p.url?`<a class="c-link" href="${esc(p.url)}" target="_blank" rel="noopener" style="margin-left:auto">↗</a>`:''}
+        <div class="c-actions">
+          <button class="c-btn" onclick="openEdit('${p.id}')">編集</button>
+          <button class="c-btn del" onclick="delPost('${p.id}')">削除</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function updateStats(){
+  const now=Date.now(), wk=7*864e5;
+  document.getElementById('totalCount').textContent=posts.length;
+  document.getElementById('tagCount').textContent=tags.length;
+  document.getElementById('cAll').textContent=posts.length;
+  document.getElementById('cRec').textContent=posts.filter(p=>now-p.createdAt<wk).length;
+  document.getElementById('cMemo').textContent=posts.filter(p=>p.memo).length;
+  document.getElementById('cImg').textContent=posts.filter(p=>p.image).length;
+}
+
+// ── PANEL ─────────────────────────────────────
+let panelOpen=false;
+function togglePanel(){
+  panelOpen=!panelOpen;
+  document.getElementById('panelBody').classList.toggle('open',panelOpen);
+  document.getElementById('panelToggle').classList.toggle('open',panelOpen);
+}
+
+// ── UTILS ─────────────────────────────────────
+function esc(s){ return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+let tTimer;
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className='toast show '+(type==='ok'?'ok':type==='err'?'err':'');
+  clearTimeout(tTimer);
+  tTimer=setTimeout(()=>{ el.className='toast'; },3000);
+}
+
+// ── EVENTS ────────────────────────────────────
+document.getElementById('newTagIn').addEventListener('keydown',e=>{ if(e.key==='Enter') addTag(); });
+document.getElementById('editModal').addEventListener('click',e=>{ if(e.target===document.getElementById('editModal')) closeModal(); });
+document.getElementById('detailModal').addEventListener('click',e=>{ if(e.target===document.getElementById('detailModal')) closeDetail(); });
+
+init();
+</script>
+</body>
+</html>
