@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XCLIP</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Libre+Baskerville:ital@0;1&family=Noto+Sans+JP:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root {
   --white: #ffffff;
@@ -235,6 +237,23 @@ main { padding: 2.5rem 3rem; min-width: 0; }
 .ld span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes ldp { 0%,80%,100% { transform: scale(0.5); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
+/* TYPE BUTTONS */
+.type-btn { background: var(--off); border: 1.5px solid var(--line); border-radius: 20px; color: var(--ink2); padding: 0.4rem 1rem; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; font-family: 'Noto Sans JP', sans-serif; }
+.type-btn:hover { border-color: var(--ink); color: var(--ink); }
+.type-btn.active { background: var(--ink); border-color: var(--ink); color: var(--white); }
+
+/* REMINDER */
+.reminder-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.4rem 0.6rem; background: var(--off);
+  border-radius: 4px; margin-bottom: 0.4rem; font-size: 0.8rem;
+}
+.reminder-item .r-time { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--ink3); }
+.reminder-item .r-del { margin-left:auto; background:transparent; border:none; color:var(--ink3); cursor:pointer; font-size:0.8rem; padding:0.1rem 0.3rem; border-radius:3px; transition:all 0.15s; }
+.reminder-item .r-del:hover { color:var(--accent); background:var(--accent-light); }
+.banner-item { display:flex; align-items:center; gap:0.75rem; padding:0.3rem 0.75rem; background:white; border-radius:4px; border:1px solid #f59e0b; font-size:0.82rem; }
+.banner-item .b-dismiss { background:transparent; border:none; color:var(--ink3); cursor:pointer; font-size:0.9rem; margin-left:0.5rem; }
+
 @media (max-width: 900px) {
   .wrap { grid-template-columns: 1fr; }
   .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); padding: 1.5rem; }
@@ -294,20 +313,51 @@ main { padding: 2.5rem 3rem; min-width: 0; }
     <div class="add-panel">
       <div class="add-panel-header" onclick="togglePanel()">
         <div>
-          <div class="add-panel-title">投稿を追加する</div>
-          <div class="add-panel-sub">X のURLを貼り付けて情報・画像を取得</div>
+          <div class="add-panel-title">クリップを追加する</div>
+          <div class="add-panel-sub">X・Web記事・メモなど何でも保存できます</div>
         </div>
         <span class="panel-toggle" id="panelToggle">▾</span>
       </div>
       <div class="add-panel-body" id="panelBody">
-        <div class="url-row">
-          <input type="text" class="url-field" id="urlIn" placeholder="https://x.com/username/status/123456789">
+        <!-- タイプ選択 -->
+        <div style="display:flex;gap:0.5rem;margin-bottom:1.25rem">
+          <button class="type-btn active" id="typeX"       onclick="setType('x')">𝕏 ポスト</button>
+          <button class="type-btn"        id="typeWeb"     onclick="setType('web')">🌐 Web記事</button>
+          <button class="type-btn"        id="typeMemo"    onclick="setType('memo')">📝 メモ</button>
+        </div>
+
+        <!-- URL行（X・Web共通） -->
+        <div class="url-row" id="urlRow">
+          <input type="text" class="url-field" id="urlIn" placeholder="URLを貼り付け...">
           <button class="fetch-btn" id="fetchBtn" onclick="fetchFromUrl()">情報取得</button>
         </div>
+
+        <!-- 要約ステータス -->
+        <div id="summaryStatus" style="display:none;font-size:0.78rem;color:var(--ink3);margin-bottom:1rem;padding:0.6rem 0.8rem;background:var(--off);border-radius:4px;border-left:2px solid var(--accent)"></div>
+
         <div class="fg">
-          <div><label class="fl">投稿者名</label><input type="text" class="fi" id="fAuthor" placeholder="例: Taro Yamada"></div>
-          <div><label class="fl">ハンドル (@)</label><input type="text" class="fi" id="fHandle" placeholder="例: @taroyamada"></div>
-          <div class="fg-full"><label class="fl">投稿テキスト</label><textarea class="fta" id="fContent" placeholder="投稿の内容を入力..."></textarea></div>
+          <!-- X用フィールド -->
+          <div id="xFields" style="display:contents">
+            <div><label class="fl">投稿者名</label><input type="text" class="fi" id="fAuthor" placeholder="例: Taro Yamada"></div>
+            <div><label class="fl">ハンドル (@)</label><input type="text" class="fi" id="fHandle" placeholder="例: @taroyamada"></div>
+          </div>
+          <!-- Web記事用フィールド -->
+          <div id="webFields" style="display:none" class="fg-full">
+            <div class="fg" style="margin-bottom:0">
+              <div class="fg-full"><label class="fl">記事タイトル</label><input type="text" class="fi" id="fTitle" placeholder="自動取得、または手動入力"></div>
+              <div><label class="fl">サイト名</label><input type="text" class="fi" id="fSite" placeholder="例: Qiita、note..."></div>
+              <div><label class="fl">著者</label><input type="text" class="fi" id="fAuthorWeb" placeholder="例: 山田太郎"></div>
+            </div>
+          </div>
+
+          <div class="fg-full"><label class="fl">本文・内容</label><textarea class="fta" id="fContent" placeholder="内容を入力..."></textarea></div>
+
+          <!-- Web記事のみ：要約 -->
+          <div class="fg-full" id="summaryField" style="display:none">
+            <label class="fl">✨ AI要約</label>
+            <textarea class="fta" id="fSummary" placeholder="「情報取得」ボタンで自動要約されます" style="min-height:70px;background:#faf9f6;color:var(--ink2)"></textarea>
+          </div>
+
           <div class="fg-full"><label class="fl">メモ・コメント</label><input type="text" class="fi" id="fMemo" placeholder="自分だけのメモを残す..."></div>
           <div class="fg-full">
             <label class="fl">画像 URL</label>
@@ -319,6 +369,16 @@ main { padding: 2.5rem 3rem; min-width: 0; }
             </div>
           </div>
           <div class="fg-full"><label class="fl">タグ</label><div class="tag-picker" id="formPicker"></div></div>
+          <div class="fg-full">
+            <label class="fl">📍 エリア（場所名）</label>
+            <div style="display:flex;gap:0.5rem">
+              <input type="text" class="fi" id="fArea" placeholder="例: 東京・渋谷、大阪・梅田..." style="flex:1">
+              <button type="button" class="btn-ghost" onclick="geocodeArea()" style="white-space:nowrap;font-size:0.75rem">位置取得</button>
+            </div>
+            <input type="hidden" id="fLat">
+            <input type="hidden" id="fLng">
+            <div id="fAreaStatus" style="font-size:0.72rem;color:var(--ink3);margin-top:0.3rem"></div>
+          </div>
         </div>
         <div class="form-actions">
           <button class="btn-ghost" onclick="clearForm()">クリア</button>
@@ -335,11 +395,42 @@ main { padding: 2.5rem 3rem; min-width: 0; }
       <div class="view-toggle">
         <button class="vt-btn active" id="vGrid" onclick="setView('grid')" title="グリッド">⊞</button>
         <button class="vt-btn"        id="vList" onclick="setView('list')" title="リスト">☰</button>
+        <button class="vt-btn"        id="vMap"  onclick="setView('map')"  title="マップ">🗺</button>
       </div>
     </div>
     <div class="result-info" id="resultInfo"></div>
+    <div id="mapWrap" style="display:none;height:500px;border-radius:4px;border:1px solid var(--line);overflow:hidden;margin-bottom:1.5rem"></div>
     <div id="postsWrap"></div>
   </main>
+</div>
+
+<!-- REMINDER BANNER -->
+<div id="reminderBanner" style="display:none;position:sticky;top:64px;z-index:99;background:#fff8e1;border-bottom:2px solid #f59e0b;padding:0.6rem 2rem;display:none;align-items:center;gap:1rem;flex-wrap:wrap"></div>
+
+<!-- REMINDER MODAL -->
+<div class="overlay" id="reminderModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">🔔 リマインダーを設定</span>
+      <button class="modal-close" onclick="closeReminderModal()">✕ 閉じる</button>
+    </div>
+    <div id="reminderPostInfo" style="background:var(--off);border-radius:4px;padding:0.75rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;color:var(--ink2)"></div>
+    <div class="fg">
+      <div class="fg-full">
+        <label class="fl">リマインド日時</label>
+        <input type="datetime-local" class="fi" id="rDatetime">
+      </div>
+      <div class="fg-full">
+        <label class="fl">メモ（任意）</label>
+        <input type="text" class="fi" id="rMessage" placeholder="例: あとで読む、返信する...">
+      </div>
+    </div>
+    <div id="existingReminders" style="margin-top:1rem"></div>
+    <div class="form-actions" style="margin-top:1.25rem">
+      <button class="btn-ghost" onclick="closeReminderModal()">キャンセル</button>
+      <button class="btn-solid" onclick="saveReminder()">設定する</button>
+    </div>
+  </div>
 </div>
 
 <!-- DETAIL MODAL -->
@@ -365,6 +456,7 @@ main { padding: 2.5rem 3rem; min-width: 0; }
       <div class="fg-full"><label class="fl">投稿テキスト</label><textarea class="fta" id="eContent"></textarea></div>
       <div class="fg-full"><label class="fl">メモ・コメント</label><input type="text" class="fi" id="eMemo"></div>
       <div class="fg-full"><label class="fl">画像 URL</label><input type="text" class="fi" id="eImgUrl"></div>
+      <div class="fg-full"><label class="fl">📍 エリア</label><input type="text" class="fi" id="eArea" placeholder="例: 東京・渋谷"></div>
       <div class="fg-full"><label class="fl">タグ</label><div class="tag-picker" id="editPicker"></div></div>
     </div>
     <div class="form-actions" style="margin-top:1.25rem">
@@ -413,7 +505,8 @@ async function init(){
     posts = rawPosts.map(r=>({
       id:r.id, url:r.url||'', author:r.author||'', handle:r.handle||'',
       content:r.content||'', memo:r.memo||'', image:r.image||'',
-      tags:r.tags||[], createdAt:r.created_at||0
+      tags:r.tags||[], createdAt:r.created_at||0,
+      area:r.area||'', lat:r.lat||null, lng:r.lng||null
     }));
     tags = rawTags;
     if(!tags.length){
@@ -426,6 +519,7 @@ async function init(){
     }
     renderAll();
     setTimeout(()=>{ document.getElementById('toast').className='toast'; }, 500);
+    await loadReminders();
   } catch(e) {
     toast('接続エラー: ' + e.message, 'err');
     console.error(e);
@@ -518,28 +612,120 @@ async function delTag(id){
   } catch(e){ toast('エラー: '+e.message,'err'); }
 }
 
-// ── URL FETCH ────────────────────────────────
+// ── TYPE SWITCH ───────────────────────────────
+let currentType = 'x';
+function setType(t){
+  currentType = t;
+  ['x','web','memo'].forEach(tt => document.getElementById('type'+tt.charAt(0).toUpperCase()+tt.slice(1))?.classList.toggle('active', tt===t));
+  document.getElementById('urlRow').style.display       = t==='memo' ? 'none' : 'flex';
+  document.getElementById('xFields').style.display      = t==='x'    ? 'contents' : 'none';
+  document.getElementById('webFields').style.display    = t==='web'  ? 'block' : 'none';
+  document.getElementById('summaryField').style.display = t==='web'  ? 'block' : 'none';
+  document.getElementById('summaryStatus').style.display = 'none';
+  document.getElementById('urlIn').placeholder =
+    t==='x'   ? 'https://x.com/username/status/...' :
+    t==='web' ? 'https://example.com/article...' : '';
+}
+
+// ── URL FETCH ─────────────────────────────────
 async function fetchFromUrl(){
-  const url=document.getElementById('urlIn').value.trim();
+  const url = document.getElementById('urlIn').value.trim();
   if(!url){ toast('URLを入力してください','err'); return; }
-  const m=url.match(/(?:twitter\.com|x\.com)\/@?([\w]+)\/status\/(\d+)/);
-  if(!m){ toast('X(Twitter)のURLを入力してください','err'); return; }
-  const btn=document.getElementById('fetchBtn');
-  btn.disabled=true; btn.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
-  document.getElementById('fHandle').value='@'+m[1];
-  document.getElementById('fAuthor').value=m[1];
-  try{
-    const r=await fetch(`https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`);
-    const d=await r.json();
-    if(d.html){
-      const doc=new DOMParser().parseFromString(d.html,'text/html');
-      const txt=doc.querySelector('p')?.textContent||'';
-      document.getElementById('fContent').value=txt;
-      if(d.author_name) document.getElementById('fAuthor').value=d.author_name;
+  const btn = document.getElementById('fetchBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="ld"><span></span><span></span><span></span></div>';
+
+  if(currentType === 'x'){
+    // ── X投稿 ──
+    const m = url.match(/(?:twitter\.com|x\.com)\/@?([\w]+)\/status\/(\d+)/);
+    if(!m){ toast('X(Twitter)のURLを入力してください','err'); btn.disabled=false; btn.innerHTML='情報取得'; return; }
+    document.getElementById('fHandle').value = '@'+m[1];
+    document.getElementById('fAuthor').value = m[1];
+    try{
+      const r = await fetch(`https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`);
+      const d = await r.json();
+      if(d.html){
+        const doc = new DOMParser().parseFromString(d.html,'text/html');
+        const txt = doc.querySelector('p')?.textContent||'';
+        document.getElementById('fContent').value = txt;
+        if(d.author_name) document.getElementById('fAuthor').value = d.author_name;
+      }
+    }catch(e){}
+    toast('X投稿の情報を取得しました','ok');
+
+  } else if(currentType === 'web'){
+    // ── Web記事 ──
+    const status = document.getElementById('summaryStatus');
+    status.style.display = 'block';
+    status.textContent = '🔍 記事情報を取得中...';
+    try {
+      // OGP情報をAllOrigins経由で取得
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      const r = await fetch(proxyUrl);
+      const d = await r.json();
+      const html = d.contents || '';
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+
+      // タイトル取得
+      const title =
+        doc.querySelector('meta[property="og:title"]')?.content ||
+        doc.querySelector('title')?.textContent || '';
+      // 説明文取得
+      const desc =
+        doc.querySelector('meta[property="og:description"]')?.content ||
+        doc.querySelector('meta[name="description"]')?.content || '';
+      // サイト名取得
+      const site =
+        doc.querySelector('meta[property="og:site_name"]')?.content || '';
+      // OGP画像取得
+      const img =
+        doc.querySelector('meta[property="og:image"]')?.content || '';
+      // 著者取得
+      const author =
+        doc.querySelector('meta[name="author"]')?.content ||
+        doc.querySelector('meta[property="article:author"]')?.content || '';
+
+      if(title) document.getElementById('fTitle').value = title;
+      if(site)  document.getElementById('fSite').value  = site;
+      if(author) document.getElementById('fAuthorWeb').value = author;
+      if(desc)  document.getElementById('fContent').value = desc;
+      if(img){
+        document.getElementById('fImgUrl').value = img;
+        prevImgUrl();
+      }
+
+      status.textContent = '✓ 記事情報を取得しました。要約中...';
+
+      // Claude APIで要約
+      const textToSummarize = (title ? 'タイトル: '+title+'\n' : '') + (desc||'');
+      if(textToSummarize.trim()){
+        try {
+          const cr = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-20250514',
+              max_tokens: 300,
+              messages: [{ role: 'user', content: `以下の記事を日本語で3〜5文で要約してください。\n\n${textToSummarize}` }]
+            })
+          });
+          const cd = await cr.json();
+          const summary = cd.content?.[0]?.text || '';
+          if(summary) document.getElementById('fSummary').value = summary;
+          status.textContent = '✓ 取得・要約が完了しました';
+        } catch(e){
+          status.textContent = '✓ 情報を取得しました（要約はスキップ）';
+        }
+      } else {
+        status.textContent = '✓ 情報を取得しました';
+      }
+    } catch(e){
+      status.textContent = '⚠️ 自動取得できませんでした。手動で入力してください';
     }
-  }catch(e){}
-  btn.disabled=false; btn.innerHTML='情報取得';
-  toast('URLから情報を取得しました。内容を確認してください','ok');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '情報取得';
 }
 
 // ── IMAGE ─────────────────────────────────────
@@ -562,17 +748,36 @@ function handleFile(e){
 
 // ── POSTS CRUD ────────────────────────────────
 async function savePost(){
-  const url=document.getElementById('urlIn').value.trim();
-  const content=document.getElementById('fContent').value.trim();
-  if(!url&&!content){ toast('URLまたは投稿内容を入力してください','err'); return; }
+  const url     = document.getElementById('urlIn').value.trim();
+  const content = document.getElementById('fContent').value.trim();
+  const memo    = document.getElementById('fMemo').value.trim();
+  if(!content && !memo && !url){ toast('内容・メモ・URLのいずれかを入力してください','err'); return; }
+
   const now = Date.now();
+  let author='', handle='', title='', site='', summary='';
+
+  if(currentType==='x'){
+    author  = document.getElementById('fAuthor').value.trim()||'不明';
+    handle  = document.getElementById('fHandle').value.trim();
+  } else if(currentType==='web'){
+    title   = document.getElementById('fTitle').value.trim();
+    site    = document.getElementById('fSite').value.trim();
+    author  = document.getElementById('fAuthorWeb').value.trim();
+    summary = document.getElementById('fSummary').value.trim();
+  }
+
   const p = {
-    id: 'p'+now, url, created_at: now,
-    author: document.getElementById('fAuthor').value.trim()||'不明',
-    handle: document.getElementById('fHandle').value.trim(),
-    content, memo: document.getElementById('fMemo').value.trim(),
+    id: 'p'+now, url: url||'', created_at: now,
+    author: author||title||'メモ',
+    handle: currentType==='web' ? (site||'') : handle,
+    content, memo,
     image: document.getElementById('fImgUrl').value.trim(),
-    tags: [...fSel]
+    tags: [...fSel],
+    area: document.getElementById('fArea').value.trim()||null,
+    lat: parseFloat(document.getElementById('fLat').value)||null,
+    lng: parseFloat(document.getElementById('fLng').value)||null,
+    type: currentType,
+    summary: summary||null,
   };
   try {
     await sb('posts','POST', p);
@@ -582,10 +787,13 @@ async function savePost(){
 }
 
 function clearForm(){
-  ['urlIn','fAuthor','fHandle','fContent','fMemo','fImgUrl'].forEach(id=>document.getElementById(id).value='');
+  ['urlIn','fAuthor','fHandle','fTitle','fSite','fAuthorWeb','fContent','fSummary','fMemo','fImgUrl','fArea','fLat','fLng'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('imgPrev').style.display='none';
   document.getElementById('imgPh').style.display='flex';
+  document.getElementById('fAreaStatus').textContent='';
+  document.getElementById('summaryStatus').style.display='none';
   fSel.clear(); renderPicker('formPicker',fSel);
+  setType('x');
 }
 
 async function delPost(id){
@@ -604,6 +812,7 @@ function openEdit(id){
   document.getElementById('eContent').value=p.content;
   document.getElementById('eMemo').value=p.memo||'';
   document.getElementById('eImgUrl').value=p.image||'';
+  document.getElementById('eArea').value=p.area||'';
   eSel=new Set(p.tags||[]);
   renderPicker('editPicker',eSel);
   document.getElementById('editModal').classList.add('open');
@@ -616,11 +825,12 @@ async function saveEdit(){
   p.content=document.getElementById('eContent').value.trim();
   p.memo=document.getElementById('eMemo').value.trim();
   p.image=document.getElementById('eImgUrl').value.trim();
+  p.area=document.getElementById('eArea').value.trim();
   p.tags=[...eSel];
   try {
     await sb('posts?id=eq.'+p.id,'PATCH',{
       author:p.author, handle:p.handle, content:p.content,
-      memo:p.memo, image:p.image, tags:p.tags
+      memo:p.memo, image:p.image, tags:p.tags, area:p.area
     });
     closeModal(); renderAll(); toast('更新しました ✓','ok');
   } catch(e){ toast('エラー: '+e.message,'err'); }
@@ -662,7 +872,10 @@ function setView(v){
   viewMode=v;
   document.getElementById('vGrid').classList.toggle('active',v==='grid');
   document.getElementById('vList').classList.toggle('active',v==='list');
-  renderPosts();
+  document.getElementById('vMap').classList.toggle('active',v==='map');
+  document.getElementById('mapWrap').style.display = v==='map' ? 'block' : 'none';
+  document.getElementById('postsWrap').style.display = v==='map' ? 'none' : 'block';
+  if(v==='map') renderMap(); else renderPosts();
 }
 
 function getFiltered(){
@@ -696,19 +909,23 @@ function cardHTML(p){
   const tagS=(p.tags||[]).map(tid=>{const t=tags.find(t=>t.id===tid);return t?`<span class="c-tag" style="background:${t.color}18;color:${t.color}">${esc(t.name)}</span>`:''}).join('');
   const d=p.createdAt?new Date(p.createdAt).toLocaleDateString('ja-JP',{month:'short',day:'numeric'}):'';
   const preview = p.content && p.content.length>80 ? esc(p.content.slice(0,80))+'…' : esc(p.content||'');
+  const typeBadge = p.type==='web' ? `<span style="font-family:'DM Mono',monospace;font-size:0.6rem;background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:10px;margin-right:0.3rem">WEB</span>` : p.type==='memo' ? `<span style="font-family:'DM Mono',monospace;font-size:0.6rem;background:#f0fdf4;color:#166534;padding:1px 6px;border-radius:10px;margin-right:0.3rem">MEMO</span>` : `<span style="font-family:'DM Mono',monospace;font-size:0.6rem;background:#111;color:#fff;padding:1px 6px;border-radius:10px;margin-right:0.3rem">𝕏</span>`;
   return`<div class="card">
     ${p.image?`<img class="card-img" src="${esc(p.image)}" onerror="this.style.display='none'" alt="">`: ''}
     <div class="card-body">
       <div class="card-meta">
         <div class="c-avatar">${(p.author||'?').charAt(0).toUpperCase()}</div>
-        <div><div class="c-author">${esc(p.author)}</div><div class="c-handle">${esc(p.handle)}</div></div>
+        <div><div class="c-author">${typeBadge}${esc(p.author)}</div><div class="c-handle">${esc(p.handle)}</div></div>
         <div class="c-date">${d}</div>
       </div>
       ${p.content?`<div class="c-content">${preview}</div>`:''}
+      ${p.summary?`<div class="c-memo" style="border-color:#8b5cf6;color:#6d28d9;background:#f5f3ff">✨ ${esc(p.summary.slice(0,80))}${p.summary.length>80?'…':''}</div>`:''}
+      ${p.area?`<div style="font-size:0.72rem;color:var(--ink3);margin-bottom:0.5rem">📍 ${esc(p.area)}</div>`:''}
       ${p.memo?`<div class="c-memo">${esc(p.memo)}</div>`:''}
       ${tagS?`<div class="c-tags">${tagS}</div>`:''}
       <div class="c-footer">
-        <button class="c-btn" onclick="openDetail('${p.id}')">全文表示</button>
+        <button class="c-btn" onclick="openDetail('${p.id}')">全文</button>
+        <button class="c-btn" onclick="openReminderModal('${p.id}')" title="リマインダー">🔔</button>
         ${p.url?`<a class="c-link" href="${esc(p.url)}" target="_blank" rel="noopener">↗ 元の投稿</a>`:''}
         <div class="c-actions">
           <button class="c-btn" onclick="openEdit('${p.id}')">編集</button>
@@ -755,6 +972,164 @@ function updateStats(){
   document.getElementById('cImg').textContent=posts.filter(p=>p.image).length;
 }
 
+// ── REMINDERS ────────────────────────────────
+let reminders = [];
+let reminderPostId = null;
+
+async function loadReminders(){
+  try {
+    reminders = await sb('reminders?select=*&order=remind_at.asc');
+    checkReminders();
+  } catch(e){ console.error('reminder load error', e); }
+}
+
+function checkReminders(){
+  const now = Date.now();
+  const due = reminders.filter(r => !r.done && r.remind_at <= now);
+  const banner = document.getElementById('reminderBanner');
+  if(!due.length){ banner.style.display='none'; return; }
+  banner.style.display='flex';
+  banner.innerHTML = '<span style="font-size:0.8rem;font-weight:500;color:#92400e">🔔 リマインダー</span>' +
+    due.map(r => {
+      const p = posts.find(p=>p.id===r.post_id);
+      const title = p ? (p.author||'投稿') : '投稿';
+      const msg = r.message ? ` — ${esc(r.message)}` : '';
+      return `<div class="banner-item">
+        <span>${esc(title)}${msg}</span>
+        ${p?`<button class="c-btn" onclick="openDetail('${p.id}')" style="font-size:0.7rem;padding:0.2rem 0.5rem">確認</button>`:''}
+        <button class="b-dismiss" onclick="dismissReminder('${r.id}')">✕</button>
+      </div>`;
+    }).join('');
+}
+
+async function dismissReminder(id){
+  try {
+    await sb('reminders?id=eq.'+id,'PATCH',{done:true});
+    const r = reminders.find(r=>r.id===id);
+    if(r) r.done = true;
+    checkReminders();
+  } catch(e){ console.error(e); }
+}
+
+function openReminderModal(postId){
+  reminderPostId = postId;
+  const p = posts.find(p=>p.id===postId);
+  document.getElementById('reminderPostInfo').textContent =
+    p ? `「${p.author}」の投稿: ${(p.content||'').slice(0,60)}...` : '投稿';
+  document.getElementById('rDatetime').value = '';
+  document.getElementById('rMessage').value = '';
+  // 既存リマインダー表示
+  const existing = reminders.filter(r=>r.post_id===postId&&!r.done);
+  const el = document.getElementById('existingReminders');
+  if(existing.length){
+    el.innerHTML = '<div class="fl" style="margin-bottom:0.5rem">設定済みのリマインダー</div>' +
+      existing.map(r=>`
+        <div class="reminder-item">
+          <span class="r-time">${new Date(r.remind_at).toLocaleString('ja-JP',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+          <span>${esc(r.message||'')}</span>
+          <button class="r-del" onclick="deleteReminder('${r.id}')">✕</button>
+        </div>`).join('');
+  } else {
+    el.innerHTML = '';
+  }
+  document.getElementById('reminderModal').classList.add('open');
+}
+
+function closeReminderModal(){ document.getElementById('reminderModal').classList.remove('open'); reminderPostId=null; }
+
+async function saveReminder(){
+  const dt = document.getElementById('rDatetime').value;
+  if(!dt){ toast('日時を選択してください','err'); return; }
+  const remind_at = new Date(dt).getTime();
+  if(remind_at <= Date.now()){ toast('未来の日時を設定してください','err'); return; }
+  const r = {
+    id: 'r'+Date.now(),
+    post_id: reminderPostId,
+    remind_at,
+    message: document.getElementById('rMessage').value.trim(),
+    done: false
+  };
+  try {
+    await sb('reminders','POST',r);
+    reminders.push(r);
+    toast('リマインダーを設定しました ✓','ok');
+    closeReminderModal();
+    checkReminders();
+  } catch(e){ toast('エラー: '+e.message,'err'); }
+}
+
+async function deleteReminder(id){
+  try {
+    await sb('reminders?id=eq.'+id,'DELETE');
+    reminders = reminders.filter(r=>r.id!==id);
+    toast('リマインダーを削除しました');
+    // モーダルを更新
+    if(reminderPostId) openReminderModal(reminderPostId);
+  } catch(e){ toast('エラー: '+e.message,'err'); }
+}
+
+// 1分ごとにリマインダーをチェック
+setInterval(checkReminders, 60000);
+
+// ── AREA & MAP ────────────────────────────────
+let map = null;
+let mapMarkers = [];
+
+async function geocodeArea(){
+  const area = document.getElementById('fArea').value.trim();
+  if(!area){ toast('エリア名を入力してください','err'); return; }
+  const status = document.getElementById('fAreaStatus');
+  status.textContent = '検索中...';
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(area)}&format=json&limit=1`);
+    const d = await r.json();
+    if(!d.length){ status.textContent = '場所が見つかりませんでした'; return; }
+    document.getElementById('fLat').value = d[0].lat;
+    document.getElementById('fLng').value = d[0].lon;
+    status.textContent = `✓ 位置を取得: ${d[0].display_name.slice(0,40)}...`;
+  } catch(e){ status.textContent = 'エラーが発生しました'; }
+}
+
+function initMap(){
+  if(map) return;
+  map = L.map('mapWrap').setView([35.6812, 139.7671], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+}
+
+function renderMap(){
+  const mapWrap = document.getElementById('mapWrap');
+  mapWrap.style.display = 'block';
+  initMap();
+  // 既存マーカーを削除
+  mapMarkers.forEach(m => m.remove());
+  mapMarkers = [];
+  const filtered = getFiltered().filter(p => p.lat && p.lng);
+  if(!filtered.length){
+    document.getElementById('resultInfo').textContent = '地図表示できる投稿がありません（エリアを設定してください）';
+    return;
+  }
+  const bounds = [];
+  filtered.forEach(p => {
+    const tagS = (p.tags||[]).map(tid=>{const t=tags.find(t=>t.id===tid);return t?`<span style="background:${t.color}18;color:${t.color};padding:1px 6px;border-radius:10px;font-size:11px">${t.name}</span>`:''}).join(' ');
+    const popup = `
+      <div style="min-width:200px;font-family:sans-serif">
+        <div style="font-weight:700;margin-bottom:4px">${esc(p.author)} <span style="font-weight:300;color:#999;font-size:11px">${esc(p.handle)}</span></div>
+        <div style="font-size:12px;color:#555;margin-bottom:6px;line-height:1.5">${esc((p.content||'').slice(0,100))}${(p.content||'').length>100?'…':''}</div>
+        ${p.area?`<div style="font-size:11px;color:#999;margin-bottom:4px">📍 ${esc(p.area)}</div>`:''}
+        ${tagS?`<div style="margin-bottom:6px">${tagS}</div>`:''}
+        <button onclick="openDetail('${p.id}')" style="font-size:11px;padding:3px 8px;background:#111;color:#fff;border:none;border-radius:2px;cursor:pointer">詳細を見る</button>
+      </div>`;
+    const marker = L.marker([p.lat, p.lng]).addTo(map).bindPopup(popup);
+    mapMarkers.push(marker);
+    bounds.push([p.lat, p.lng]);
+  });
+  if(bounds.length) map.fitBounds(bounds, { padding: [40, 40] });
+  setTimeout(()=>map.invalidateSize(), 100);
+  document.getElementById('resultInfo').textContent = filtered.length + ' clips（地図表示）';
+}
+
 // ── PANEL ─────────────────────────────────────
 let panelOpen=false;
 function togglePanel(){
@@ -779,6 +1154,7 @@ function toast(msg,type=''){
 document.getElementById('newTagIn').addEventListener('keydown',e=>{ if(e.key==='Enter') addTag(); });
 document.getElementById('editModal').addEventListener('click',e=>{ if(e.target===document.getElementById('editModal')) closeModal(); });
 document.getElementById('detailModal').addEventListener('click',e=>{ if(e.target===document.getElementById('detailModal')) closeDetail(); });
+document.getElementById('reminderModal').addEventListener('click',e=>{ if(e.target===document.getElementById('reminderModal')) closeReminderModal(); });
 
 init();
 </script>
