@@ -8,584 +8,604 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-:root {
-  --white:#ffffff; --off:#f7f6f3; --paper:#faf9f6;
-  --ink:#111111; --ink2:#444444; --ink3:#999999;
-  --line:#e0ddd6; --accent:#d4502a; --accent-light:#f5e8e3;
-  --blue:#3b82f6; --purple:#8b5cf6; --green:#059669;
-  --yellow:#f59e0b; --yellow-bg:#fff8e1;
+:root{
+  --white:#fff;--off:#f7f6f3;--paper:#faf9f6;
+  --ink:#111;--ink2:#444;--ink3:#999;
+  --line:#e0ddd6;--line2:#ebebeb;
+  --accent:#d4502a;--accent-light:#f5e8e3;
+  --blue:#3b82f6;--green:#059669;--yellow:#f59e0b;--yellow-bg:#fff8e1;
+  --red:#dc2626;--purple:#8b5cf6;
   --shadow-sm:0 1px 4px rgba(0,0,0,.06);
-  --shadow-md:0 4px 24px rgba(0,0,0,.08);
+  --shadow-md:0 4px 24px rgba(0,0,0,.09);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;font-weight:300;min-height:100vh;-webkit-font-smoothing:antialiased;}
 
-/* ── REMINDER BAR ── */
-#reminderBar{background:var(--yellow-bg);border-bottom:2px solid var(--yellow);padding:.6rem 2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;min-height:44px;}
-#reminderBar .rb-label{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:#92400e;white-space:nowrap;}
-#reminderBar .rb-empty{font-size:.8rem;color:#a16207;}
-.rb-item{display:flex;align-items:center;gap:.5rem;background:#fff;border:1px solid var(--yellow);border-radius:4px;padding:.25rem .7rem;font-size:.78rem;}
-.rb-item .rb-dismiss{background:transparent;border:none;color:#a16207;cursor:pointer;font-size:.9rem;margin-left:.3rem;}
+/* ─── REMINDER BAR ─── */
+#reminderBar{background:var(--yellow-bg);border-bottom:2px solid var(--yellow);padding:.55rem 1.5rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;min-height:42px;}
+#reminderBar .rb-label{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;color:#92400e;white-space:nowrap;}
+.rb-item{display:flex;align-items:center;gap:.4rem;background:#fff;border:1px solid #fcd34d;border-radius:4px;padding:.2rem .6rem;font-size:.76rem;color:#92400e;}
+.rb-dismiss{background:transparent;border:none;color:#a16207;cursor:pointer;font-size:.85rem;margin-left:.2rem;}
+#rbEmpty{font-size:.78rem;color:#a16207;}
 
-/* ── HEADER ── */
-header{position:sticky;top:0;z-index:200;background:rgba(250,249,246,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);}
-.header-inner{max-width:1400px;margin:0 auto;padding:0 2rem;height:56px;display:flex;align-items:center;gap:1.5rem;}
-.logo-main{font-family:'Playfair Display',serif;font-weight:900;font-size:1.35rem;color:var(--ink);letter-spacing:-.03em;}
-.logo-main em{color:var(--accent);font-style:normal;}
-.logo-sub{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.18em;color:var(--ink3);text-transform:uppercase;}
-.header-rule{flex:1;height:1px;background:var(--line);}
-.header-stats{display:flex;gap:1.5rem;}
-.stat-n{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;}
-.stat-l{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;color:var(--ink3);text-transform:uppercase;}
+/* ─── HEADER ─── */
+header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);}
+.hd{max-width:1440px;margin:0 auto;padding:0 1.5rem;height:52px;display:flex;align-items:center;gap:1.25rem;}
+.logo{font-family:'Playfair Display',serif;font-weight:900;font-size:1.3rem;letter-spacing:-.03em;}
+.logo em{color:var(--accent);font-style:normal;}
+.hd-rule{flex:1;height:1px;background:var(--line);}
+.hd-stat{text-align:right;}
+.hd-stat .n{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;line-height:1;}
+.hd-stat .l{font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.12em;color:var(--ink3);text-transform:uppercase;}
+.hd-stats{display:flex;gap:1.25rem;}
 
-/* ── TABS ── */
-.tabs{display:flex;border-bottom:1px solid var(--line);background:var(--white);position:sticky;top:56px;z-index:150;}
-.tab-btn{flex:1;padding:.75rem;font-size:.82rem;font-family:'Noto Sans JP',sans-serif;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--ink3);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.4rem;}
-.tab-btn:hover{color:var(--ink);background:var(--off);}
+/* ─── TABS ─── */
+.tabs{display:flex;background:var(--white);border-bottom:1px solid var(--line);position:sticky;top:52px;z-index:200;}
+.tab-btn{flex:1;padding:.7rem;font-size:.8rem;font-family:'Noto Sans JP',sans-serif;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--ink3);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.35rem;}
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500;}
-.tab-pane{display:none;max-width:1400px;margin:0 auto;padding:1.5rem 2rem;}
+.tab-btn:hover:not(.active){background:var(--off);color:var(--ink);}
+.tab-pane{display:none;}
 .tab-pane.active{display:block;}
 
-/* ── HOME TAB ── */
-.home-toolbar{display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;}
-.search-wrap{flex:1;min-width:180px;position:relative;}
-.search-ico{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);color:var(--ink3);font-size:.9rem;}
-.search-fi{width:100%;background:var(--white);border:1px solid var(--line);border-radius:6px;padding:.5rem .75rem .5rem 2.2rem;font-size:.85rem;outline:none;transition:border-color .2s;}
-.search-fi:focus{border-color:var(--ink);}
-.view-toggle{display:flex;gap:.25rem;}
-.vt-btn{background:var(--off);border:1px solid var(--line);border-radius:4px;padding:.4rem .65rem;cursor:pointer;color:var(--ink3);font-size:.9rem;transition:all .15s;}
-.vt-btn.active{background:var(--ink);color:var(--white);border-color:var(--ink);}
-.mode-toggle{display:flex;gap:.25rem;}
-.mode-btn{background:var(--off);border:1px solid var(--line);border-radius:4px;padding:.35rem .75rem;cursor:pointer;color:var(--ink2);font-size:.72rem;font-family:'DM Mono',monospace;letter-spacing:.05em;transition:all .15s;}
-.mode-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+/* ─── ACTIVE FILTER BADGE ─── */
+#activeBadgeBar{display:none;padding:.4rem 1.5rem;background:var(--accent-light);border-bottom:1px solid #f0c4b4;gap:.4rem;flex-wrap:wrap;align-items:center;}
+#activeBadgeBar.show{display:flex;}
+.a-badge{display:inline-flex;align-items:center;gap:.3rem;background:var(--accent);color:#fff;border-radius:12px;padding:.2rem .7rem;font-size:.72rem;}
+.a-badge-clear{background:transparent;border:none;color:#fff;cursor:pointer;opacity:.7;font-size:.8rem;margin-left:.1rem;}
+.a-badge-clear:hover{opacity:1;}
 
-.home-layout{display:grid;grid-template-columns:220px 1fr;gap:1.5rem;}
-.sidebar{background:var(--white);border:1px solid var(--line);border-radius:6px;padding:1.25rem;height:fit-content;position:sticky;top:120px;}
-.sb-head{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink3);padding-bottom:.6rem;border-bottom:1px solid var(--line);margin-bottom:.6rem;}
-.filter-btn{display:flex;align-items:center;gap:.5rem;width:100%;padding:.4rem .6rem;background:transparent;border:none;border-radius:4px;color:var(--ink2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:.8rem;font-weight:300;text-align:left;transition:all .15s;margin-bottom:2px;}
+/* ─── MOBILE FILTER BAR ─── */
+#mobileFilterBar{display:none;position:sticky;top:104px;z-index:150;background:var(--white);border-bottom:1px solid var(--line);}
+.mfb-scroll{display:flex;gap:.35rem;overflow-x:auto;padding:.5rem 1rem;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.mfb-scroll::-webkit-scrollbar{display:none;}
+.mfb-pill{flex-shrink:0;padding:.3rem .8rem;border-radius:20px;border:1.5px solid var(--line);background:var(--white);color:var(--ink2);font-size:.74rem;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.mfb-pill.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+.mfb-pill.yt-pill.active{background:#dc2626;border-color:#dc2626;color:#fff;}
+.mfb-pill.fav-pill.active{background:#f59e0b;border-color:#f59e0b;color:#fff;}
+.mfb-expand{display:none;padding:.35rem 1rem .5rem;gap:.3rem;flex-wrap:wrap;border-bottom:1px solid var(--line);}
+.mfb-expand.open{display:flex;}
+.mfb-ep{flex-shrink:0;padding:.25rem .7rem;border-radius:14px;border:1.5px solid var(--line);background:var(--off);color:var(--ink2);font-size:.71rem;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.mfb-ep.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+#contentAnchor{scroll-margin-top:160px;}
+
+/* ─── HOME LAYOUT ─── */
+.home-wrap{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 160px);}
+
+/* ─── SIDEBAR ─── */
+.sidebar{border-right:1px solid var(--line);padding:1.25rem;position:sticky;top:104px;height:calc(100vh - 104px);overflow-y:auto;background:var(--white);}
+.sb-section{margin-bottom:1.25rem;}
+.sb-head{font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink3);padding-bottom:.5rem;border-bottom:1px solid var(--line);margin-bottom:.5rem;}
+.filter-btn{display:flex;align-items:center;gap:.5rem;width:100%;padding:.38rem .55rem;background:transparent;border:none;border-radius:4px;color:var(--ink2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:.79rem;font-weight:300;text-align:left;transition:all .15s;margin-bottom:1px;}
 .filter-btn:hover{background:var(--off);}
-.filter-btn.active{background:var(--ink);color:var(--white);}
-.filter-btn .fc{margin-left:auto;font-family:'DM Mono',monospace;font-size:.62rem;opacity:.6;}
-.tag-tree-parent{margin-bottom:3px;}
-.tag-row{display:flex;align-items:center;gap:.4rem;padding:.35rem .6rem;border-radius:4px;cursor:pointer;transition:background .15s;font-size:.8rem;color:var(--ink2);}
+.filter-btn.active{background:var(--ink);color:#fff;}
+.filter-btn.yt-btn.active{background:#dc2626;}
+.filter-btn.fav-btn.active{background:#f59e0b;color:#fff;}
+.filter-btn .fc{margin-left:auto;font-family:'DM Mono',monospace;font-size:.6rem;opacity:.55;}
+.tag-tree-parent{margin-bottom:2px;}
+.tag-row{display:flex;align-items:center;gap:.4rem;padding:.32rem .55rem;border-radius:4px;cursor:pointer;transition:background .15s;font-size:.79rem;color:var(--ink2);}
 .tag-row:hover{background:var(--off);}
 .tag-row.active{background:var(--accent-light);color:var(--accent);font-weight:500;}
-.tag-row .t-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.tag-row .t-cnt{margin-left:auto;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--ink3);}
-.tag-child-wrap{padding-left:1rem;}
-.tag-child-wrap .tag-row{font-size:.75rem;}
-.tag-child-wrap .tag-row .t-dot{width:5px;height:5px;}
-.area-select{width:100%;background:var(--off);border:1px solid var(--line);border-radius:4px;color:var(--ink);padding:.4rem .6rem;font-size:.78rem;font-family:'Noto Sans JP',sans-serif;outline:none;cursor:pointer;margin-bottom:.4rem;}
+.t-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.t-cnt{margin-left:auto;font-family:'DM Mono',monospace;font-size:.6rem;color:var(--ink3);}
+.tag-child-wrap{padding-left:.9rem;}
+.tag-child-wrap .tag-row{font-size:.74rem;}
+.tag-child-wrap .t-dot{width:5px;height:5px;}
+.area-select{width:100%;background:var(--off);border:1px solid var(--line);border-radius:4px;color:var(--ink);padding:.38rem .55rem;font-size:.76rem;font-family:'Noto Sans JP',sans-serif;outline:none;cursor:pointer;margin-bottom:.35rem;}
+.sb-play-btn{width:100%;padding:.38rem .55rem;background:var(--ink);border:none;border-radius:4px;color:#fff;font-size:.74rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.3rem;font-family:'Noto Sans JP',sans-serif;margin-top:.3rem;transition:background .15s;}
+.sb-play-btn:hover{background:var(--accent);}
 
-.result-info{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--ink3);letter-spacing:.08em;margin-bottom:.75rem;}
-.posts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;}
-.posts-list{display:flex;flex-direction:column;gap:.6rem;}
+/* ─── MAIN AREA ─── */
+.main-area{padding:1.25rem 1.5rem;}
+.toolbar{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;}
+.search-wrap{flex:1;min-width:160px;position:relative;}
+.search-ico{position:absolute;left:.7rem;top:50%;transform:translateY(-50%);color:var(--ink3);font-size:.85rem;}
+.search-fi{width:100%;background:var(--white);border:1px solid var(--line);border-radius:6px;padding:.45rem .7rem .45rem 2rem;font-size:.82rem;outline:none;transition:border-color .2s;font-family:'Noto Sans JP',sans-serif;}
+.search-fi:focus{border-color:var(--ink);}
+.view-toggle{display:flex;gap:.2rem;}
+.vt-btn{background:var(--off);border:1px solid var(--line);border-radius:4px;padding:.36rem .6rem;cursor:pointer;color:var(--ink3);font-size:.88rem;transition:all .15s;}
+.vt-btn.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.mode-toggle{display:flex;gap:.2rem;}
+.mode-btn{background:var(--off);border:1px solid var(--line);border-radius:4px;padding:.3rem .65rem;cursor:pointer;color:var(--ink2);font-size:.7rem;font-family:'DM Mono',monospace;transition:all .15s;}
+.mode-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.result-info{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--ink3);letter-spacing:.08em;margin-bottom:.75rem;}
 
-/* ── CARD ── */
-.card{background:var(--white);border:1px solid var(--line);border-radius:6px;overflow:hidden;transition:box-shadow .2s;}
+/* ─── CARDS ─── */
+.posts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:.9rem;}
+.posts-list{display:flex;flex-direction:column;gap:.5rem;}
+.card{background:var(--white);border:1px solid var(--line);border-radius:6px;overflow:hidden;transition:box-shadow .2s;position:relative;}
 .card:hover{box-shadow:var(--shadow-md);}
-.card-img{width:100%;height:160px;object-fit:cover;display:block;}
-.card-body{padding:1rem;}
-.card-meta{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;}
-.c-avatar{width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0;}
-.c-author{font-size:.82rem;font-weight:500;color:var(--ink);}
-.c-handle{font-size:.72rem;color:var(--ink3);}
-.c-date{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--ink3);margin-left:auto;white-space:nowrap;}
-.c-content{font-size:.82rem;color:var(--ink2);line-height:1.6;margin-bottom:.5rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
-.c-summary{font-size:.75rem;color:#6d28d9;background:#f5f3ff;border-left:2px solid #8b5cf6;padding:.4rem .6rem;border-radius:0 4px 4px 0;margin-bottom:.5rem;line-height:1.5;}
-.c-memo{font-size:.75rem;color:var(--ink2);background:var(--off);border-left:2px solid var(--line);padding:.35rem .6rem;border-radius:0 3px 3px 0;margin-bottom:.5rem;}
-.c-area{font-size:.7rem;color:var(--ink3);margin-bottom:.4rem;}
-.c-dist{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--blue);background:#eff6ff;padding:1px 5px;border-radius:3px;margin-left:.3rem;}
-.c-tags{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.5rem;}
-.c-tag{font-size:.68rem;padding:1px 7px;border-radius:10px;}
-.c-footer{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--line);}
-.c-btn{background:var(--off);border:1px solid var(--line);border-radius:3px;padding:.2rem .55rem;font-size:.7rem;cursor:pointer;color:var(--ink2);transition:all .15s;font-family:'Noto Sans JP',sans-serif;}
+.card-img-wrap{width:100%;height:160px;background:#f8f8f8;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.card-img-wrap img{max-width:100%;max-height:100%;object-fit:contain;}
+.card-body{padding:.85rem;}
+.card-meta{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;}
+.c-avatar{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0;}
+.c-author{font-size:.8rem;font-weight:500;}
+.c-handle{font-size:.7rem;color:var(--ink3);}
+.c-date{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--ink3);margin-left:auto;white-space:nowrap;}
+.c-content{font-size:.8rem;color:var(--ink2);line-height:1.6;margin-bottom:.45rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.c-summary{font-size:.73rem;color:#6d28d9;background:#f5f3ff;border-left:2px solid #8b5cf6;padding:.35rem .55rem;border-radius:0 4px 4px 0;margin-bottom:.45rem;line-height:1.5;}
+.c-memo-row{font-size:.72rem;color:var(--ink2);background:var(--off);border-left:2px solid var(--line);padding:.3rem .55rem;border-radius:0 3px 3px 0;margin-bottom:.4rem;word-break:break-all;}
+.c-area{font-size:.68rem;color:var(--ink3);margin-bottom:.35rem;}
+.c-dist{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--blue);background:#eff6ff;padding:1px 5px;border-radius:3px;margin-left:.3rem;}
+.c-tags{display:flex;flex-wrap:wrap;gap:.25rem;margin-bottom:.4rem;}
+.c-tag{font-size:.66rem;padding:1px 7px;border-radius:10px;}
+.c-footer{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap;padding-top:.45rem;border-top:1px solid var(--line);}
+.c-btn{background:var(--off);border:1px solid var(--line);border-radius:3px;padding:.18rem .52rem;font-size:.68rem;cursor:pointer;color:var(--ink2);transition:all .15s;font-family:'Noto Sans JP',sans-serif;}
 .c-btn:hover{background:var(--ink);color:#fff;border-color:var(--ink);}
-.c-btn.del:hover{background:#dc2626;border-color:#dc2626;color:#fff;}
-.c-link{font-size:.72rem;color:var(--blue);text-decoration:none;margin-left:auto;}
+.c-btn.del:hover{background:var(--red);border-color:var(--red);color:#fff;}
+.c-btn.green{background:#d1fae5;border-color:#6ee7b7;color:#065f46;}
+.c-link{font-size:.7rem;color:var(--blue);text-decoration:none;}
 .c-link:hover{text-decoration:underline;}
-.type-badge{font-family:'DM Mono',monospace;font-size:.58rem;padding:1px 6px;border-radius:10px;margin-right:.25rem;}
+.type-badge{font-family:'DM Mono',monospace;font-size:.56rem;padding:1px 6px;border-radius:10px;margin-right:.2rem;vertical-align:middle;}
+/* フラグアイコン */
+.flag-fav{position:absolute;top:.5rem;right:.5rem;font-size:.95rem;line-height:1;}
+.flag-wl{font-size:.8rem;color:var(--blue);}
+.yt-status-badge{font-size:.66rem;padding:1px 7px;border-radius:10px;font-family:'DM Mono',monospace;}
+.yt-status-badge.unwatch{background:#fee2e2;color:#991b1b;}
+.yt-status-badge.watched{background:#d1fae5;color:#065f46;}
 
 /* LIST ROW */
-.list-row{background:var(--white);border:1px solid var(--line);border-radius:6px;display:grid;grid-template-columns:80px 1fr;overflow:hidden;transition:box-shadow .2s;}
+.list-row{background:var(--white);border:1px solid var(--line);border-radius:6px;display:grid;grid-template-columns:80px 1fr;overflow:hidden;transition:box-shadow .2s;position:relative;}
 .list-row:hover{box-shadow:var(--shadow-sm);}
-.list-img{width:80px;height:80px;object-fit:cover;}
-.list-img-ph{width:80px;height:80px;display:flex;align-items:center;justify-content:center;background:var(--off);color:var(--ink3);font-size:1.2rem;}
-.list-body{padding:.6rem .85rem;display:flex;flex-direction:column;gap:.2rem;}
-.list-top{display:flex;align-items:center;gap:.5rem;font-size:.78rem;}
+.list-thumb{width:80px;height:80px;background:#f8f8f8;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+.list-thumb img{max-width:100%;max-height:100%;object-fit:contain;}
+.list-thumb-ph{width:80px;height:80px;display:flex;align-items:center;justify-content:center;background:var(--off);color:var(--ink3);font-size:1.1rem;}
+.list-body{padding:.55rem .75rem;display:flex;flex-direction:column;gap:.15rem;min-width:0;}
+.list-top{display:flex;align-items:center;gap:.4rem;font-size:.76rem;}
 .list-author{font-weight:500;}
-.list-handle{color:var(--ink3);font-size:.72rem;}
-.list-date{color:var(--ink3);font-family:'DM Mono',monospace;font-size:.62rem;margin-left:auto;}
-.list-content{font-size:.78rem;color:var(--ink2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.list-bottom{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap;margin-top:.2rem;}
+.list-handle{color:var(--ink3);font-size:.7rem;}
+.list-date{color:var(--ink3);font-family:'DM Mono',monospace;font-size:.6rem;margin-left:auto;white-space:nowrap;}
+.list-content{font-size:.76rem;color:var(--ink2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.list-bottom{display:flex;align-items:center;gap:.25rem;flex-wrap:wrap;margin-top:.2rem;}
 
 /* GROUP HEADER */
-.group-header{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3);padding:.5rem 0 .3rem;border-bottom:1px solid var(--line);margin-bottom:.5rem;margin-top:1rem;}
+.group-header{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3);padding:.4rem 0 .25rem;border-bottom:1px solid var(--line);margin-bottom:.5rem;margin-top:.9rem;}
 .group-header:first-child{margin-top:0;}
 
-/* ── ADD TAB ── */
-.add-card{background:var(--white);border:1px solid var(--line);border-radius:8px;padding:1.5rem;max-width:720px;margin:0 auto;}
-.type-tabs{display:flex;gap:.5rem;margin-bottom:1.25rem;}
-.type-tab{flex:1;padding:.55rem;background:var(--off);border:1.5px solid var(--line);border-radius:20px;color:var(--ink2);font-size:.8rem;cursor:pointer;transition:all .15s;font-family:'Noto Sans JP',sans-serif;text-align:center;}
+/* ─── ADD TAB ─── */
+.add-wrap{max-width:740px;margin:0 auto;padding:1.5rem;}
+.add-card{background:var(--white);border:1px solid var(--line);border-radius:8px;padding:1.5rem;}
+.type-tabs{display:flex;gap:.4rem;margin-bottom:1.1rem;}
+.type-tab{flex:1;padding:.5rem;background:var(--off);border:1.5px solid var(--line);border-radius:20px;color:var(--ink2);font-size:.78rem;cursor:pointer;transition:all .15s;font-family:'Noto Sans JP',sans-serif;text-align:center;}
 .type-tab.active{background:var(--ink);border-color:var(--ink);color:#fff;}
-.url-row{display:flex;gap:.5rem;margin-bottom:1rem;}
-.url-field{flex:1;background:var(--off);border:1px solid var(--line);border-radius:6px;padding:.55rem .85rem;font-size:.85rem;outline:none;transition:border-color .2s;font-family:'Noto Sans JP',sans-serif;}
+.url-row{display:flex;gap:.4rem;margin-bottom:.9rem;}
+.url-field{flex:1;background:var(--off);border:1px solid var(--line);border-radius:6px;padding:.5rem .75rem;font-size:.82rem;outline:none;transition:border-color .2s;font-family:'Noto Sans JP',sans-serif;}
 .url-field:focus{border-color:var(--ink);}
-.fetch-btn{background:var(--ink);border:none;border-radius:6px;color:#fff;padding:.55rem 1.1rem;font-size:.82rem;cursor:pointer;white-space:nowrap;transition:background .15s;}
+.fetch-btn{background:var(--ink);border:none;border-radius:6px;color:#fff;padding:.5rem 1rem;font-size:.8rem;cursor:pointer;white-space:nowrap;transition:background .15s;}
 .fetch-btn:hover{background:var(--accent);}
 .fetch-btn:disabled{opacity:.5;cursor:not-allowed;}
-.fg{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.65rem;}
 .fg-full{grid-column:1/-1;}
-.fl{font-size:.72rem;color:var(--ink3);letter-spacing:.05em;margin-bottom:.25rem;display:block;}
-.fi{width:100%;background:var(--off);border:1px solid var(--line);border-radius:4px;padding:.45rem .7rem;font-size:.82rem;color:var(--ink);outline:none;transition:border-color .2s;font-family:'Noto Sans JP',sans-serif;}
+.fl{font-size:.7rem;color:var(--ink3);letter-spacing:.05em;margin-bottom:.2rem;display:block;}
+.fi{width:100%;background:var(--off);border:1px solid var(--line);border-radius:4px;padding:.42rem .65rem;font-size:.8rem;color:var(--ink);outline:none;transition:border-color .2s;font-family:'Noto Sans JP',sans-serif;}
 .fi:focus{border-color:var(--ink);}
 .fi::placeholder{color:var(--ink3);}
-.fta{width:100%;background:var(--off);border:1px solid var(--line);border-radius:4px;padding:.5rem .7rem;font-size:.82rem;color:var(--ink);outline:none;resize:vertical;min-height:80px;transition:border-color .2s;font-family:'Noto Sans JP',sans-serif;}
+.fta{width:100%;background:var(--off);border:1px solid var(--line);border-radius:4px;padding:.45rem .65rem;font-size:.8rem;color:var(--ink);outline:none;resize:vertical;min-height:75px;transition:border-color .2s;font-family:'Noto Sans JP',sans-serif;}
 .fta:focus{border-color:var(--ink);}
-.img-area{border:1.5px dashed var(--line);border-radius:6px;overflow:hidden;cursor:pointer;position:relative;min-height:80px;display:flex;align-items:center;justify-content:center;background:var(--off);}
+.img-area{border:1.5px dashed var(--line);border-radius:6px;overflow:hidden;cursor:pointer;position:relative;min-height:90px;display:flex;align-items:center;justify-content:center;background:#f8f8f8;}
 .img-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
-.img-area img{width:100%;max-height:200px;object-fit:cover;display:block;}
-.img-area-placeholder{display:flex;flex-direction:column;align-items:center;gap:.3rem;color:var(--ink3);font-size:.78rem;pointer-events:none;}
-.tag-picker{display:flex;flex-wrap:wrap;gap:.35rem;}
-.tp-pill{font-size:.74rem;padding:.25rem .65rem;border-radius:12px;cursor:pointer;border:1.5px solid;transition:all .15s;}
-.status-bar{font-size:.78rem;color:var(--ink3);background:var(--off);border-left:2px solid var(--accent);padding:.5rem .75rem;border-radius:0 4px 4px 0;margin-bottom:.75rem;display:none;}
-.form-actions{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);}
-.btn-ghost{background:transparent;border:1px solid var(--line);border-radius:6px;padding:.5rem 1.2rem;font-size:.82rem;cursor:pointer;color:var(--ink2);transition:all .15s;}
+.img-area-prev{width:100%;max-height:220px;object-fit:contain;display:block;}
+.img-area-ph{display:flex;flex-direction:column;align-items:center;gap:.3rem;color:var(--ink3);font-size:.76rem;pointer-events:none;}
+.tag-picker{display:flex;flex-wrap:wrap;gap:.3rem;}
+.tp-pill{font-size:.72rem;padding:.22rem .62rem;border-radius:12px;cursor:pointer;border:1.5px solid;transition:all .15s;}
+.status-bar{font-size:.76rem;color:var(--ink3);background:var(--off);border-left:2px solid var(--accent);padding:.45rem .7rem;border-radius:0 4px 4px 0;margin-bottom:.7rem;display:none;}
+.form-actions{display:flex;justify-content:flex-end;gap:.5rem;margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--line);}
+.btn-ghost{background:transparent;border:1px solid var(--line);border-radius:6px;padding:.45rem 1.1rem;font-size:.8rem;cursor:pointer;color:var(--ink2);transition:all .15s;}
 .btn-ghost:hover{border-color:var(--ink);color:var(--ink);}
-.btn-solid{background:var(--ink);border:none;border-radius:6px;padding:.5rem 1.5rem;font-size:.82rem;color:#fff;cursor:pointer;transition:background .15s;}
+.btn-solid{background:var(--ink);border:none;border-radius:6px;padding:.45rem 1.4rem;font-size:.8rem;color:#fff;cursor:pointer;transition:background .15s;}
 .btn-solid:hover{background:var(--accent);}
+.flag-row{display:flex;align-items:center;gap:1.25rem;padding:.45rem 0;}
+.flag-row label{display:flex;align-items:center;gap:.4rem;font-size:.8rem;cursor:pointer;color:var(--ink2);}
 
-/* ── SETTINGS TAB ── */
-.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:900px;}
-.settings-card{background:var(--white);border:1px solid var(--line);border-radius:8px;padding:1.25rem;}
-.settings-title{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3);margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--line);}
-.tag-mgr-row{display:flex;align-items:center;gap:.4rem;padding:.3rem .4rem;border-radius:4px;transition:background .15s;margin-bottom:2px;}
+/* ─── SETTINGS TAB ─── */
+.settings-wrap{max-width:980px;margin:0 auto;padding:1.5rem;}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+.settings-card{background:var(--white);border:1px solid var(--line);border-radius:8px;padding:1.1rem;}
+.settings-title{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3);margin-bottom:.9rem;padding-bottom:.45rem;border-bottom:1px solid var(--line);}
+.tag-mgr-row{display:flex;align-items:center;gap:.35rem;padding:.28rem .4rem;border-radius:4px;transition:background .15s;margin-bottom:1px;}
 .tag-mgr-row:hover{background:var(--off);}
-.tag-mgr-row .tn{font-size:.8rem;flex:1;color:var(--ink2);}
-.tag-del{background:transparent;border:none;color:var(--ink3);cursor:pointer;font-size:.8rem;padding:.1rem .3rem;border-radius:3px;transition:all .15s;}
-.tag-del:hover{color:var(--accent);background:var(--accent-light);}
-.add-tag-row{display:flex;gap:.4rem;margin-top:.75rem;}
-.add-tag-row input{flex:1;background:var(--off);border:1px solid var(--line);border-radius:4px;color:var(--ink);padding:.4rem .6rem;font-size:.78rem;font-family:'Noto Sans JP',sans-serif;outline:none;}
-.add-tag-row button{background:var(--ink);border:none;border-radius:4px;color:#fff;padding:.4rem .8rem;font-size:.78rem;cursor:pointer;}
-.reminder-display-item{display:flex;align-items:center;gap:.5rem;padding:.35rem .5rem;border-radius:4px;transition:background .15s;font-size:.8rem;color:var(--ink2);cursor:pointer;}
-.reminder-display-item:hover{background:var(--off);}
-.reminder-display-item input[type=checkbox]{accent-color:var(--accent);}
+.tmr-name{font-size:.78rem;flex:1;color:var(--ink2);}
+.tmr-btn{background:transparent;border:none;cursor:pointer;font-size:.78rem;padding:.1rem .28rem;border-radius:3px;color:var(--ink3);transition:all .15s;}
+.tmr-btn:hover{color:var(--ink);background:var(--off);}
+.tmr-order{display:flex;flex-direction:column;gap:1px;}
+.tmr-order button{background:var(--off);border:1px solid var(--line);border-radius:2px;width:18px;height:14px;cursor:pointer;font-size:.55rem;color:var(--ink2);display:flex;align-items:center;justify-content:center;padding:0;}
+.add-row{display:flex;gap:.35rem;margin-top:.65rem;}
+.add-row input{flex:1;background:var(--off);border:1px solid var(--line);border-radius:4px;color:var(--ink);padding:.38rem .55rem;font-size:.76rem;font-family:'Noto Sans JP',sans-serif;outline:none;}
+.add-row input:focus{border-color:var(--ink);}
+.add-row button{background:var(--ink);border:none;border-radius:4px;color:#fff;padding:.38rem .75rem;font-size:.76rem;cursor:pointer;}
 
-/* ── MODAL ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s;}
+/* ─── YOUTUBE PLAYER ─── */
+#homeYtPanel{display:none;background:var(--ink);color:#fff;border-radius:8px;padding:1rem;margin-bottom:1rem;}
+.yt-panel-grid{display:grid;grid-template-columns:1fr 240px;gap:1rem;align-items:start;}
+.yt-iframe-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;background:#000;}
+#homeYtIframeContainer{position:absolute;inset:0;}
+.yt-controls{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem;align-items:center;}
+.yt-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:4px;color:#fff;padding:.25rem .6rem;font-size:.72rem;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:background .15s;}
+.yt-btn:hover{background:rgba(255,255,255,.22);}
+.yt-btn.green{background:#065f46;border-color:#6ee7b7;color:#d1fae5;}
+.yt-queue{max-height:280px;overflow-y:auto;}
+.yt-queue-item{display:flex;align-items:center;gap:.45rem;padding:.35rem .4rem;border-radius:4px;cursor:pointer;transition:background .15s;margin-bottom:2px;}
+.yt-queue-item:hover{background:rgba(255,255,255,.08);}
+.yt-queue-item.active{background:rgba(255,255,255,.15);}
+.yt-queue-thumb{width:42px;height:30px;object-fit:cover;border-radius:2px;flex-shrink:0;}
+.yt-queue-title{font-size:.7rem;line-height:1.3;opacity:.85;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.yt-info{font-size:.79rem;opacity:.88;margin:.45rem 0;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;}
+.watched-toggle{display:flex;align-items:center;gap:.3rem;font-size:.72rem;opacity:.75;}
+.watched-toggle input{accent-color:#6ee7b7;}
+
+/* ─── MODAL ─── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:600;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s;}
 .overlay.open{opacity:1;pointer-events:all;}
-.modal{background:var(--white);border-radius:10px;padding:1.5rem;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-md);}
-.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--line);}
-.modal-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;}
-.modal-close{background:var(--off);border:1px solid var(--line);border-radius:4px;padding:.25rem .65rem;cursor:pointer;font-size:.78rem;color:var(--ink2);}
+.modal{background:var(--white);border-radius:10px;padding:1.5rem;max-width:620px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-md);}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem;padding-bottom:.65rem;border-bottom:1px solid var(--line);}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;}
+.modal-close{background:var(--off);border:1px solid var(--line);border-radius:4px;padding:.22rem .6rem;cursor:pointer;font-size:.76rem;color:var(--ink2);}
+.modal-close-bottom{width:100%;margin-top:1rem;padding:.5rem;background:var(--off);border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:.8rem;color:var(--ink2);font-family:'Noto Sans JP',sans-serif;}
+.modal-close-bottom:hover{background:var(--ink);color:#fff;border-color:var(--ink);}
+.detail-img-wrap{width:100%;background:#f8f8f8;border-radius:4px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:1rem;max-height:320px;}
+.detail-img-wrap img{max-width:100%;max-height:320px;object-fit:contain;}
+.yt-embed-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;margin-bottom:1rem;}
+.yt-embed-wrap iframe{position:absolute;inset:0;width:100%;height:100%;}
 
-/* ── YOUTUBE ── */
-.yt-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:4px;margin-bottom:.5rem;}
-.yt-status{font-size:.68rem;padding:2px 8px;border-radius:10px;font-family:'DM Mono',monospace;}
-.yt-status.unwatch{background:#fee2e2;color:#991b1b;}
-.yt-status.watched{background:#d1fae5;color:#065f46;}
-.yt-priority{color:#f59e0b;font-size:.85rem;}
-.yt-player-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;margin-bottom:.75rem;}
-.yt-player-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;}
-
-/* ── LOADING ── */
-.ld{display:flex;gap:3px;align-items:center;}
+/* ─── TOAST / LOADING ─── */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:#fff;padding:.55rem 1.2rem;border-radius:6px;font-size:.8rem;z-index:1000;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.ok{background:var(--green);}
+.toast.err{background:var(--red);}
+.ld{display:inline-flex;gap:3px;align-items:center;}
 .ld span{width:4px;height:4px;border-radius:50%;background:currentColor;animation:ld .8s ease-in-out infinite;}
 .ld span:nth-child(2){animation-delay:.15s;}
 .ld span:nth-child(3){animation-delay:.3s;}
 @keyframes ld{0%,80%,100%{opacity:.2}40%{opacity:1}}
-
-/* ── TOAST ── */
-.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:#fff;padding:.6rem 1.25rem;border-radius:6px;font-size:.82rem;z-index:1000;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;}
-.toast.show{opacity:1;transform:translateY(0);}
-.toast.ok{background:var(--green);}
-.toast.err{background:#dc2626;}
-
-/* ── EMPTY ── */
 .empty{text-align:center;padding:4rem 2rem;color:var(--ink3);}
-.empty-mark{font-family:'Playfair Display',serif;font-size:3rem;opacity:.2;margin-bottom:1rem;}
-.empty h3{font-size:1rem;font-weight:400;margin-bottom:.5rem;color:var(--ink2);}
-.empty p{font-size:.82rem;}
+.empty-mark{font-family:'Playfair Display',serif;font-size:3rem;opacity:.18;margin-bottom:1rem;}
+.empty h3{font-size:.95rem;font-weight:400;margin-bottom:.4rem;color:var(--ink2);}
+.empty p{font-size:.8rem;}
 
-/* ── MOBILE FILTER BAR ── */
-#mobileFilterBar{display:none;}
-.mfb-scroll{display:flex;gap:.4rem;overflow-x:auto;padding:.5rem 1rem .5rem;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.mfb-scroll::-webkit-scrollbar{display:none;}
-.mfb-pill{flex-shrink:0;padding:.35rem .85rem;border-radius:20px;border:1.5px solid var(--line);background:var(--white);color:var(--ink2);font-size:.76rem;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap;}
-.mfb-pill.active{background:var(--ink);border-color:var(--ink);color:#fff;}
-.mfb-pill.tag-pill{border-style:solid;}
-.mfb-pill.accent{background:var(--accent);border-color:var(--accent);color:#fff;}
-/* タグ・エリアの展開エリア */
-.mfb-expand{display:none;padding:.4rem 1rem .6rem;gap:.35rem;flex-wrap:wrap;border-bottom:1px solid var(--line);background:var(--white);}
-.mfb-expand.open{display:flex;}
-.mfb-expand-pill{flex-shrink:0;padding:.28rem .75rem;border-radius:16px;border:1.5px solid var(--line);background:var(--off);color:var(--ink2);font-size:.72rem;cursor:pointer;transition:all .15s;white-space:nowrap;}
-.mfb-expand-pill.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+/* ─── COLOR PICKER ─── */
+.color-swatch{width:16px;height:16px;border-radius:50%;flex-shrink:0;cursor:pointer;border:2px solid rgba(255,255,255,.4);box-shadow:0 0 0 1px rgba(0,0,0,.15);}
+input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;height:22px;padding:0;border-radius:50%;}
 
-/* コンテンツ先頭アンカー */
-#contentAnchor{scroll-margin-top:110px;}
-
+/* ─── RESPONSIVE ─── */
 @media(max-width:768px){
-  #mobileFilterBar{display:block;position:sticky;top:112px;z-index:100;background:var(--white);border-bottom:1px solid var(--line);}
-  .home-layout{grid-template-columns:1fr;}
-  .sidebar{display:none !important;}
+  #mobileFilterBar{display:block;}
+  .sidebar{display:none;}
+  .home-wrap{grid-template-columns:1fr;}
+  .main-area{padding:.75rem 1rem;}
   .settings-grid{grid-template-columns:1fr;}
-  .tab-pane{padding:.75rem 1rem;}
+  .yt-panel-grid{grid-template-columns:1fr;}
   .posts-grid{grid-template-columns:1fr;}
-  .home-toolbar{gap:.5rem;padding-bottom:.25rem;}
-  .mode-toggle .mode-btn{font-size:.68rem;padding:.3rem .6rem;}
-  /* YTプレイヤー スマホは縦積み */
-  #homeYtPanel [style*="grid-template-columns:1fr 260px"]{display:flex !important;flex-direction:column !important;}
-  #homeYtPanel [style*="max-height:280px"]{max-height:160px;}
+  .add-wrap{padding:.75rem 1rem;}
 }
 @media(min-width:769px){
-  .sidebar{display:block !important;}
   #mobileFilterBar{display:none !important;}
+  .sidebar{display:block;}
 }
 </style>
 </head>
 <body>
 
-<!-- ── REMINDER BAR ── -->
+<!-- REMINDER BAR -->
 <div id="reminderBar">
   <span class="rb-label">🔔 Today</span>
-  <span class="rb-empty" id="rbEmpty">本日の予定はありません</span>
-  <div id="rbItems" style="display:flex;gap:.5rem;flex-wrap:wrap;flex:1"></div>
+  <span id="rbEmpty" class="rb-empty">本日の予定はありません</span>
+  <div id="rbItems" style="display:flex;gap:.4rem;flex-wrap:wrap;flex:1"></div>
 </div>
 
-<!-- ── HEADER ── -->
+<!-- HEADER -->
 <header>
-  <div class="header-inner">
-    <div>
-      <div class="logo-main">XC<em>L</em>IP</div>
-      <div style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.18em;color:var(--ink3);text-transform:uppercase;">Clip Collector</div>
-    </div>
-    <div class="header-rule"></div>
-    <div class="header-stats">
-      <div class="stat"><div class="stat-n" id="totalCount">0</div><div class="stat-l">Clips</div></div>
-      <div class="stat"><div class="stat-n" id="tagCount">0</div><div class="stat-l">Tags</div></div>
+  <div class="hd">
+    <div class="logo">XC<em>L</em>IP</div>
+    <div class="hd-rule"></div>
+    <div class="hd-stats">
+      <div class="hd-stat"><div class="n" id="totalCount">0</div><div class="l">Clips</div></div>
+      <div class="hd-stat"><div class="n" id="tagCount">0</div><div class="l">Tags</div></div>
     </div>
   </div>
 </header>
 
-<!-- ── TABS ── -->
+<!-- TABS -->
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('home')">🏠 Home</button>
   <button class="tab-btn" onclick="switchTab('add')">＋ Add</button>
   <button class="tab-btn" onclick="switchTab('settings')">⚙ Settings</button>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
-<!-- HOME TAB -->
-<!-- ══════════════════════════════════════════════ -->
+<!-- ACTIVE FILTER BADGE BAR -->
+<div id="activeBadgeBar"></div>
+
+<!-- MOBILE FILTER BAR -->
+<div id="mobileFilterBar">
+  <div class="mfb-scroll" id="mfbMain">
+    <button class="mfb-pill active" data-f="all" onclick="setFilter('all')">すべて</button>
+    <button class="mfb-pill fav-pill" data-f="fav" onclick="setFilter('fav')">⭐ お気に入り</button>
+    <button class="mfb-pill yt-pill" data-f="yt-watchlater" onclick="setFilter('yt-watchlater')">▶ あとで見る</button>
+    <button class="mfb-pill" data-f="recent" onclick="setFilter('recent')">最近追加</button>
+    <button class="mfb-pill accent" onclick="startHomePlaylist()">▶ 連続再生</button>
+    <button class="mfb-pill" onclick="toggleMfbExpand('Tags')">🏷 タグ ▾</button>
+    <button class="mfb-pill" onclick="toggleMfbExpand('Area')">📍 エリア ▾</button>
+  </div>
+  <div class="mfb-expand" id="mfbTags"></div>
+  <div class="mfb-expand" id="mfbArea">
+    <select class="area-select" id="mCountrySelect" onchange="setCountryFilter(this.value)" style="flex:1;min-width:120px"><option value="">国を選択...</option></select>
+    <select class="area-select" id="mPrefSelect" onchange="setPrefFilter(this.value)" style="flex:1;min-width:120px;display:none"><option value="">都道府県...</option></select>
+  </div>
+</div>
+
+<!-- ═════════════ HOME TAB ═════════════ -->
 <div class="tab-pane active" id="tab-home">
-
-  <!-- ▼ スマホ用フィルターバー（768px以下で表示） -->
-  <div id="mobileFilterBar">
-    <div class="mfb-scroll" id="mfbMain">
-      <button class="mfb-pill active" data-f="all"        onclick="mfbFilter('all')">すべて</button>
-      <button class="mfb-pill"        data-f="recent"     onclick="mfbFilter('recent')">最近追加</button>
-      <button class="mfb-pill"        data-f="memo"       onclick="mfbFilter('memo')">メモあり</button>
-      <button class="mfb-pill"        data-f="img"        onclick="mfbFilter('img')">画像あり</button>
-      <button class="mfb-pill"        data-f="youtube"    onclick="mfbFilter('youtube')">YouTube</button>
-      <button class="mfb-pill"        data-f="yt-unwatch" onclick="mfbFilter('yt-unwatch')">▶ 未視聴</button>
-      <button class="mfb-pill accent"                     onclick="startHomePlaylist()">▶ 連続再生</button>
-      <button class="mfb-pill"        data-f="tag"        onclick="toggleMfbExpand('tags')">🏷 タグ ▾</button>
-      <button class="mfb-pill"        data-f="area"       onclick="toggleMfbExpand('area')">📍 エリア ▾</button>
-    </div>
-    <!-- タグ展開 -->
-    <div class="mfb-expand" id="mfbTags"></div>
-    <!-- エリア展開 -->
-    <div class="mfb-expand" id="mfbArea">
-      <select class="area-select" id="mCountrySelect" onchange="mfbSetCountry(this.value)" style="flex:1;min-width:120px">
-        <option value="">国を選択...</option>
-      </select>
-      <select class="area-select" id="mPrefSelect" onchange="mfbSetPref(this.value)" style="flex:1;min-width:120px;display:none">
-        <option value="">都道府県...</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="home-toolbar">
-    <div class="search-wrap">
-      <span class="search-ico">🔍</span>
-      <input class="search-fi" id="searchIn" placeholder="検索..." oninput="renderHome()">
-    </div>
-    <div class="mode-toggle">
-      <button class="mode-btn active" id="modeA" onclick="setMode('A')" title="ジャンル主軸">A: ジャンル</button>
-      <button class="mode-btn" id="modeB" onclick="setMode('B')" title="エリア主軸">B: エリア</button>
-    </div>
-    <div class="view-toggle">
-      <button class="vt-btn active" id="vGrid" onclick="setView('grid')" title="グリッド">⊞</button>
-      <button class="vt-btn" id="vList" onclick="setView('list')" title="リスト">☰</button>
-      <button class="vt-btn" id="vMap" onclick="setView('map')" title="マップ">🗺</button>
-    </div>
-    <button class="c-btn" onclick="locateMe()" title="現在地取得" style="white-space:nowrap">📍 現在地</button>
-  </div>
-
-  <!-- コンテンツ先頭アンカー（フィルター後スクロール先） -->
-  <div id="contentAnchor"></div>
-
-  <div class="home-layout">
+  <div class="home-wrap">
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <div class="sb-head">Filter</div>
-      <button class="filter-btn active" id="fAll" onclick="setFilter('all')">すべて <span class="fc" id="cAll">0</span></button>
-      <button class="filter-btn" id="fRecent" onclick="setFilter('recent')">最近追加 <span class="fc" id="cRec">0</span></button>
-      <button class="filter-btn" id="fMemo" onclick="setFilter('memo')">メモあり <span class="fc" id="cMemo">0</span></button>
-      <button class="filter-btn" id="fImg" onclick="setFilter('img')">画像あり <span class="fc" id="cImg">0</span></button>
-      <button class="filter-btn" id="fYt" onclick="setFilter('youtube')">YouTube <span class="fc" id="cYt">0</span></button>
-      <button class="filter-btn" id="fYtUn" onclick="setFilter('yt-unwatch')">▶ 未視聴 <span class="fc" id="cYtUn">0</span></button>
-      <button onclick="startHomePlaylist()" style="width:100%;margin-top:.3rem;padding:.4rem .6rem;background:var(--ink);border:none;border-radius:4px;color:#fff;font-size:.75rem;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;justify-content:center;gap:.3rem">▶ 連続再生</button>
+      <div class="sb-section">
+        <div class="sb-head">Filter</div>
+        <button class="filter-btn active" id="fAll" onclick="setFilter('all')">すべて <span class="fc" id="cAll">0</span></button>
+        <button class="filter-btn fav-btn" id="fFav" onclick="setFilter('fav')">⭐ お気に入り <span class="fc" id="cFav">0</span></button>
+        <button class="filter-btn yt-btn" id="fYtWl" onclick="setFilter('yt-watchlater')">▶ あとで見る（未視聴） <span class="fc" id="cYtWl">0</span></button>
+        <button class="filter-btn" id="fRecent" onclick="setFilter('recent')">最近追加 <span class="fc" id="cRec">0</span></button>
+      </div>
 
-      <div class="sb-head" style="margin-top:1.25rem">📍 エリア</div>
-      <select class="area-select" id="countrySelect" onchange="setCountryFilter(this.value)">
-        <option value="">国を選択...</option>
-      </select>
-      <select class="area-select" id="prefSelect" onchange="setPrefFilter(this.value)" style="display:none">
-        <option value="">都道府県を選択...</option>
-      </select>
+      <div class="sb-section">
+        <div class="sb-head">📍 エリア</div>
+        <select class="area-select" id="countrySelect" onchange="setCountryFilter(this.value)"><option value="">国を選択...</option></select>
+        <select class="area-select" id="prefSelect" onchange="setPrefFilter(this.value)" style="display:none"><option value="">都道府県を選択...</option></select>
+      </div>
 
-      <div class="sb-head" style="margin-top:1.25rem">Tags</div>
-      <div id="sideTagList"></div>
+      <div class="sb-section">
+        <div class="sb-head">Tags</div>
+        <div id="sideTagList"></div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-head">▶ YouTube</div>
+        <label class="watched-toggle" style="color:var(--ink2);font-size:.76rem;display:flex;align-items:center;gap:.4rem;cursor:pointer;padding:.2rem 0">
+          <input type="checkbox" id="includeWatched" onchange="renderHome()"> 視聴済みも含める
+        </label>
+        <button class="sb-play-btn" onclick="startHomePlaylist()">▶ 連続再生</button>
+      </div>
     </aside>
 
     <!-- MAIN -->
-    <div>
-      <div class="result-info" id="resultInfo"></div>
-      <div id="mapWrap" style="display:none;height:480px;border-radius:6px;border:1px solid var(--line);overflow:hidden;margin-bottom:1rem"></div>
+    <div class="main-area">
+      <div id="contentAnchor"></div>
 
-      <!-- YouTube プレイヤーパネル（Home内） -->
-      <div id="homeYtPanel" style="display:none;background:var(--ink);color:#fff;border-radius:8px;padding:1rem;margin-bottom:1rem">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
-          <div style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;opacity:.6">▶ PLAYLIST</div>
-          <button onclick="closeHomePlayer()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:4px;padding:.2rem .6rem;cursor:pointer;font-size:.75rem">✕ 閉じる</button>
+      <!-- YouTube Player Panel -->
+      <div id="homeYtPanel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem">
+          <span style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;opacity:.5">▶ NOW PLAYING</span>
+          <button class="yt-btn" onclick="closeHomePlayer()">✕ 閉じる</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 260px;gap:1rem;align-items:start">
-          <!-- プレイヤー -->
+        <div class="yt-panel-grid">
           <div>
-            <div id="homeYtIframeContainer" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;background:#000;margin-bottom:.75rem"></div>
-            <div id="homeYtPlayInfo" style="font-size:.82rem;margin-bottom:.6rem;display:flex;align-items:center;flex-wrap:wrap;gap:.4rem;opacity:.9"></div>
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-              <button class="c-btn" onclick="ytPrev()" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2);color:#fff">◀ 前へ</button>
-              <button class="c-btn" onclick="ytNext()" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.2);color:#fff">次へ ▶</button>
-              <button class="c-btn" onclick="markWatched()" style="background:#d1fae5;border-color:#6ee7b7;color:#065f46;margin-left:auto">✅ 視聴済み</button>
+            <div class="yt-iframe-wrap"><div id="homeYtIframeContainer"></div></div>
+            <div class="yt-info" id="homeYtPlayInfo"></div>
+            <div class="yt-controls">
+              <button class="yt-btn" onclick="ytPrev()">◀ 前へ</button>
+              <button class="yt-btn" onclick="ytNext()">次へ ▶</button>
+              <button class="yt-btn green" onclick="markWatched()" style="margin-left:auto">✅ 視聴済み</button>
+              <label class="watched-toggle" style="margin-left:.5rem"><input type="checkbox" id="plIncludeWatched" onchange="renderYtQueue()"> 視聴済みも表示</label>
             </div>
           </div>
-          <!-- プレイリスト -->
-          <div style="max-height:280px;overflow-y:auto">
-            <div style="font-size:.65rem;letter-spacing:.1em;opacity:.5;margin-bottom:.4rem;font-family:'DM Mono',monospace">QUEUE</div>
-            <div id="homeYtQueue"></div>
+          <div>
+            <div style="font-family:'DM Mono',monospace;font-size:.6rem;opacity:.4;margin-bottom:.35rem">QUEUE</div>
+            <div class="yt-queue" id="homeYtQueue"></div>
           </div>
         </div>
       </div>
 
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-ico">🔍</span>
+          <input class="search-fi" id="searchIn" placeholder="検索..." oninput="renderHome()">
+        </div>
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="modeA" onclick="setMode('A')">A: ジャンル</button>
+          <button class="mode-btn" id="modeB" onclick="setMode('B')">B: エリア</button>
+        </div>
+        <div class="view-toggle">
+          <button class="vt-btn active" id="vGrid" onclick="setView('grid')" title="グリッド">⊞</button>
+          <button class="vt-btn" id="vList" onclick="setView('list')" title="リスト">☰</button>
+          <button class="vt-btn" id="vMap" onclick="setView('map')" title="マップ">🗺</button>
+        </div>
+        <button class="c-btn" onclick="locateMe()" title="現在地" style="white-space:nowrap">📍 現在地</button>
+      </div>
+      <div class="result-info" id="resultInfo"></div>
+      <div id="mapWrap" style="display:none;height:460px;border-radius:6px;border:1px solid var(--line);overflow:hidden;margin-bottom:1rem"></div>
       <div id="postsWrap"></div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
-<!-- ADD TAB -->
-<!-- ══════════════════════════════════════════════ -->
+<!-- ═════════════ ADD TAB ═════════════ -->
 <div class="tab-pane" id="tab-add">
-  <div class="add-card">
-    <div class="type-tabs">
-      <button class="type-tab active" id="typeX" onclick="setType('x')">𝕏 ポスト</button>
-      <button class="type-tab" id="typeWeb" onclick="setType('web')">🌐 Web記事</button>
-      <button class="type-tab" id="typeYt" onclick="setType('youtube')">▶ YouTube</button>
-      <button class="type-tab" id="typeMemo" onclick="setType('memo')">📝 メモ</button>
-    </div>
-
-    <div id="urlRow" class="url-row">
-      <input type="text" class="url-field" id="urlIn" placeholder="URLを貼り付け...">
-      <button class="fetch-btn" id="fetchBtn" onclick="fetchFromUrl()">情報取得</button>
-    </div>
-
-    <div class="status-bar" id="statusBar"></div>
-
-    <div class="fg">
-      <!-- X fields -->
-      <div id="xFields" style="display:contents">
-        <div><label class="fl">投稿者名</label><input class="fi" id="fAuthor" placeholder="Taro Yamada"></div>
-        <div><label class="fl">ハンドル</label><input class="fi" id="fHandle" placeholder="@taroyamada"></div>
+  <div class="add-wrap">
+    <div class="add-card">
+      <div class="type-tabs">
+        <button class="type-tab active" id="typeX" onclick="setType('x')">𝕏 ポスト</button>
+        <button class="type-tab" id="typeWeb" onclick="setType('web')">🌐 Web記事</button>
+        <button class="type-tab" id="typeYt" onclick="setType('youtube')">▶ YouTube</button>
+        <button class="type-tab" id="typeMemo" onclick="setType('memo')">📝 メモ</button>
       </div>
-      <!-- Web fields -->
-      <div id="webFields" style="display:none;grid-column:1/-1">
-        <div class="fg" style="margin:0">
-          <div class="fg-full"><label class="fl">記事タイトル</label><input class="fi" id="fTitle" placeholder="自動取得または手動入力"></div>
-          <div><label class="fl">サイト名</label><input class="fi" id="fSite" placeholder="Qiita, note..."></div>
-          <div><label class="fl">著者</label><input class="fi" id="fAuthorWeb" placeholder="山田太郎"></div>
+      <div id="urlRow" class="url-row">
+        <input class="url-field" id="urlIn" placeholder="URLを貼り付け...">
+        <button class="fetch-btn" id="fetchBtn" onclick="fetchFromUrl()">情報取得</button>
+      </div>
+      <div class="status-bar" id="statusBar"></div>
+      <div class="fg">
+        <div id="xFields" style="display:contents">
+          <div><label class="fl">投稿者名</label><input class="fi" id="fAuthor" placeholder="Taro Yamada"></div>
+          <div><label class="fl">ハンドル</label><input class="fi" id="fHandle" placeholder="@handle"></div>
         </div>
-      </div>
-      <!-- YouTube fields -->
-      <div id="ytFields" style="display:none;grid-column:1/-1">
-        <div class="fg" style="margin:0">
-          <div class="fg-full"><label class="fl">動画タイトル</label><input class="fi" id="fYtTitle" placeholder="自動取得または手動入力"></div>
-          <div><label class="fl">チャンネル名</label><input class="fi" id="fYtChannel" placeholder="チャンネル名"></div>
-          <div style="display:flex;align-items:center;gap:.75rem;padding:.5rem 0">
-            <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;cursor:pointer">
-              <input type="checkbox" id="fYtPriority" style="accent-color:var(--yellow)"> ⭐ 優先
-            </label>
-            <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;cursor:pointer">
-              <input type="checkbox" id="fYtWatched" style="accent-color:var(--green)"> ✅ 視聴済み
-            </label>
+        <div id="webFields" style="display:none;grid-column:1/-1">
+          <div class="fg" style="margin:0">
+            <div class="fg-full"><label class="fl">記事タイトル</label><input class="fi" id="fTitle" placeholder="自動取得または手動入力"></div>
+            <div><label class="fl">サイト名</label><input class="fi" id="fSite"></div>
+            <div><label class="fl">著者</label><input class="fi" id="fAuthorWeb"></div>
           </div>
         </div>
-      </div>
-
-      <div class="fg-full"><label class="fl">本文・内容</label><textarea class="fta" id="fContent" placeholder="内容..."></textarea></div>
-      <div class="fg-full" id="summaryField" style="display:none">
-        <label class="fl">✨ AI要約</label>
-        <textarea class="fta" id="fSummary" style="min-height:60px;background:var(--paper)"></textarea>
-      </div>
-      <div class="fg-full"><label class="fl">メモ（URLも可）</label><input class="fi" id="fMemo" placeholder="メモや参考URLを入力..."></div>
-      <div class="fg-full">
-        <label class="fl">画像 URL</label>
-        <input class="fi" id="fImgUrl" placeholder="https://..." oninput="prevImgUrl()" style="margin-bottom:.4rem">
-        <div class="img-area" id="imgArea">
-          <input type="file" accept="image/*" onchange="handleFile(event)">
-          <div class="img-area-placeholder" id="imgPh"><span style="font-size:1.5rem">↑</span><span>クリックして画像をアップロード</span></div>
-          <img id="imgPrev" style="display:none">
+        <div id="ytFields" style="display:none;grid-column:1/-1">
+          <div class="fg" style="margin:0">
+            <div class="fg-full"><label class="fl">動画タイトル</label><input class="fi" id="fYtTitle"></div>
+            <div><label class="fl">チャンネル名</label><input class="fi" id="fYtChannel"></div>
+          </div>
         </div>
-      </div>
-      <div class="fg-full"><label class="fl">タグ</label><div class="tag-picker" id="formPicker"></div></div>
-      <div class="fg-full">
-        <label class="fl">📍 エリア（任意）</label>
-        <div class="fg" style="margin:0">
-          <div><label class="fl">国</label><input class="fi" id="fCountry" placeholder="日本, アメリカ..."></div>
-          <div><label class="fl">都道府県</label><input class="fi" id="fPrefecture" placeholder="東京都, 大阪府..."></div>
-          <div class="fg-full">
-            <label class="fl">詳細な場所名</label>
-            <div style="display:flex;gap:.4rem">
-              <input class="fi" id="fArea" placeholder="渋谷, 梅田..." style="flex:1">
-              <button class="btn-ghost" onclick="geocodeArea()" style="white-space:nowrap;font-size:.72rem">位置取得</button>
+        <div class="fg-full"><label class="fl">本文・内容</label><textarea class="fta" id="fContent" placeholder="内容..."></textarea></div>
+        <div class="fg-full" id="summaryField" style="display:none"><label class="fl">✨ AI要約</label><textarea class="fta" id="fSummary" style="min-height:55px"></textarea></div>
+        <div class="fg-full"><label class="fl">メモ（URLも可）</label><input class="fi" id="fMemo" placeholder="メモや参考URL..."></div>
+        <div class="fg-full">
+          <label class="fl">画像</label>
+          <input class="fi" id="fImgUrl" placeholder="https://... または下でファイルを選択" oninput="prevImgUrl()" style="margin-bottom:.4rem">
+          <div class="img-area" id="imgArea">
+            <input type="file" accept="image/*" onchange="handleFile(event)">
+            <div class="img-area-ph" id="imgPh"><span style="font-size:1.4rem">📷</span><span>クリックして画像を選択</span></div>
+            <img class="img-area-prev" id="imgPrev" style="display:none">
+          </div>
+        </div>
+        <div class="fg-full">
+          <label class="fl">🏷 タグ</label>
+          <div class="tag-picker" id="formPicker"></div>
+        </div>
+        <div class="fg-full">
+          <label class="fl">📍 エリア（任意）</label>
+          <div class="fg" style="margin:0">
+            <div><label class="fl">国</label><input class="fi" id="fCountry" placeholder="日本..."></div>
+            <div><label class="fl">都道府県</label><input class="fi" id="fPrefecture" placeholder="東京都..."></div>
+            <div class="fg-full">
+              <label class="fl">詳細な場所</label>
+              <div style="display:flex;gap:.35rem">
+                <input class="fi" id="fArea" placeholder="渋谷, 梅田..." style="flex:1">
+                <button class="btn-ghost" onclick="geocodeArea('f')" style="font-size:.7rem;white-space:nowrap">位置取得</button>
+              </div>
+              <div id="fAreaStatus" style="font-size:.68rem;color:var(--ink3);margin-top:.2rem"></div>
             </div>
-            <div id="fAreaStatus" style="font-size:.7rem;color:var(--ink3);margin-top:.25rem"></div>
+          </div>
+          <input type="hidden" id="fLat"><input type="hidden" id="fLng">
+        </div>
+        <div class="fg-full" style="background:var(--yellow-bg);border-radius:6px;padding:.75rem">
+          <label class="fl" style="color:#92400e">🔔 リマインダー（任意）</label>
+          <div style="display:flex;gap:.4rem">
+            <input type="date" class="fi" id="fRemindDate" style="flex:1">
+            <input class="fi" id="fRemindMsg" placeholder="メモ..." style="flex:2">
           </div>
         </div>
-        <input type="hidden" id="fLat"><input type="hidden" id="fLng">
-      </div>
-      <!-- Reminder -->
-      <div class="fg-full" style="background:var(--yellow-bg);border-radius:6px;padding:.75rem">
-        <label class="fl" style="color:#92400e">🔔 リマインダー（任意）</label>
-        <div style="display:flex;gap:.5rem">
-          <input type="date" class="fi" id="fRemindDate" style="flex:1">
-          <input type="text" class="fi" id="fRemindMsg" placeholder="メモ..." style="flex:2">
+        <div class="fg-full">
+          <div class="flag-row">
+            <label><input type="checkbox" id="fFavorite" style="accent-color:var(--yellow)"> ⭐ お気に入り</label>
+            <label id="watchLaterLabel" style="display:none"><input type="checkbox" id="fWatchLater" style="accent-color:var(--blue)"> 📌 あとで見る</label>
+            <label id="ytWatchedLabel" style="display:none"><input type="checkbox" id="fYtWatched" style="accent-color:var(--green)"> ✅ 視聴済み</label>
+          </div>
         </div>
       </div>
-    </div>
-
-    <div class="form-actions">
-      <button class="btn-ghost" onclick="clearForm()">クリア</button>
-      <button class="btn-solid" onclick="savePost()">保存する</button>
+      <div class="form-actions">
+        <button class="btn-ghost" onclick="clearForm()">クリア</button>
+        <button class="btn-solid" onclick="savePost()">保存する</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
-<!-- SETTINGS TAB -->
-<!-- ══════════════════════════════════════════════ -->
+<!-- ═════════════ SETTINGS TAB ═════════════ -->
 <div class="tab-pane" id="tab-settings">
-  <div class="settings-grid">
-    <!-- TAG MANAGEMENT -->
-    <div class="settings-card">
-      <div class="settings-title">タグ管理</div>
-      <div id="tagMgrList"></div>
-      <div class="add-tag-row" style="margin-top:.75rem">
-        <input type="text" id="newTagIn" placeholder="新しいタグ..." maxlength="20">
-        <button onclick="addTag()">追加</button>
-      </div>
-      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line)">
-        <div class="fl" style="margin-bottom:.5rem">サブカテゴリーを追加</div>
-        <select class="area-select" id="parentTagSelect"><option value="">親タグを選択...</option></select>
-        <div class="add-tag-row">
-          <input type="text" id="newSubTagIn" placeholder="サブタグ名..." maxlength="20">
-          <button onclick="addSubTag()">追加</button>
+  <div class="settings-wrap">
+    <div class="settings-grid">
+      <!-- タグ管理 -->
+      <div class="settings-card">
+        <div class="settings-title">タグ管理（ドラッグ不可の場合↑↓で並べ替え）</div>
+        <div id="tagMgrList"></div>
+        <div class="add-row" style="margin-top:.65rem">
+          <input id="newTagIn" placeholder="新しいタグ..." maxlength="20">
+          <input type="color" id="newTagColor" value="#3b82f6" title="色を選択" style="width:36px;padding:2px;border:1px solid var(--line);border-radius:4px;">
+          <button onclick="addTag()">追加</button>
+        </div>
+        <div style="margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--line)">
+          <div style="font-size:.72rem;color:var(--ink3);margin-bottom:.4rem">サブカテゴリーを追加</div>
+          <select class="area-select" id="parentTagSelect"><option value="">親タグを選択...</option></select>
+          <div class="add-row">
+            <input id="newSubTagIn" placeholder="サブタグ名..." maxlength="20">
+            <button onclick="addSubTag()">追加</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- REMINDER SETTINGS -->
-    <div class="settings-card">
-      <div class="settings-title">リマインダー表示設定</div>
-      <div style="font-size:.78rem;color:var(--ink3);margin-bottom:.75rem">リマインダー枠に表示する項目を選択</div>
-      <div id="reminderDisplaySettings"></div>
-      <div style="margin-top:1rem">
-        <div class="settings-title">本日のリマインダー一覧</div>
+      <!-- リマインダー -->
+      <div class="settings-card">
+        <div class="settings-title">リマインダー一覧</div>
         <div id="allRemindersList"></div>
       </div>
-    </div>
 
-    <!-- YOUTUBE PLAYLIST -->
-    <div class="settings-card">
-      <div class="settings-title">YouTube 連続再生</div>
-      <div style="font-size:.78rem;color:var(--ink2);margin-bottom:.75rem">未視聴動画を優先度順に連続再生。終了すると自動で次へ進みます</div>
-      <select class="area-select" id="ytPlayTag"><option value="">タグで絞り込み（任意）</option></select>
-      <button class="btn-solid" onclick="startPlaylist()" style="width:100%;margin-top:.75rem">▶ 連続再生スタート</button>
-      <div id="ytPlayerWrap" style="margin-top:1rem;display:none">
-        <div class="yt-player-wrap" id="ytIframeContainer" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;margin-bottom:.75rem"></div>
-        <div id="ytPlayInfo" style="font-size:.8rem;color:var(--ink2);margin-bottom:.5rem;display:flex;align-items:center;flex-wrap:wrap;gap:.4rem"></div>
-        <div style="display:flex;gap:.5rem">
-          <button class="c-btn" onclick="ytPrev()">◀ 前へ</button>
-          <button class="c-btn" onclick="ytNext()">次へ ▶</button>
-          <button class="c-btn" onclick="markWatched()" style="margin-left:auto;background:#d1fae5;border-color:#6ee7b7;color:#065f46">✅ 視聴済みにする</button>
-        </div>
+      <!-- YouTube連続再生 -->
+      <div class="settings-card">
+        <div class="settings-title">YouTube 連続再生設定</div>
+        <div style="font-size:.78rem;color:var(--ink2);margin-bottom:.65rem">タグで絞り込んでHomeタブで再生</div>
+        <select class="area-select" id="ytPlayTag"><option value="">タグで絞り込み（任意）</option></select>
+        <button class="btn-solid" onclick="startHomePlaylist();switchTab('home')" style="width:100%;margin-top:.65rem">▶ 連続再生スタート</button>
       </div>
-    </div>
 
-    <!-- STATS -->
-    <div class="settings-card">
-      <div class="settings-title">統計</div>
-      <div id="statsWrap" style="font-size:.82rem;line-height:2;color:var(--ink2)"></div>
+      <!-- 統計 -->
+      <div class="settings-card">
+        <div class="settings-title">統計</div>
+        <div id="statsWrap" style="font-size:.8rem;line-height:2.1;color:var(--ink2)"></div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
-<!-- MODALS -->
-<!-- ══════════════════════════════════════════════ -->
-<!-- Detail Modal -->
+<!-- ═════════════ MODALS ═════════════ -->
+<!-- Detail -->
 <div class="overlay" id="detailModal">
   <div class="modal">
     <div class="modal-head">
       <span class="modal-title">詳細</span>
-      <button class="modal-close" onclick="closeModal('detailModal')">✕ 閉じる</button>
+      <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
     </div>
     <div id="detailBody"></div>
+    <button class="modal-close-bottom" onclick="closeModal('detailModal')">閉じる</button>
   </div>
 </div>
 
-<!-- Edit Modal -->
+<!-- Edit -->
 <div class="overlay" id="editModal">
   <div class="modal">
     <div class="modal-head">
       <span class="modal-title">編集</span>
-      <button class="modal-close" onclick="closeModal('editModal')">✕ 閉じる</button>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
     </div>
     <div class="fg">
       <div><label class="fl">投稿者名 / タイトル</label><input class="fi" id="eAuthor"></div>
       <div><label class="fl">ハンドル / サイト名</label><input class="fi" id="eHandle"></div>
       <div class="fg-full"><label class="fl">本文</label><textarea class="fta" id="eContent"></textarea></div>
       <div class="fg-full"><label class="fl">メモ</label><input class="fi" id="eMemo"></div>
-      <div class="fg-full"><label class="fl">画像 URL</label><input class="fi" id="eImgUrl"></div>
+      <div class="fg-full">
+        <label class="fl">画像URL</label>
+        <input class="fi" id="eImgUrl" style="margin-bottom:.35rem" oninput="eImgPrev()">
+        <div class="img-area" id="eImgArea" style="min-height:70px">
+          <input type="file" accept="image/*" onchange="handleEditFile(event)">
+          <div class="img-area-ph" id="eImgPh"><span style="font-size:1.2rem">📷</span><span>クリックして変更</span></div>
+          <img class="img-area-prev" id="eImgPrevImg" style="display:none">
+        </div>
+      </div>
       <div><label class="fl">国</label><input class="fi" id="eCountry"></div>
       <div><label class="fl">都道府県</label><input class="fi" id="ePrefecture"></div>
       <div class="fg-full">
         <label class="fl">詳細な場所</label>
-        <div style="display:flex;gap:.4rem">
+        <div style="display:flex;gap:.35rem">
           <input class="fi" id="eArea" style="flex:1">
-          <button class="btn-ghost" onclick="geocodeEditArea()" style="white-space:nowrap;font-size:.72rem">位置取得</button>
+          <button class="btn-ghost" onclick="geocodeArea('e')" style="font-size:.7rem;white-space:nowrap">位置取得</button>
         </div>
-        <div id="eAreaStatus" style="font-size:.7rem;color:var(--ink3);margin-top:.25rem"></div>
+        <div id="eAreaStatus" style="font-size:.68rem;color:var(--ink3);margin-top:.2rem"></div>
         <input type="hidden" id="eLat"><input type="hidden" id="eLng">
       </div>
       <div class="fg-full" id="eYtFields" style="display:none">
-        <label style="display:flex;align-items:center;gap:.75rem;font-size:.82rem;cursor:pointer">
-          <span>YouTube: </span>
-          <label style="display:flex;align-items:center;gap:.3rem"><input type="checkbox" id="eYtPriority"> ⭐ 優先</label>
-          <label style="display:flex;align-items:center;gap:.3rem"><input type="checkbox" id="eYtWatched"> ✅ 視聴済み</label>
-        </label>
+        <div class="flag-row">
+          <label><input type="checkbox" id="eYtWatched" style="accent-color:var(--green)"> ✅ 視聴済み</label>
+          <label><input type="checkbox" id="eWatchLater" style="accent-color:var(--blue)"> 📌 あとで見る</label>
+        </div>
+      </div>
+      <div class="fg-full">
+        <div class="flag-row">
+          <label><input type="checkbox" id="eFavorite" style="accent-color:var(--yellow)"> ⭐ お気に入り</label>
+        </div>
       </div>
       <div class="fg-full"><label class="fl">タグ</label><div class="tag-picker" id="editPicker"></div></div>
     </div>
@@ -596,19 +616,19 @@ header{position:sticky;top:0;z-index:200;background:rgba(250,249,246,.95);backdr
   </div>
 </div>
 
-<!-- Reminder Modal -->
+<!-- Reminder -->
 <div class="overlay" id="reminderModal">
   <div class="modal">
     <div class="modal-head">
       <span class="modal-title">🔔 リマインダー</span>
-      <button class="modal-close" onclick="closeModal('reminderModal')">✕ 閉じる</button>
+      <button class="modal-close" onclick="closeModal('reminderModal')">✕</button>
     </div>
-    <div id="reminderPostInfo" style="background:var(--off);border-radius:4px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.82rem;color:var(--ink2)"></div>
+    <div id="reminderPostInfo" style="background:var(--off);border-radius:4px;padding:.7rem .9rem;margin-bottom:.9rem;font-size:.8rem;color:var(--ink2)"></div>
     <div class="fg">
       <div class="fg-full"><label class="fl">リマインド日</label><input type="date" class="fi" id="rDate"></div>
-      <div class="fg-full"><label class="fl">メモ（任意）</label><input class="fi" id="rMessage" placeholder="あとで読む、返信する..."></div>
+      <div class="fg-full"><label class="fl">メモ（任意）</label><input class="fi" id="rMessage" placeholder="あとで読む..."></div>
     </div>
-    <div id="existingReminders" style="margin-top:.75rem"></div>
+    <div id="existingReminders" style="margin-top:.65rem"></div>
     <div class="form-actions">
       <button class="btn-ghost" onclick="closeModal('reminderModal')">キャンセル</button>
       <button class="btn-solid" onclick="saveReminder()">設定する</button>
@@ -619,314 +639,372 @@ header{position:sticky;top:0;z-index:200;background:rgba(250,249,246,.95);backdr
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // SUPABASE
-// ══════════════════════════════════════════════════════
-const SB_URL = 'https://hpgcymyyugrzblvahkcc.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwZ2N5bXl5dWdyemJsdmFoa2NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MjAxOTEsImV4cCI6MjA4NzM5NjE5MX0.l2C4TWVU-CeMPB3Thz238z5qqeiOsFLhkm-GlOYVL8o';
+// ════════════════════════════════════════════════
+const SB_URL='https://hpgcymyyugrzblvahkcc.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwZ2N5bXl5dWdyemJsdmFoa2NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MjAxOTEsImV4cCI6MjA4NzM5NjE5MX0.l2C4TWVU-CeMPB3Thz238z5qqeiOsFLhkm-GlOYVL8o';
 
-async function sb(path, method='GET', body=null){
-  const h = {
-    'apikey': SB_KEY, 'Authorization': 'Bearer '+SB_KEY,
-    'Content-Type': 'application/json'
-  };
+async function sb(path,method='GET',body=null){
+  const h={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
   if(method==='POST') h['Prefer']='return=representation,resolution=merge-duplicates';
   if(method==='PATCH') h['Prefer']='return=representation';
-  const opts = {method, headers:h};
-  if(body) opts.body = JSON.stringify(body);
-  const r = await fetch(SB_URL+'/rest/v1/'+path, opts);
-  if(!r.ok){ const e=await r.text(); throw new Error(e); }
-  const txt = await r.text();
-  return txt ? JSON.parse(txt) : [];
+  const opts={method,headers:h};
+  if(body) opts.body=JSON.stringify(body);
+  const r=await fetch(SB_URL+'/rest/v1/'+path,opts);
+  if(!r.ok){const e=await r.text();throw new Error(e);}
+  const t=await r.text(); return t?JSON.parse(t):[];
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // STATE
-// ══════════════════════════════════════════════════════
-let posts=[], tags=[], reminders=[];
-let curFilter='all', tagFilter=null, viewMode='grid', displayMode='A';
-let areaFilter={country:null, prefecture:null};
-let fSel=new Set(), eSel=new Set();
-let editId=null, reminderPostId=null, currentType='x';
-let myLat=null, myLng=null;
-let map=null, mapMarkers=[];
-let ytPlaylist=[], ytPlayIdx=0;
-let reminderDisplayKeys = ['author','content','memo']; // 表示項目設定
-const COLORS=['#3b82f6','#8b5cf6','#e11d48','#d97706','#059669','#dc2626','#0891b2','#65a30d','#9333ea','#ea580c'];
+// ════════════════════════════════════════════════
+let posts=[],tags=[],reminders=[];
+let curFilter='all',tagFilter=null,viewMode='grid',displayMode='A';
+let areaFilter={country:null,prefecture:null};
+let fSel=new Set(),eSel=new Set();
+let editId=null,reminderPostId=null,currentType='x';
+let myLat=null,myLng=null;
+let map=null,mapMarkers=[];
+let ytPlaylist=[],ytPlayIdx=0;
+let ytPlayer=null,ytApiReady=false;
+const COLORS=['#3b82f6','#8b5cf6','#e11d48','#d97706','#059669','#0891b2','#65a30d','#9333ea','#ea580c','#6366f1'];
+// LocalStorage: タグ並び順
+function loadTagOrder(){return JSON.parse(localStorage.getItem('xclip_tag_order')||'[]');}
+function saveTagOrder(ids){localStorage.setItem('xclip_tag_order',JSON.stringify(ids));}
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // INIT
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 async function init(){
   toast('読み込み中...','');
-  try {
-    const [rawP, rawT, rawR] = await Promise.all([
+  try{
+    const [rawP,rawT,rawR]=await Promise.all([
       sb('posts?select=*&order=created_at.desc'),
-      sb('tags?select=*&order=name.asc'),
+      sb('tags?select=*&order=sort_order.asc,name.asc'),
       sb('reminders?select=*&order=remind_at.asc')
     ]);
-    posts = rawP.map(mapPost);
-    tags  = rawT;
-    reminders = rawR;
-
+    posts=rawP.map(mapPost);
+    tags=applyTagOrder(rawT);
+    reminders=rawR;
     if(!tags.length){
-      const defs=['参考','インスピレーション','技術','デザイン','ニュース','お気に入り'];
+      const defs=[['参考','#3b82f6'],['技術','#8b5cf6'],['デザイン','#e11d48'],['ニュース','#d97706'],['インスピレーション','#059669'],['お気に入り','#f59e0b']];
       for(let i=0;i<defs.length;i++){
-        const t={id:'t'+(Date.now()+i), name:defs[i], color:COLORS[i], parent_id:null};
+        const t={id:'t'+(Date.now()+i),name:defs[i][0],color:defs[i][1],parent_id:null,sort_order:i};
         await sb('tags','POST',t); tags.push(t);
       }
     }
-    renderAll();
-    renderReminderBar();
-    renderSettings();
-    setTimeout(()=>{ document.getElementById('toast').className='toast'; },500);
-    // 1分ごとにリマインダーチェック
-    setInterval(renderReminderBar, 60000);
-  } catch(e){
-    toast('接続エラー: '+e.message,'err'); console.error(e);
-  }
+    renderAll(); renderReminderBar(); renderSettings();
+    setTimeout(()=>{document.getElementById('toast').className='toast';},600);
+    setInterval(renderReminderBar,60000);
+    loadYtApi();
+  }catch(e){toast('接続エラー: '+e.message,'err');console.error(e);}
+}
+
+function applyTagOrder(rawTags){
+  const order=loadTagOrder();
+  if(!order.length) return rawTags;
+  const map=new Map(rawTags.map(t=>[t.id,t]));
+  const sorted=order.map(id=>map.get(id)).filter(Boolean);
+  rawTags.forEach(t=>{if(!order.includes(t.id)) sorted.push(t);});
+  return sorted;
 }
 
 function mapPost(r){
-  return {
-    id:r.id, url:r.url||'', author:r.author||'', handle:r.handle||'',
-    content:r.content||'', memo:r.memo||'', image:r.image||'',
-    tags:r.tags||[], createdAt:r.created_at||0,
-    area:r.area||'', country:r.country||'', prefecture:r.prefecture||'',
-    lat:r.lat||null, lng:r.lng||null,
-    type:r.type||'x', summary:r.summary||'',
+  return{
+    id:r.id,url:r.url||'',author:r.author||'',handle:r.handle||'',
+    content:r.content||'',memo:r.memo||'',image:r.image||'',
+    tags:r.tags||[],createdAt:typeof r.created_at==='number'?r.created_at:new Date(r.created_at).getTime()||0,
+    area:r.area||'',country:r.country||'',prefecture:r.prefecture||'',
+    lat:r.lat||null,lng:r.lng||null,
+    type:r.type||'x',summary:r.summary||'',
     youtube_status:r.youtube_status||'unwatch',
     youtube_priority:r.youtube_priority||false,
+    is_favorite:r.is_favorite||false,
+    watch_later:r.watch_later||false,
   };
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // TABS
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 function switchTab(tab){
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
-  const idx = ['home','add','settings'].indexOf(tab);
-  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  ['home','add','settings'].forEach((t,i)=>{
+    if(t===tab) document.querySelectorAll('.tab-btn')[i].classList.add('active');
+  });
   if(tab==='home') renderHome();
   if(tab==='settings') renderSettings();
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // RENDER ALL
-// ══════════════════════════════════════════════════════
-function renderAll(){
-  renderSide(); renderPickers(); renderHome(); updateStats(); renderMobileFilterBar();
-}
+// ════════════════════════════════════════════════
+function renderAll(){renderSide();renderPickers();renderHome();updateStats();renderMobileFilterBar();}
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // SIDEBAR
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 function renderSide(){
-  const parentTags = tags.filter(t=>!t.parent_id);
-  const childTags  = tags.filter(t=> t.parent_id);
+  const parentTags=tags.filter(t=>!t.parent_id);
+  const childTags=tags.filter(t=>t.parent_id);
   let html='';
   parentTags.forEach(pt=>{
-    const children = childTags.filter(c=>c.parent_id===pt.id);
-    const cnt = posts.filter(p=>p.tags&&p.tags.includes(pt.id)).length;
-    html += `<div class="tag-tree-parent">
+    const children=childTags.filter(c=>c.parent_id===pt.id);
+    const cnt=posts.filter(p=>p.tags&&p.tags.includes(pt.id)).length;
+    html+=`<div class="tag-tree-parent">
       <div class="tag-row${tagFilter===pt.id?' active':''}" onclick="toggleTagFilter('${pt.id}')">
         <div class="t-dot" style="background:${pt.color}"></div>
-        <span>${esc(pt.name)}</span>
-        <span class="t-cnt">${cnt}</span>
+        <span>${esc(pt.name)}</span><span class="t-cnt">${cnt}</span>
       </div>`;
     if(children.length){
-      html += `<div class="tag-child-wrap">`;
+      html+=`<div class="tag-child-wrap">`;
       children.forEach(ct=>{
-        const ccnt = posts.filter(p=>p.tags&&p.tags.includes(ct.id)).length;
-        html += `<div class="tag-row${tagFilter===ct.id?' active':''}" onclick="toggleTagFilter('${ct.id}')">
+        const cc=posts.filter(p=>p.tags&&p.tags.includes(ct.id)).length;
+        html+=`<div class="tag-row${tagFilter===ct.id?' active':''}" onclick="toggleTagFilter('${ct.id}')">
           <div class="t-dot" style="background:${ct.color}"></div>
-          <span>${esc(ct.name)}</span>
-          <span class="t-cnt">${ccnt}</span>
+          <span>${esc(ct.name)}</span><span class="t-cnt">${cc}</span>
         </div>`;
       });
-      html += `</div>`;
+      html+=`</div>`;
     }
-    html += `</div>`;
+    html+=`</div>`;
   });
-  document.getElementById('sideTagList').innerHTML = html;
+  document.getElementById('sideTagList').innerHTML=html;
   renderAreaFilter();
 }
 
 function renderAreaFilter(){
-  const countries = [...new Set(posts.map(p=>p.country).filter(Boolean))].sort();
-  const cSel = document.getElementById('countrySelect');
-  const curC = areaFilter.country||'';
-  cSel.innerHTML = '<option value="">国を選択...</option>' +
-    countries.map(c=>`<option value="${esc(c)}"${curC===c?' selected':''}>${esc(c)}</option>`).join('');
-  const prefSel = document.getElementById('prefSelect');
-  if(areaFilter.country){
-    const prefs = [...new Set(posts.filter(p=>p.country===areaFilter.country).map(p=>p.prefecture).filter(Boolean))].sort();
-    if(prefs.length){
-      prefSel.style.display='block';
-      prefSel.innerHTML = '<option value="">都道府県を選択...</option>' +
-        prefs.map(pr=>`<option value="${esc(pr)}"${areaFilter.prefecture===pr?' selected':''}>${esc(pr)}</option>`).join('');
-    } else { prefSel.style.display='none'; }
-  } else { prefSel.style.display='none'; prefSel.value=''; }
+  const countries=[...new Set(posts.map(p=>p.country).filter(Boolean))].sort();
+  ['countrySelect','mCountrySelect'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    const cur=areaFilter.country||'';
+    el.innerHTML='<option value="">国を選択...</option>'+countries.map(c=>`<option value="${esc(c)}"${cur===c?' selected':''}>${esc(c)}</option>`).join('');
+  });
+  ['prefSelect','mPrefSelect'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    if(areaFilter.country){
+      const prefs=[...new Set(posts.filter(p=>p.country===areaFilter.country).map(p=>p.prefecture).filter(Boolean))].sort();
+      if(prefs.length){
+        el.style.display='block';
+        el.innerHTML='<option value="">都道府県を選択...</option>'+prefs.map(pr=>`<option value="${esc(pr)}"${areaFilter.prefecture===pr?' selected':''}>${esc(pr)}</option>`).join('');
+      } else el.style.display='none';
+    } else {el.style.display='none'; el.value='';}
+  });
 }
 
-function setCountryFilter(v){ areaFilter.country=v||null; areaFilter.prefecture=null; renderAreaFilter(); syncMobileAreaFilter(); renderHome(); scrollToContent(); }
-function setPrefFilter(v){ areaFilter.prefecture=v||null; renderHome(); scrollToContent(); }
-function toggleTagFilter(id){ tagFilter=tagFilter===id?null:id; renderSide(); renderMobileFilterBar(); renderHome(); scrollToContent(); }
+// ════════════════════════════════════════════════
+// MOBILE FILTER BAR
+// ════════════════════════════════════════════════
+function renderMobileFilterBar(){
+  const parentTags=tags.filter(t=>!t.parent_id);
+  const childTags=tags.filter(t=>t.parent_id);
+  let html='';
+  parentTags.forEach(pt=>{
+    const children=childTags.filter(c=>c.parent_id===pt.id);
+    const active=tagFilter===pt.id;
+    html+=`<button class="mfb-ep${active?' active':''}" style="${active?'':'border-color:'+pt.color+';color:'+pt.color}" onclick="mfbTag('${pt.id}')">${esc(pt.name)}</button>`;
+    children.forEach(ct=>{
+      const ca=tagFilter===ct.id;
+      html+=`<button class="mfb-ep${ca?' active':''}" style="${ca?'':'border-color:'+ct.color+';color:'+ct.color}" onclick="mfbTag('${ct.id}')">└ ${esc(ct.name)}</button>`;
+    });
+  });
+  const mfbTags=document.getElementById('mfbTags');
+  if(mfbTags) mfbTags.innerHTML=html;
+  // ピルのactive同期
+  document.querySelectorAll('#mfbMain .mfb-pill[data-f]').forEach(el=>el.classList.toggle('active',el.dataset.f===curFilter));
+  renderAreaFilter();
+}
 
-// ══════════════════════════════════════════════════════
+function mfbTag(id){tagFilter=tagFilter===id?null:id;renderSide();renderMobileFilterBar();renderHome();scrollToContent();document.querySelectorAll('.mfb-expand').forEach(e=>e.classList.remove('open'));}
+function toggleMfbExpand(name){const el=document.getElementById('mfb'+name);if(!el)return;const open=el.classList.contains('open');document.querySelectorAll('.mfb-expand').forEach(e=>e.classList.remove('open'));if(!open)el.classList.add('open');}
+function scrollToContent(){const a=document.getElementById('contentAnchor');if(a)a.scrollIntoView({behavior:'smooth',block:'start'});}
+
+// ════════════════════════════════════════════════
+// ACTIVE BADGE BAR
+// ════════════════════════════════════════════════
+function renderBadgeBar(){
+  const bar=document.getElementById('activeBadgeBar');
+  const badges=[];
+  const filterLabels={all:null,fav:'⭐ お気に入り','yt-watchlater':'▶ あとで見る（未視聴）',recent:'最近追加'};
+  if(curFilter&&curFilter!=='all'&&filterLabels[curFilter]){
+    badges.push(`<span class="a-badge">${filterLabels[curFilter]}<button class="a-badge-clear" onclick="setFilter('all')">✕</button></span>`);
+  }
+  if(tagFilter){
+    const t=tags.find(t=>t.id===tagFilter);
+    if(t) badges.push(`<span class="a-badge" style="background:${t.color}">${esc(t.name)}<button class="a-badge-clear" onclick="toggleTagFilter('${t.id}')">✕</button></span>`);
+  }
+  if(areaFilter.country){
+    badges.push(`<span class="a-badge">${esc(areaFilter.country)}${areaFilter.prefecture?' › '+esc(areaFilter.prefecture):''}<button class="a-badge-clear" onclick="clearAreaFilter()">✕</button></span>`);
+  }
+  if(badges.length){bar.innerHTML=badges.join('');bar.classList.add('show');}
+  else{bar.innerHTML='';bar.classList.remove('show');}
+}
+
+function clearAreaFilter(){areaFilter={country:null,prefecture:null};renderAreaFilter();renderMobileFilterBar();renderHome();}
+
+// ════════════════════════════════════════════════
 // FILTER & SORT
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 function getFiltered(){
-  const s = document.getElementById('searchIn')?.value.toLowerCase()||'';
-  const now = Date.now(), wk=7*864e5;
-  let result = posts.filter(p=>{
-    if(s && ![(p.author||''),(p.handle||''),(p.content||''),(p.memo||'')].join(' ').toLowerCase().includes(s)) return false;
-    if(tagFilter && !(p.tags&&p.tags.includes(tagFilter))) return false;
-    if(curFilter==='recent' && now-p.createdAt>wk) return false;
-    if(curFilter==='memo' && !p.memo) return false;
-    if(curFilter==='img' && !p.image) return false;
-    if(curFilter==='youtube' && p.type!=='youtube') return false;
-    if(curFilter==='yt-unwatch' && (p.type!=='youtube'||p.youtube_status==='watched')) return false;
-    if(areaFilter.country && p.country!==areaFilter.country) return false;
-    if(areaFilter.prefecture && p.prefecture!==areaFilter.prefecture) return false;
-    if(displayMode==='B' && !p.area && !p.country) return false;
+  const s=document.getElementById('searchIn')?.value.toLowerCase()||'';
+  const now=Date.now(),wk=7*864e5;
+  let result=posts.filter(p=>{
+    if(s&&![p.author,p.handle,p.content,p.memo].join(' ').toLowerCase().includes(s)) return false;
+    if(tagFilter&&!(p.tags&&p.tags.includes(tagFilter))) return false;
+    if(curFilter==='fav'&&!p.is_favorite) return false;
+    if(curFilter==='yt-watchlater'&&!(p.type==='youtube'&&p.watch_later&&p.youtube_status!=='watched')) return false;
+    if(curFilter==='recent'&&now-p.createdAt>wk) return false;
+    if(areaFilter.country&&p.country!==areaFilter.country) return false;
+    if(areaFilter.prefecture&&p.prefecture!==areaFilter.prefecture) return false;
+    if(displayMode==='B'&&!p.area&&!p.country) return false;
     return true;
   });
 
-  // 現在地ソート
+  // ソート: お気に入り > リマインダー日（近）> 登録日（新）
+  const todayMs=Date.now();
+  const remindMap=new Map();
+  reminders.filter(r=>!r.done).forEach(r=>{
+    if(!remindMap.has(r.post_id)||r.remind_at<remindMap.get(r.post_id)) remindMap.set(r.post_id,r.remind_at);
+  });
+
+  result.sort((a,b)=>{
+    // お気に入り優先
+    if(a.is_favorite!==b.is_favorite) return a.is_favorite?-1:1;
+    // リマインダー近い順
+    const ra=remindMap.get(a.id)??Infinity, rb=remindMap.get(b.id)??Infinity;
+    if(ra!==rb) return ra-rb;
+    // 登録日新しい順
+    return b.createdAt-a.createdAt;
+  });
+
+  // 現在地ソートは is_favorite 以外の部分に適用
   if(myLat!==null){
-    result = result.map(p=>{
+    result=result.map(p=>{
       let dist=Infinity;
       if(p.lat&&p.lng) dist=haversine(myLat,myLng,p.lat,p.lng);
-      return {...p,_dist:dist};
-    }).sort((a,b)=>a._dist-b._dist);
+      return{...p,_dist:dist};
+    });
+    // お気に入りグループ内でも距離ソート
+    result.sort((a,b)=>{
+      if(a.is_favorite!==b.is_favorite) return a.is_favorite?-1:1;
+      return a._dist-b._dist;
+    });
   }
   return result;
 }
 
 function haversine(la1,lo1,la2,lo2){
-  const R=6371, dLat=(la2-la1)*Math.PI/180, dLon=(lo2-lo1)*Math.PI/180;
+  const R=6371,dLat=(la2-la1)*Math.PI/180,dLon=(lo2-lo1)*Math.PI/180;
   const a=Math.sin(dLat/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLon/2)**2;
   return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
 function locateMe(){
-  if(!navigator.geolocation){ toast('位置情報が使えません','err'); return; }
-  navigator.geolocation.getCurrentPosition(pos=>{
-    myLat=pos.coords.latitude; myLng=pos.coords.longitude;
-    toast('現在地を取得しました。近い順に並び替えます','ok');
-    renderHome();
-  }, ()=>toast('位置情報の取得に失敗しました','err'));
+  if(!navigator.geolocation){toast('位置情報が使えません','err');return;}
+  navigator.geolocation.getCurrentPosition(pos=>{myLat=pos.coords.latitude;myLng=pos.coords.longitude;toast('現在地を取得しました','ok');renderHome();},()=>toast('位置情報の取得に失敗しました','err'));
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// FILTER SETTERS
+// ════════════════════════════════════════════════
+function setFilter(f){
+  curFilter=f; tagFilter=null;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  const map={all:'fAll',fav:'fFav','yt-watchlater':'fYtWl',recent:'fRecent'};
+  document.getElementById(map[f]||'fAll')?.classList.add('active');
+  document.querySelectorAll('#mfbMain .mfb-pill[data-f]').forEach(el=>el.classList.toggle('active',el.dataset.f===f));
+  renderBadgeBar(); renderHome(); scrollToContent();
+}
+function setCountryFilter(v){areaFilter.country=v||null;areaFilter.prefecture=null;renderAreaFilter();renderBadgeBar();renderHome();scrollToContent();}
+function setPrefFilter(v){areaFilter.prefecture=v||null;renderBadgeBar();renderHome();scrollToContent();}
+function toggleTagFilter(id){tagFilter=tagFilter===id?null:id;renderSide();renderMobileFilterBar();renderBadgeBar();renderHome();scrollToContent();}
+
+// ════════════════════════════════════════════════
 // RENDER HOME
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 function renderHome(){
-  if(viewMode==='map'){ renderMap(); return; }
+  if(viewMode==='map'){renderMap();return;}
   document.getElementById('mapWrap').style.display='none';
   document.getElementById('postsWrap').style.display='block';
-  const filtered = getFiltered();
-  document.getElementById('resultInfo').textContent = filtered.length+' clips'+(myLat?' (現在地優先)':'');
-  const wrap = document.getElementById('postsWrap');
-  if(!filtered.length){
-    wrap.className='';
-    wrap.innerHTML=`<div class="empty"><div class="empty-mark">—</div><h3>クリップがありません</h3><p>「Add」タブから追加してみましょう</p></div>`;
-    return;
-  }
-
-  if(displayMode==='A'){
-    // ジャンル主軸：タグでグループ化
-    renderGrouped(filtered, wrap, 'tag');
-  } else {
-    // エリア主軸：エリアでグループ化
-    renderGrouped(filtered, wrap, 'area');
-  }
-  updateStats();
+  const filtered=getFiltered();
+  document.getElementById('resultInfo').textContent=filtered.length+' clips'+(myLat?' (現在地優先)':'');
+  const wrap=document.getElementById('postsWrap');
+  if(!filtered.length){wrap.innerHTML=`<div class="empty"><div class="empty-mark">—</div><h3>クリップがありません</h3><p>フィルターを変更するか「Add」から追加してください</p></div>`;return;}
+  if(displayMode==='A') renderGrouped(filtered,wrap,'tag');
+  else renderGrouped(filtered,wrap,'area');
 }
 
-function renderGrouped(filtered, wrap, groupBy){
-  if(viewMode==='list') wrap.className='';
-  else wrap.className='';
-
-  let groups={};
-  const ungroupedKey = groupBy==='tag' ? 'タグなし' : 'エリアなし';
-
+function renderGrouped(filtered,wrap,groupBy){
+  const ungrouped=groupBy==='tag'?'タグなし':'エリアなし';
+  const groups={};
   if(groupBy==='tag'){
-    // タグでグループ
-    const parentTags = tags.filter(t=>!t.parent_id);
+    const parentTags=tags.filter(t=>!t.parent_id);
     filtered.forEach(p=>{
-      const ptags = (p.tags||[]).map(tid=>tags.find(t=>t.id===tid)).filter(Boolean);
-      const parents = ptags.filter(t=>!t.parent_id);
-      if(parents.length){
-        parents.forEach(pt=>{ (groups[pt.name]=groups[pt.name]||[]).push(p); });
-      } else {
-        (groups[ungroupedKey]=groups[ungroupedKey]||[]).push(p);
-      }
+      const ptags=(p.tags||[]).map(id=>tags.find(t=>t.id===id)).filter(t=>t&&!t.parent_id);
+      if(ptags.length) ptags.forEach(pt=>{(groups[pt.name]=groups[pt.name]||[]).push(p);});
+      else (groups[ungrouped]=groups[ungrouped]||[]).push(p);
     });
   } else {
-    // エリアでグループ
     filtered.forEach(p=>{
-      const key = [p.country, p.prefecture].filter(Boolean).join(' › ') || ungroupedKey;
+      const key=[p.country,p.prefecture].filter(Boolean).join(' › ')||ungrouped;
       (groups[key]=groups[key]||[]).push(p);
     });
   }
-
+  const sortedKeys=Object.keys(groups).sort((a,b)=>a===ungrouped?1:b===ungrouped?-1:a.localeCompare(b,'ja'));
   let html='';
-  // tagなし/エリアなしを末尾に
-  const sortedKeys = Object.keys(groups).sort((a,b)=>a===ungroupedKey?1:b===ungroupedKey?-1:a.localeCompare(b,'ja'));
   sortedKeys.forEach(k=>{
-    html += `<div class="group-header">${esc(k)} <span style="opacity:.5">(${groups[k].length})</span></div>`;
-    if(viewMode==='grid'){
-      html += `<div class="posts-grid" style="margin-bottom:1rem">${groups[k].map(cardHTML).join('')}</div>`;
-    } else {
-      html += `<div class="posts-list" style="margin-bottom:1rem">${groups[k].map(rowHTML).join('')}</div>`;
-    }
+    html+=`<div class="group-header">${esc(k)} <span style="opacity:.4">(${groups[k].length})</span></div>`;
+    if(viewMode==='grid') html+=`<div class="posts-grid" style="margin-bottom:.9rem">${groups[k].map(cardHTML).join('')}</div>`;
+    else html+=`<div class="posts-list" style="margin-bottom:.9rem">${groups[k].map(rowHTML).join('')}</div>`;
   });
-  wrap.innerHTML = html;
+  wrap.innerHTML=html;
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // CARD / ROW HTML
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 function typeBadge(type){
-  const map={x:'𝕏',web:'WEB',youtube:'▶ YT',memo:'MEMO'};
+  const label={x:'𝕏',web:'WEB',youtube:'▶',memo:'MEMO'};
   const bg={x:'#111',web:'#0369a1',youtube:'#dc2626',memo:'#166534'};
   const fg={x:'#fff',web:'#e0f2fe',youtube:'#fee2e2',memo:'#f0fdf4'};
-  return `<span class="type-badge" style="background:${bg[type]||'#111'};color:${fg[type]||'#fff'}">${map[type]||type}</span>`;
+  return `<span class="type-badge" style="background:${bg[type]||'#111'};color:${fg[type]||'#fff'}">${label[type]||type}</span>`;
 }
 
 function cardHTML(p){
-  const tagS=(p.tags||[]).map(tid=>{const t=tags.find(t=>t.id===tid);return t?`<span class="c-tag" style="background:${t.color}18;color:${t.color}">${esc(t.name)}</span>`:''}).join('');
   const d=p.createdAt?new Date(p.createdAt).toLocaleDateString('ja-JP',{month:'short',day:'numeric'}):'';
-  const preview=p.content&&p.content.length>100?esc(p.content.slice(0,100))+'…':esc(p.content||'');
-  const distBadge=p._dist&&p._dist<Infinity?`<span class="c-dist">${p._dist<1?Math.round(p._dist*1000)+'m':p._dist.toFixed(1)+'km'}</span>`:'';
+  const tagS=(p.tags||[]).map(id=>{const t=tags.find(t=>t.id===id);return t?`<span class="c-tag" style="background:${t.color}1a;color:${t.color}">${esc(t.name)}</span>`:''}).join('');
   const areaStr=[p.country,p.prefecture,p.area].filter(Boolean).join(' › ');
-  const ytBadge=p.type==='youtube'?`<span class="yt-status ${p.youtube_status}">${p.youtube_status==='watched'?'視聴済':'未視聴'}</span>${p.youtube_priority?'<span class="yt-priority">⭐</span>':''}`:' ';
-
+  const distBadge=p._dist&&p._dist<Infinity?`<span class="c-dist">${p._dist<1?Math.round(p._dist*1000)+'m':p._dist.toFixed(1)+'km'}</span>`:'';
+  const ytThumb=p.type==='youtube'&&p.url?`https://img.youtube.com/vi/${getYtId(p.url)}/mqdefault.jpg`:'';
+  const imgSrc=p.image||ytThumb;
+  const favFlag=p.is_favorite?`<span class="flag-fav">⭐</span>`:'';
+  const wlFlag=p.watch_later?`<span class="flag-wl">📌</span>`:'';
+  const ytStatusBadge=p.type==='youtube'?`<span class="yt-status-badge ${p.youtube_status}">${p.youtube_status==='watched'?'✅ 視聴済':'▶ 未視聴'}</span>`:'';
+  const reminderEl=reminders.filter(r=>r.post_id===p.id&&!r.done).length?`<span style="font-size:.65rem;color:var(--yellow);background:#fff8e1;padding:1px 6px;border-radius:10px">🔔</span>`:'';
   return `<div class="card">
-    ${p.image?`<img class="card-img" src="${esc(p.image)}" onerror="this.style.display='none'" alt="">`:
-      p.type==='youtube'&&p.url?`<img class="card-img" src="https://img.youtube.com/vi/${getYtId(p.url)}/mqdefault.jpg" onerror="this.style.display='none'" alt="">`:'' }
+    ${favFlag}
+    ${imgSrc?`<div class="card-img-wrap"><img src="${esc(imgSrc)}" onerror="this.parentElement.style.display='none'" alt="" loading="lazy"></div>`:''}
     <div class="card-body">
       <div class="card-meta">
         <div class="c-avatar">${(p.author||'?').charAt(0).toUpperCase()}</div>
         <div><div class="c-author">${typeBadge(p.type)}${esc(p.author)}</div><div class="c-handle">${esc(p.handle)}</div></div>
         <div class="c-date">${d}</div>
       </div>
-      ${ytBadge !== ' ' ? `<div style="margin-bottom:.4rem">${ytBadge}</div>` : ''}
-      ${preview?`<div class="c-content">${preview}</div>`:''}
+      ${ytStatusBadge?`<div style="margin-bottom:.35rem">${ytStatusBadge}${wlFlag}</div>`:''}
+      ${p.content?`<div class="c-content">${esc(p.content.slice(0,120))}</div>`:''}
       ${p.summary?`<div class="c-summary">✨ ${esc(p.summary.slice(0,80))}${p.summary.length>80?'…':''}</div>`:''}
       ${areaStr?`<div class="c-area">📍 ${esc(areaStr)}${distBadge}</div>`:''}
-      ${p.memo?`<div class="c-memo">${memoHTML(p.memo)}</div>`:''}
+      ${p.memo?`<div class="c-memo-row">${memoHTML(p.memo.slice(0,60))}</div>`:''}
       ${tagS?`<div class="c-tags">${tagS}</div>`:''}
       <div class="c-footer">
         <button class="c-btn" onclick="openDetail('${p.id}')">詳細</button>
-        <button class="c-btn" onclick="openReminderModal('${p.id}')" title="リマインダー">🔔</button>
-        ${p.type==='youtube'?`<button class="c-btn" onclick="playYt('${p.id}')">▶ 再生</button>`:''}
+        <button class="c-btn" onclick="openReminderModal('${p.id}')" title="リマインダー">🔔${reminderEl}</button>
+        ${p.type==='youtube'?`<button class="c-btn" onclick="playYt('${p.id}')">▶</button>`:''}
         ${p.url?`<a class="c-link" href="${esc(p.url)}" target="_blank" rel="noopener">↗</a>`:''}
-        <div style="margin-left:auto;display:flex;gap:.3rem">
+        <div style="margin-left:auto;display:flex;gap:.25rem">
           <button class="c-btn" onclick="openEdit('${p.id}')">編集</button>
           <button class="c-btn del" onclick="delPost('${p.id}')">削除</button>
         </div>
@@ -936,122 +1014,90 @@ function cardHTML(p){
 }
 
 function rowHTML(p){
-  const tagS=(p.tags||[]).map(tid=>{const t=tags.find(t=>t.id===tid);return t?`<span class="c-tag" style="background:${t.color}18;color:${t.color}">${esc(t.name)}</span>`:''}).join('');
   const d=p.createdAt?new Date(p.createdAt).toLocaleDateString('ja-JP',{month:'short',day:'numeric'}):'';
-  const thumb=p.type==='youtube'&&p.url?`https://img.youtube.com/vi/${getYtId(p.url)}/mqdefault.jpg`:'';
+  const tagS=(p.tags||[]).map(id=>{const t=tags.find(t=>t.id===id);return t?`<span class="c-tag" style="background:${t.color}1a;color:${t.color}">${esc(t.name)}</span>`:''}).join('');
+  const ytThumb=p.type==='youtube'&&p.url?`https://img.youtube.com/vi/${getYtId(p.url)}/mqdefault.jpg`:'';
+  const imgSrc=p.image||ytThumb;
+  const favFlag=p.is_favorite?'⭐ ':p.watch_later?'📌 ':'';
   return `<div class="list-row">
-    ${p.image?`<img class="list-img" src="${esc(p.image)}" onerror="this.style.display='none'" alt="">`:
-      thumb?`<img class="list-img" src="${thumb}" onerror="this.style.display='none'" alt="">`:
-      `<div class="list-img-ph">${p.type==='youtube'?'▶':'—'}</div>`}
+    ${imgSrc
+      ?`<div class="list-thumb"><img src="${esc(imgSrc)}" onerror="this.parentElement.innerHTML='<div class=list-thumb-ph>—</div>'" alt="" loading="lazy"></div>`
+      :`<div class="list-thumb-ph">${p.type==='youtube'?'▶':'—'}</div>`}
     <div class="list-body">
-      <div class="list-top">
-        <span class="list-author">${typeBadge(p.type)}${esc(p.author)}</span>
-        <span class="list-handle">${esc(p.handle)}</span>
-        <span class="list-date">${d}</span>
-      </div>
-      ${p.content?`<div class="list-content">${esc(p.content.slice(0,120))}</div>`:''}
-      <div class="list-bottom">
-        ${tagS}
-        <button class="c-btn" onclick="openDetail('${p.id}')" style="font-size:.68rem">詳細</button>
-        <button class="c-btn" onclick="openEdit('${p.id}')" style="font-size:.68rem">編集</button>
-        <button class="c-btn del" onclick="delPost('${p.id}')" style="font-size:.68rem">削除</button>
-      </div>
+      <div class="list-top"><span class="list-author">${favFlag}${typeBadge(p.type)}${esc(p.author)}</span><span class="list-handle">${esc(p.handle)}</span><span class="list-date">${d}</span></div>
+      ${p.content?`<div class="list-content">${esc(p.content.slice(0,100))}</div>`:''}
+      <div class="list-bottom">${tagS}<button class="c-btn" onclick="openDetail('${p.id}')" style="font-size:.66rem">詳細</button><button class="c-btn" onclick="openEdit('${p.id}')" style="font-size:.66rem">編集</button><button class="c-btn del" onclick="delPost('${p.id}')" style="font-size:.66rem">削除</button></div>
     </div>
   </div>`;
 }
 
-function memoHTML(memo){
-  // URLを検出してリンク化
-  return esc(memo).replace(/https?:\/\/[^\s]+/g, m=>`<a href="${m}" target="_blank" rel="noopener" style="color:var(--blue)">${m}</a>`);
-}
+function memoHTML(m){return esc(m).replace(/https?:\/\/[^\s]+/g,u=>`<a href="${u}" target="_blank" rel="noopener" style="color:var(--blue)">${u}</a>`);}
+function getYtId(url){const m=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/);return m?m[1]:'';}
 
-function getYtId(url){
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/);
-  return m?m[1]:'';
-}
-
-// ══════════════════════════════════════════════════════
-// MAP（現在地中心対応）
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// MAP
+// ════════════════════════════════════════════════
 function renderMap(){
   document.getElementById('mapWrap').style.display='block';
   document.getElementById('postsWrap').style.display='none';
-  const initLat=myLat||35.6812, initLng=myLng||139.7671, initZoom=myLat?13:10;
+  const initLat=myLat||35.6812,initLng=myLng||139.7671,initZoom=myLat?13:10;
   if(!map){
     map=L.map('mapWrap').setView([initLat,initLng],initZoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
-  } else if(myLat){
-    map.setView([myLat,myLng],13);
-  }
+  } else if(myLat) map.setView([myLat,myLng],13);
   mapMarkers.forEach(m=>m.remove()); mapMarkers=[];
-
-  // 現在地マーカー
-  if(myLat){
-    const icon=L.divIcon({className:'',html:'<div style="width:14px;height:14px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 0 3px rgba(59,130,246,.4)"></div>',iconSize:[14,14],iconAnchor:[7,7]});
-    L.marker([myLat,myLng],{icon}).addTo(map).bindPopup('📍 現在地');
-  }
-
+  if(myLat){const icon=L.divIcon({className:'',html:'<div style="width:14px;height:14px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 0 3px rgba(59,130,246,.4)"></div>',iconSize:[14,14],iconAnchor:[7,7]});L.marker([myLat,myLng],{icon}).addTo(map).bindPopup('📍 現在地');}
   const filtered=getFiltered().filter(p=>p.lat&&p.lng);
   document.getElementById('resultInfo').textContent=filtered.length?filtered.length+' clips (地図)':'地図表示できる投稿がありません';
-  if(!filtered.length){ setTimeout(()=>map.invalidateSize(),100); return; }
-
   const bounds=[];
   filtered.forEach(p=>{
-    const popup=`<div style="min-width:180px;font-family:sans-serif">
-      <b>${esc(p.author)}</b><br>
-      <span style="font-size:11px;color:#555">${esc((p.content||'').slice(0,80))}</span><br>
-      <button onclick="openDetail('${p.id}')" style="margin-top:4px;font-size:11px;padding:2px 8px;background:#111;color:#fff;border:none;border-radius:2px;cursor:pointer">詳細</button>
-    </div>`;
+    const popup=`<div style="min-width:160px;font-family:sans-serif"><b>${esc(p.author)}</b><br><span style="font-size:11px;color:#555">${esc((p.content||'').slice(0,60))}</span><br><button onclick="openDetail('${p.id}')" style="margin-top:4px;font-size:11px;padding:2px 8px;background:#111;color:#fff;border:none;border-radius:2px;cursor:pointer">詳細</button></div>`;
     const m=L.marker([p.lat,p.lng]).addTo(map).bindPopup(popup);
     mapMarkers.push(m); bounds.push([p.lat,p.lng]);
   });
-
-  if(myLat){ bounds.push([myLat,myLng]); map.fitBounds(bounds,{padding:[40,40],maxZoom:14}); }
-  else { map.fitBounds(bounds,{padding:[40,40]}); }
+  if(myLat){bounds.push([myLat,myLng]);map.fitBounds(bounds,{padding:[40,40],maxZoom:14});}
+  else if(bounds.length) map.fitBounds(bounds,{padding:[40,40]});
   setTimeout(()=>map.invalidateSize(),100);
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // DETAIL MODAL
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 function openDetail(id){
   const p=posts.find(p=>p.id===id); if(!p) return;
-  const tagS=(p.tags||[]).map(tid=>{const t=tags.find(t=>t.id===tid);return t?`<span class="c-tag" style="background:${t.color}18;color:${t.color};padding:2px 8px;border-radius:10px">${esc(t.name)}</span>`:''}).join(' ');
+  const tagS=(p.tags||[]).map(id=>{const t=tags.find(t=>t.id===id);return t?`<span class="c-tag" style="background:${t.color}1a;color:${t.color};padding:2px 8px;border-radius:10px">${esc(t.name)}</span>`:''}).join(' ');
   const d=p.createdAt?new Date(p.createdAt).toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'}):'';
   const areaStr=[p.country,p.prefecture,p.area].filter(Boolean).join(' › ');
   const gmapUrl=areaStr?`https://www.google.com/maps/search/${encodeURIComponent(areaStr)}`:'';
-
   let ytSection='';
-  if(p.type==='youtube'&&p.url){
-    const vid=getYtId(p.url);
-    ytSection=`<div class="yt-player-wrap"><iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen allow="autoplay"></iframe></div>`;
-  }
-
+  if(p.type==='youtube'&&p.url){const vid=getYtId(p.url);ytSection=`<div class="yt-embed-wrap"><iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe></div>`;}
+  const imgSection=(!ytSection&&p.image)?`<div class="detail-img-wrap"><img src="${esc(p.image)}" onerror="this.parentElement.style.display='none'" alt=""></div>`:'';
   document.getElementById('detailBody').innerHTML=`
-    ${ytSection}
-    ${!ytSection&&p.image?`<img src="${esc(p.image)}" style="width:100%;border-radius:4px;margin-bottom:1rem;border:1px solid var(--line)" onerror="this.style.display='none'" alt="">`: ''}
-    <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1rem">
+    ${ytSection}${imgSection}
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.9rem">
       <div class="c-avatar">${(p.author||'?').charAt(0).toUpperCase()}</div>
-      <div><div class="c-author">${typeBadge(p.type)}${esc(p.author)}</div><div class="c-handle">${esc(p.handle)}</div></div>
+      <div><div class="c-author">${typeBadge(p.type)}${esc(p.author)}${p.is_favorite?' ⭐':''}</div><div class="c-handle">${esc(p.handle)}</div></div>
       <div class="c-date" style="margin-left:auto">${d}</div>
     </div>
-    ${p.type==='youtube'?`<div style="margin-bottom:.75rem"><span class="yt-status ${p.youtube_status}">${p.youtube_status==='watched'?'✅ 視聴済':'▶ 未視聴'}</span>${p.youtube_priority?'<span class="yt-priority" style="margin-left:.5rem">⭐ 優先</span>':''}</div>`:''}
-    ${p.content?`<div style="font-size:.88rem;line-height:1.8;color:var(--ink2);margin-bottom:1rem;white-space:pre-wrap">${esc(p.content)}</div>`:''}
-    ${p.summary?`<div class="c-summary" style="margin-bottom:1rem">✨ ${esc(p.summary)}</div>`:''}
-    ${areaStr?`<div style="font-size:.8rem;color:var(--ink3);margin-bottom:.75rem">📍 ${esc(areaStr)} ${gmapUrl?`<a href="${gmapUrl}" target="_blank" rel="noopener" style="color:var(--blue);margin-left:.5rem">Googleマップで開く ↗</a>`:''}</div>`:''}
-    ${p.memo?`<div class="c-memo" style="margin-bottom:.75rem">${memoHTML(p.memo)}</div>`:''}
-    ${tagS?`<div class="c-tags" style="margin-bottom:.75rem">${tagS}</div>`:''}
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-      ${p.url?`<a class="btn-ghost" href="${esc(p.url)}" target="_blank" rel="noopener" style="font-size:.8rem;padding:.35rem .85rem;text-decoration:none">↗ 元のリンク</a>`:''}
-      ${p.type==='youtube'?`<button class="c-btn" onclick="toggleWatched('${p.id}')">${p.youtube_status==='watched'?'▶ 未視聴に戻す':'✅ 視聴済みにする'}</button>`:''}
+    ${p.type==='youtube'?`<div style="margin-bottom:.65rem"><span class="yt-status-badge ${p.youtube_status}">${p.youtube_status==='watched'?'✅ 視聴済':'▶ 未視聴'}</span>${p.watch_later?'<span style="margin-left:.4rem;font-size:.76rem">📌 あとで見る</span>':''}</div>`:''}
+    ${p.content?`<div style="font-size:.85rem;line-height:1.85;color:var(--ink2);margin-bottom:.9rem;white-space:pre-wrap">${esc(p.content)}</div>`:''}
+    ${p.summary?`<div class="c-summary" style="margin-bottom:.9rem">✨ ${esc(p.summary)}</div>`:''}
+    ${areaStr?`<div style="font-size:.78rem;color:var(--ink3);margin-bottom:.65rem">📍 ${esc(areaStr)}${gmapUrl?` <a href="${gmapUrl}" target="_blank" rel="noopener" style="color:var(--blue)">Googleマップ ↗</a>`:''}</div>`:''}
+    ${p.memo?`<div class="c-memo-row" style="margin-bottom:.65rem">${memoHTML(p.memo)}</div>`:''}
+    ${tagS?`<div class="c-tags" style="margin-bottom:.65rem">${tagS}</div>`:''}
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+      ${p.url?`<a class="btn-ghost" href="${esc(p.url)}" target="_blank" rel="noopener" style="font-size:.78rem;padding:.32rem .8rem;text-decoration:none">↗ 元リンク</a>`:''}
+      ${p.type==='youtube'?`<button class="c-btn" onclick="toggleWatched('${p.id}')">
+        ${p.youtube_status==='watched'?'▶ 未視聴に戻す':'✅ 視聴済みにする'}
+      </button>`:''}
       <button class="c-btn" onclick="closeModal('detailModal');openEdit('${p.id}')" style="margin-left:auto">編集</button>
     </div>`;
   openModal('detailModal');
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // EDIT
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 function openEdit(id){
   const p=posts.find(p=>p.id===id); if(!p) return;
   editId=id;
@@ -1066,15 +1112,31 @@ function openEdit(id){
   document.getElementById('eLat').value='';
   document.getElementById('eLng').value='';
   document.getElementById('eAreaStatus').textContent=p.lat?`現在の位置: ${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`:'';
+  document.getElementById('eFavorite').checked=p.is_favorite;
+  eImgPrev();
   const ytF=document.getElementById('eYtFields');
   if(p.type==='youtube'){
     ytF.style.display='block';
-    document.getElementById('eYtPriority').checked=p.youtube_priority;
     document.getElementById('eYtWatched').checked=p.youtube_status==='watched';
-  } else { ytF.style.display='none'; }
+    document.getElementById('eWatchLater').checked=p.watch_later;
+  } else ytF.style.display='none';
   eSel=new Set(p.tags||[]);
   renderPicker('editPicker',eSel);
   openModal('editModal');
+}
+
+function eImgPrev(){
+  const u=document.getElementById('eImgUrl').value.trim();
+  const img=document.getElementById('eImgPrevImg'),ph=document.getElementById('eImgPh');
+  if(u){img.src=u;img.style.display='block';ph.style.display='none';}
+  else{img.style.display='none';ph.style.display='flex';}
+}
+
+function handleEditFile(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{document.getElementById('eImgUrl').value=ev.target.result;eImgPrev();};
+  r.readAsDataURL(f);
 }
 
 async function saveEdit(){
@@ -1087,171 +1149,150 @@ async function saveEdit(){
   p.country=document.getElementById('eCountry').value.trim();
   p.prefecture=document.getElementById('ePrefecture').value.trim();
   p.area=document.getElementById('eArea').value.trim();
-  // 位置取得ボタンで更新された場合のみ lat/lng を上書き
+  p.is_favorite=document.getElementById('eFavorite').checked;
   const newLat=parseFloat(document.getElementById('eLat').value);
   const newLng=parseFloat(document.getElementById('eLng').value);
-  if(!isNaN(newLat)&&!isNaN(newLng)){ p.lat=newLat; p.lng=newLng; }
+  if(!isNaN(newLat)&&!isNaN(newLng)){p.lat=newLat;p.lng=newLng;}
   p.tags=[...eSel];
   if(p.type==='youtube'){
-    p.youtube_priority=document.getElementById('eYtPriority').checked;
     p.youtube_status=document.getElementById('eYtWatched').checked?'watched':'unwatch';
+    p.watch_later=document.getElementById('eWatchLater').checked;
+    // 閲覧済みなら watch_later OFF
+    if(p.youtube_status==='watched') p.watch_later=false;
   }
-  try {
+  try{
     await sb('posts?id=eq.'+p.id,'PATCH',{
-      author:p.author, handle:p.handle, content:p.content, memo:p.memo,
-      image:p.image, country:p.country, prefecture:p.prefecture, area:p.area,
-      lat:p.lat||null, lng:p.lng||null,
-      tags:p.tags, youtube_priority:p.youtube_priority, youtube_status:p.youtube_status
+      author:p.author,handle:p.handle,content:p.content,memo:p.memo,
+      image:p.image,country:p.country,prefecture:p.prefecture,area:p.area,
+      lat:p.lat||null,lng:p.lng||null,tags:p.tags,
+      is_favorite:p.is_favorite,watch_later:p.watch_later,
+      youtube_status:p.youtube_status,youtube_priority:p.youtube_priority
     });
-    closeModal('editModal'); renderAll(); toast('更新しました ✓','ok');
-  } catch(e){ toast('エラー: '+e.message,'err'); }
+    closeModal('editModal');renderAll();toast('更新しました ✓','ok');
+  }catch(e){toast('エラー: '+e.message,'err');}
 }
 
 async function toggleWatched(id){
   const p=posts.find(p=>p.id===id); if(!p) return;
-  p.youtube_status=p.youtube_status==='watched'?'unwatch':'watched';
-  try {
-    await sb('posts?id=eq.'+id,'PATCH',{youtube_status:p.youtube_status});
-    closeModal('detailModal'); renderAll(); toast(p.youtube_status==='watched'?'視聴済みにしました':'未視聴に戻しました','ok');
-  } catch(e){ toast('エラー: '+e.message,'err'); }
+  const wasWatched=p.youtube_status==='watched';
+  p.youtube_status=wasWatched?'unwatch':'watched';
+  // 視聴済みにしたら watch_later=false、リマインダーをdone=true
+  if(!wasWatched){
+    p.watch_later=false;
+    // 関連リマインダーを済みに
+    const related=reminders.filter(r=>r.post_id===id&&!r.done);
+    for(const r of related){r.done=true;await sb('reminders?id=eq.'+r.id,'PATCH',{done:true}).catch(()=>{});}
+  }
+  try{
+    await sb('posts?id=eq.'+p.id,'PATCH',{youtube_status:p.youtube_status,watch_later:p.watch_later});
+    closeModal('detailModal');renderAll();renderReminderBar();toast(p.youtube_status==='watched'?'視聴済みにしました':'未視聴に戻しました','ok');
+  }catch(e){toast('エラー: '+e.message,'err');}
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // DELETE
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 async function delPost(id){
   if(!confirm('削除しますか？')) return;
-  try {
-    await sb('posts?id=eq.'+id,'DELETE');
-    posts=posts.filter(p=>p.id!==id); renderAll(); toast('削除しました');
-  } catch(e){ toast('エラー: '+e.message,'err'); }
+  try{await sb('posts?id=eq.'+id,'DELETE');posts=posts.filter(p=>p.id!==id);renderAll();toast('削除しました');}
+  catch(e){toast('エラー: '+e.message,'err');}
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // SAVE POST
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 async function savePost(){
   const url=document.getElementById('urlIn')?.value.trim()||'';
   const content=document.getElementById('fContent').value.trim();
   const memo=document.getElementById('fMemo').value.trim();
-  if(!content&&!memo&&!url){ toast('内容・メモ・URLのいずれかを入力してください','err'); return; }
-
+  if(!content&&!memo&&!url&&currentType!=='memo'){toast('内容・メモ・URLのいずれかを入力してください','err');return;}
   const now=Date.now();
   let author='',handle='',summary='';
+  if(currentType==='x'){author=document.getElementById('fAuthor').value.trim()||'不明';handle=document.getElementById('fHandle').value.trim();}
+  else if(currentType==='web'){const title=document.getElementById('fTitle').value.trim();const site=document.getElementById('fSite').value.trim();author=document.getElementById('fAuthorWeb').value.trim()||title||'Web記事';handle=site;summary=document.getElementById('fSummary').value.trim();}
+  else if(currentType==='youtube'){author=document.getElementById('fYtTitle').value.trim()||'YouTube動画';handle=document.getElementById('fYtChannel').value.trim();}
+  else{author='メモ';}
 
-  if(currentType==='x'){
-    author=document.getElementById('fAuthor').value.trim()||'不明';
-    handle=document.getElementById('fHandle').value.trim();
-  } else if(currentType==='web'){
-    const title=document.getElementById('fTitle').value.trim();
-    const site=document.getElementById('fSite').value.trim();
-    author=document.getElementById('fAuthorWeb').value.trim()||title||'Web記事';
-    handle=site;
-    summary=document.getElementById('fSummary').value.trim();
-  } else if(currentType==='youtube'){
-    author=document.getElementById('fYtTitle').value.trim()||'YouTube動画';
-    handle=document.getElementById('fYtChannel').value.trim();
-  } else {
-    author='メモ';
-  }
+  // タグ：子タグ選択時は親タグも自動追加
+  const selectedTags=new Set([...fSel]);
+  fSel.forEach(tid=>{
+    const t=tags.find(t=>t.id===tid);
+    if(t?.parent_id&&!selectedTags.has(t.parent_id)) selectedTags.add(t.parent_id);
+  });
 
   const remindDate=document.getElementById('fRemindDate').value;
   const remindMsg=document.getElementById('fRemindMsg').value.trim();
-
   const p={
-    id:'p'+now, url, created_at:now,
-    author, handle, content, memo,
+    id:'p'+now,url,created_at:now,
+    author,handle,content,memo,
     image:document.getElementById('fImgUrl').value.trim(),
-    tags:[...fSel],
+    tags:[...selectedTags],
     area:document.getElementById('fArea').value.trim()||null,
     country:document.getElementById('fCountry').value.trim()||null,
     prefecture:document.getElementById('fPrefecture').value.trim()||null,
     lat:parseFloat(document.getElementById('fLat').value)||null,
     lng:parseFloat(document.getElementById('fLng').value)||null,
-    type:currentType, summary:summary||null,
+    type:currentType,summary:summary||null,
     youtube_status:document.getElementById('fYtWatched')?.checked?'watched':'unwatch',
-    youtube_priority:document.getElementById('fYtPriority')?.checked||false,
+    youtube_priority:false,
+    is_favorite:document.getElementById('fFavorite').checked,
+    watch_later:document.getElementById('fWatchLater')?.checked||false,
   };
-
-  try {
+  try{
     await sb('posts','POST',p);
     posts.unshift(mapPost({...p}));
-
-    // リマインダー保存
     if(remindDate){
-      const r={id:'r'+now, post_id:p.id, remind_at:new Date(remindDate).getTime(), message:remindMsg, done:false};
-      await sb('reminders','POST',r);
-      reminders.push(r);
+      const r={id:'r'+now,post_id:p.id,remind_at:new Date(remindDate).getTime(),message:remindMsg,done:false};
+      await sb('reminders','POST',r); reminders.push(r);
     }
-
-    clearForm(); renderAll(); renderReminderBar();
-    toast('保存しました ✓','ok');
-    switchTab('home');
-  } catch(e){ toast('保存エラー: '+e.message,'err'); console.error(e); }
+    clearForm();renderAll();renderReminderBar();toast('保存しました ✓','ok');switchTab('home');
+  }catch(e){toast('保存エラー: '+e.message,'err');console.error(e);}
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // FETCH FROM URL
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 async function fetchFromUrl(){
   const url=document.getElementById('urlIn').value.trim();
-  if(!url){ toast('URLを入力してください','err'); return; }
+  if(!url){toast('URLを入力してください','err');return;}
   const btn=document.getElementById('fetchBtn');
-  btn.disabled=true; btn.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
+  btn.disabled=true;btn.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
   const status=document.getElementById('statusBar');
-  status.style.display='block'; status.textContent='取得中...';
-
-  try {
+  status.style.display='block';status.textContent='取得中...';
+  try{
     if(currentType==='x'){
       const m=url.match(/(?:twitter\.com|x\.com)\/@?([\w]+)\/status\/(\d+)/);
-      if(!m){ toast('XのURLを入力してください','err'); return; }
+      if(!m){toast('XのURLを入力してください','err');return;}
       document.getElementById('fHandle').value='@'+m[1];
       document.getElementById('fAuthor').value=m[1];
       const r=await fetch(`https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`);
       const d=await r.json();
       if(d.html){
         const doc=new DOMParser().parseFromString(d.html,'text/html');
-        let txt=doc.querySelector('p')?.textContent||'';
-        // pic.twitter.com リンクを画像URLに変換
-        const picMatch=txt.match(/pic\.twitter\.com\/\S+/);
-        if(picMatch){
-          const picUrl='https://'+picMatch[0];
-          document.getElementById('fImgUrl').value=picUrl;
-          prevImgUrl();
-          txt=txt.replace(picMatch[0],'').trim();
-        }
+        const txt=doc.querySelector('p')?.textContent||'';
         document.getElementById('fContent').value=txt;
         if(d.author_name) document.getElementById('fAuthor').value=d.author_name;
       }
       status.textContent='✓ X投稿の情報を取得しました';
-
     } else if(currentType==='youtube'){
       const vid=getYtId(url);
-      if(!vid){ toast('YouTubeのURLを入力してください','err'); return; }
-      // oEmbedでタイトル・チャンネル取得
-      try {
+      if(!vid){toast('YouTubeのURLを入力してください','err');return;}
+      try{
         const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
         const d=await r.json();
         if(d.title) document.getElementById('fYtTitle').value=d.title;
         if(d.author_name) document.getElementById('fYtChannel').value=d.author_name;
-        // サムネ
         document.getElementById('fImgUrl').value=`https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
         prevImgUrl();
-      } catch(e){}
+      }catch(e){}
+      // YouTube はデフォルトで「あとで見る」ON
+      document.getElementById('fWatchLater').checked=true;
       status.textContent='✓ YouTube動画の情報を取得しました';
-
     } else if(currentType==='web'){
       let html='';
-      const proxies=[
-        `https://corsproxy.io/?${encodeURIComponent(url)}`,
-        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-      ];
+      const proxies=[`https://corsproxy.io/?${encodeURIComponent(url)}`,`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`];
       for(const px of proxies){
-        try {
-          const r=await fetch(px,{signal:AbortSignal.timeout(8000)});
-          html=px.includes('allorigins')?(await r.json()).contents||'':await r.text();
-          if(html) break;
-        } catch(e){ continue; }
+        try{const r=await fetch(px,{signal:AbortSignal.timeout(8000)});html=px.includes('allorigins')?(await r.json()).contents||'':await r.text();if(html)break;}catch(e){continue;}
       }
       if(!html) throw new Error('取得失敗');
       const doc=new DOMParser().parseFromString(html,'text/html');
@@ -1265,60 +1306,55 @@ async function fetchFromUrl(){
       if(site) document.getElementById('fSite').value=site;
       if(author) document.getElementById('fAuthorWeb').value=author;
       if(desc) document.getElementById('fContent').value=desc;
-      if(img){ document.getElementById('fImgUrl').value=img; prevImgUrl(); }
-      status.textContent='✓ 記事情報を取得しました。要約中...';
-      // AI要約
+      if(img){document.getElementById('fImgUrl').value=img;prevImgUrl();}
+      status.textContent='✓ 情報を取得しました。要約中...';
       const toSummarize=[title,desc].filter(Boolean).join('\n');
       if(toSummarize){
-        try {
-          const cr=await fetch('https://api.anthropic.com/v1/messages',{
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,
-              messages:[{role:'user',content:`以下の記事を日本語で3〜5文で要約してください。\n\n${toSummarize}`}]})
-          });
+        try{
+          const cr=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:`以下の記事を日本語で3〜5文で要約してください。\n\n${toSummarize}`}]})});
           const cd=await cr.json();
           const sum=cd.content?.[0]?.text||'';
-          if(sum){ document.getElementById('fSummary').value=sum; status.textContent='✓ 取得・要約が完了しました'; }
+          if(sum){document.getElementById('fSummary').value=sum;status.textContent='✓ 取得・要約が完了しました';}
           else status.textContent='✓ 情報を取得しました';
-        } catch(e){ status.textContent='✓ 情報を取得しました（要約スキップ）'; }
-      } else { status.textContent='✓ 情報を取得しました'; }
+        }catch(e){status.textContent='✓ 情報を取得しました（要約スキップ）';}
+      } else status.textContent='✓ 情報を取得しました';
     }
-  } catch(e){
-    status.textContent='⚠️ 自動取得できませんでした。手動で入力してください';
-  }
-  btn.disabled=false; btn.innerHTML='情報取得';
+  }catch(e){status.textContent='⚠️ 自動取得できませんでした。手動で入力してください';}
+  btn.disabled=false;btn.innerHTML='情報取得';
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // FORM HELPERS
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 function setType(t){
   currentType=t;
   ['x','web','youtube','memo'].forEach(tt=>{
-    document.getElementById('type'+tt.charAt(0).toUpperCase()+tt.slice(1))?.classList.toggle('active',tt===t);
+    const el=document.getElementById('type'+tt.charAt(0).toUpperCase()+tt.slice(1));
+    if(el) el.classList.toggle('active',tt===t);
   });
   document.getElementById('urlRow').style.display=t==='memo'?'none':'flex';
   document.getElementById('xFields').style.display=t==='x'?'contents':'none';
   document.getElementById('webFields').style.display=t==='web'?'block':'none';
   document.getElementById('ytFields').style.display=t==='youtube'?'block':'none';
   document.getElementById('summaryField').style.display=t==='web'?'block':'none';
+  document.getElementById('watchLaterLabel').style.display=t==='youtube'?'inline-flex':'none';
+  document.getElementById('ytWatchedLabel').style.display=t==='youtube'?'inline-flex':'none';
   document.getElementById('statusBar').style.display='none';
-  const placeholders={x:'https://x.com/username/status/...',web:'https://example.com/article...',youtube:'https://youtube.com/watch?v=...',memo:''};
-  if(document.getElementById('urlIn')) document.getElementById('urlIn').placeholder=placeholders[t]||'';
+  const ph={x:'https://x.com/username/status/...',web:'https://example.com/article...',youtube:'https://youtube.com/watch?v=...',memo:''};
+  const urlIn=document.getElementById('urlIn');
+  if(urlIn) urlIn.placeholder=ph[t]||'';
 }
 
 function clearForm(){
   ['urlIn','fAuthor','fHandle','fTitle','fSite','fAuthorWeb','fYtTitle','fYtChannel',
-   'fContent','fSummary','fMemo','fImgUrl','fArea','fCountry','fPrefecture','fLat','fLng',
-   'fRemindDate','fRemindMsg'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  if(document.getElementById('fYtPriority')) document.getElementById('fYtPriority').checked=false;
-  if(document.getElementById('fYtWatched')) document.getElementById('fYtWatched').checked=false;
+   'fContent','fSummary','fMemo','fImgUrl','fArea','fCountry','fPrefecture','fLat','fLng','fRemindDate','fRemindMsg']
+   .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['fFavorite','fWatchLater','fYtWatched'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
   document.getElementById('imgPrev').style.display='none';
   document.getElementById('imgPh').style.display='flex';
   document.getElementById('fAreaStatus').textContent='';
   document.getElementById('statusBar').style.display='none';
-  fSel.clear(); renderPicker('formPicker',fSel);
-  setType('x');
+  fSel.clear();renderPicker('formPicker',fSel);setType('x');
 }
 
 function prevImgUrl(){
@@ -1329,68 +1365,58 @@ function prevImgUrl(){
 }
 
 function handleFile(e){
-  const f=e.target.files[0]; if(!f) return;
+  const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=ev=>{
-    document.getElementById('imgPrev').src=ev.target.result;
-    document.getElementById('imgPrev').style.display='block';
-    document.getElementById('imgPh').style.display='none';
-    document.getElementById('fImgUrl').value=ev.target.result;
-  };
+  r.onload=ev=>{document.getElementById('fImgUrl').value=ev.target.result;prevImgUrl();};
   r.readAsDataURL(f);
 }
 
-async function geocodeArea(){
-  const area=document.getElementById('fArea').value.trim();
-  const country=document.getElementById('fCountry').value.trim();
+async function geocodeArea(prefix){
+  const area=document.getElementById(prefix+'Area').value.trim();
+  const country=document.getElementById(prefix+'Country').value.trim();
   const q=[area,country].filter(Boolean).join(', ');
-  if(!q){ toast('場所名を入力してください','err'); return; }
-  const status=document.getElementById('fAreaStatus');
-  status.textContent='検索中...';
-  try {
+  if(!q){toast('場所名を入力してください','err');return;}
+  const statusId=prefix+'AreaStatus';
+  document.getElementById(statusId).textContent='検索中...';
+  try{
     const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&addressdetails=1`);
     const d=await r.json();
-    if(!d.length){ status.textContent='場所が見つかりませんでした'; return; }
+    if(!d.length){document.getElementById(statusId).textContent='場所が見つかりませんでした';return;}
     const addr=d[0].address||{};
-    document.getElementById('fLat').value=d[0].lat;
-    document.getElementById('fLng').value=d[0].lon;
-    if(!document.getElementById('fCountry').value&&addr.country) document.getElementById('fCountry').value=addr.country;
-    if(!document.getElementById('fPrefecture').value){
-      const pref=addr.state||addr.province||addr.region||'';
-      if(pref) document.getElementById('fPrefecture').value=pref;
-    }
-    status.textContent='✓ 位置情報を取得しました';
-  } catch(e){ status.textContent='エラーが発生しました'; }
+    document.getElementById(prefix+'Lat').value=d[0].lat;
+    document.getElementById(prefix+'Lng').value=d[0].lon;
+    if(!document.getElementById(prefix+'Country').value&&addr.country) document.getElementById(prefix+'Country').value=addr.country;
+    if(!document.getElementById(prefix+'Prefecture').value){const pref=addr.state||addr.province||addr.region||'';if(pref) document.getElementById(prefix+'Prefecture').value=pref;}
+    document.getElementById(statusId).textContent='✓ 位置情報を取得しました';
+  }catch(e){document.getElementById(statusId).textContent='エラーが発生しました';}
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // TAG PICKERS
-// ══════════════════════════════════════════════════════
-function renderPickers(){ renderPicker('formPicker',fSel); renderPicker('editPicker',eSel); }
+// ════════════════════════════════════════════════
+function renderPickers(){renderPicker('formPicker',fSel);renderPicker('editPicker',eSel);}
 
 function renderPicker(id,sel){
-  const el=document.getElementById(id); if(!el) return;
-  el.innerHTML=tags.map(t=>`
-    <span class="tp-pill ${sel.has(t.id)?'on':'off'}"
-      style="border-color:${t.color};color:${t.color};${sel.has(t.id)?'background:'+t.color+'22':''}"
-      onclick="togglePill('${t.id}','${id}',this)">${esc(t.name)}</span>`).join('');
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML=tags.map(t=>`<span class="tp-pill" style="border-color:${t.color};color:${t.color};${sel.has(t.id)?'background:'+t.color+'22':''}" onclick="togglePill('${t.id}','${id}',this)">${esc(t.name)}</span>`).join('');
 }
 
 function togglePill(id,pickerId,el){
   const sel=pickerId==='formPicker'?fSel:eSel;
-  if(sel.has(id)){sel.delete(id);el.className='tp-pill off';el.style.background='';}
-  else{sel.add(id);el.className='tp-pill on';const t=tags.find(t=>t.id===id);el.style.background=t.color+'22';}
+  if(sel.has(id)){sel.delete(id);el.style.background='';}
+  else{sel.add(id);const t=tags.find(t=>t.id===id);el.style.background=t.color+'22';}
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // TAGS CRUD
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 async function addTag(){
   const inp=document.getElementById('newTagIn'),name=inp.value.trim();
+  const color=document.getElementById('newTagColor').value;
   if(!name)return;
   if(tags.find(t=>t.name===name)){toast('同じ名前のタグが存在します','err');return;}
-  const t={id:'t'+Date.now(),name,color:COLORS[tags.length%COLORS.length],parent_id:null};
-  try{await sb('tags','POST',t);tags.push(t);inp.value='';renderAll();renderSettings();toast('タグ追加','ok');}
+  const t={id:'t'+Date.now(),name,color,parent_id:null,sort_order:tags.filter(t=>!t.parent_id).length};
+  try{await sb('tags','POST',t);tags.push(t);inp.value='';saveTagOrder(tags.map(t=>t.id));renderAll();renderSettings();toast('タグ追加','ok');}
   catch(e){toast('エラー: '+e.message,'err');}
 }
 
@@ -1401,8 +1427,8 @@ async function addSubTag(){
   if(!name){toast('タグ名を入力してください','err');return;}
   if(tags.find(t=>t.name===name)){toast('同じ名前のタグが存在します','err');return;}
   const parent=tags.find(t=>t.id===parentId);
-  const t={id:'t'+Date.now(),name,color:parent?.color||COLORS[tags.length%COLORS.length],parent_id:parentId};
-  try{await sb('tags','POST',t);tags.push(t);document.getElementById('newSubTagIn').value='';renderAll();renderSettings();toast(`「${name}」を追加`,'ok');}
+  const t={id:'t'+Date.now(),name,color:parent?.color||COLORS[tags.length%COLORS.length],parent_id:parentId,sort_order:tags.length};
+  try{await sb('tags','POST',t);tags.push(t);document.getElementById('newSubTagIn').value='';saveTagOrder(tags.map(t=>t.id));renderAll();renderSettings();toast(`「${name}」を追加`,'ok');}
   catch(e){toast('エラー: '+e.message,'err');}
 }
 
@@ -1411,63 +1437,54 @@ async function delTag(id){
   try{
     await sb('tags?id=eq.'+id,'DELETE');
     tags=tags.filter(t=>t.id!==id);
-    for(const p of posts){if(p.tags?.includes(id)){p.tags=p.tags.filter(x=>x!==id);await sb('posts?id=eq.'+p.id,'PATCH',{tags:p.tags});}}
+    for(const p of posts){if(p.tags?.includes(id)){p.tags=p.tags.filter(x=>x!==id);await sb('posts?id=eq.'+p.id,'PATCH',{tags:p.tags}).catch(()=>{});}}
     if(tagFilter===id)tagFilter=null;
-    renderAll();renderSettings();toast('タグを削除しました');
+    saveTagOrder(tags.map(t=>t.id));renderAll();renderSettings();toast('タグを削除しました');
   }catch(e){toast('エラー: '+e.message,'err');}
 }
 
-function startRenameTag(id){
+async function renameTag(id){
   const t=tags.find(t=>t.id===id);if(!t)return;
-  const name=prompt('新しいタグ名',t.name);
-  if(!name||name.trim()===t.name)return;
-  renameTag(id,name.trim());
+  const name=prompt('新しいタグ名',t.name);if(!name||name.trim()===t.name)return;
+  try{await sb('tags?id=eq.'+id,'PATCH',{name:name.trim()});t.name=name.trim();renderAll();renderSettings();toast('タグ名を変更しました','ok');}
+  catch(e){toast('エラー: '+e.message,'err');}
 }
 
-async function renameTag(id,name){
-  try{
-    await sb('tags?id=eq.'+id,'PATCH',{name});
-    const t=tags.find(t=>t.id===id);if(t)t.name=name;
-    renderAll();renderSettings();toast('タグ名を変更しました','ok');
-  }catch(e){toast('エラー: '+e.message,'err');}
+async function changeTagColor(id,color){
+  try{await sb('tags?id=eq.'+id,'PATCH',{color});const t=tags.find(t=>t.id===id);if(t)t.color=color;renderAll();renderSettings();}
+  catch(e){toast('エラー: '+e.message,'err');}
 }
 
-// ══════════════════════════════════════════════════════
+function moveTag(id,dir){
+  const idx=tags.indexOf(tags.find(t=>t.id===id));
+  if(idx<0)return;
+  const newIdx=idx+dir;
+  if(newIdx<0||newIdx>=tags.length)return;
+  [tags[idx],tags[newIdx]]=[tags[newIdx],tags[idx]];
+  saveTagOrder(tags.map(t=>t.id));renderAll();renderSettings();
+}
+
+// ════════════════════════════════════════════════
 // REMINDERS
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 function renderReminderBar(){
-  const today=new Date(); today.setHours(0,0,0,0);
-  const tomorrow=new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
-  const todayMs=today.getTime(), tomorrowMs=tomorrow.getTime();
-  const due=reminders.filter(r=>!r.done&&r.remind_at>=todayMs&&r.remind_at<tomorrowMs);
+  const today=new Date();today.setHours(0,0,0,0);
+  const tomorrow=new Date(today);tomorrow.setDate(tomorrow.getDate()+1);
+  const due=reminders.filter(r=>!r.done&&r.remind_at>=today.getTime()&&r.remind_at<tomorrow.getTime());
   const rbEmpty=document.getElementById('rbEmpty');
   const rbItems=document.getElementById('rbItems');
-  if(!due.length){
-    rbEmpty.style.display='block';
-    rbItems.innerHTML='';
-    return;
-  }
+  if(!due.length){rbEmpty.style.display='block';rbItems.innerHTML='';return;}
   rbEmpty.style.display='none';
-  rbItems.innerHTML=due.filter(r=>{
-    // 表示設定フィルター
-    return true; // 全表示（設定で絞り込み可能）
-  }).map(r=>{
+  rbItems.innerHTML=due.map(r=>{
     const p=posts.find(p=>p.id===r.post_id);
     const label=p?esc(p.author+(r.message?' — '+r.message:'')):esc(r.message||'リマインダー');
-    return `<div class="rb-item">
-      <span>${label}</span>
-      ${p?`<button class="c-btn" onclick="openDetail('${p.id}')" style="font-size:.68rem;padding:.15rem .45rem">確認</button>`:''}
-      <button class="rb-dismiss" onclick="dismissReminder('${r.id}')">✕</button>
-    </div>`;
+    return `<div class="rb-item"><span>${label}</span>${p?`<button class="c-btn" onclick="openDetail('${p.id}')" style="font-size:.65rem;padding:.12rem .4rem">確認</button>`:''}<button class="rb-dismiss" onclick="dismissReminder('${r.id}')">✕</button></div>`;
   }).join('');
 }
 
 async function dismissReminder(id){
-  try{
-    await sb('reminders?id=eq.'+id,'PATCH',{done:true});
-    const r=reminders.find(r=>r.id===id); if(r)r.done=true;
-    renderReminderBar();
-  }catch(e){console.error(e);}
+  try{await sb('reminders?id=eq.'+id,'PATCH',{done:true});const r=reminders.find(r=>r.id===id);if(r)r.done=true;renderReminderBar();}
+  catch(e){console.error(e);}
 }
 
 function openReminderModal(postId){
@@ -1477,13 +1494,8 @@ function openReminderModal(postId){
   document.getElementById('rDate').value='';
   document.getElementById('rMessage').value='';
   const existing=reminders.filter(r=>r.post_id===postId&&!r.done);
-  const el=document.getElementById('existingReminders');
-  el.innerHTML=existing.length?`<div style="font-size:.78rem;color:var(--ink3);margin-bottom:.4rem">設定済み</div>`+
-    existing.map(r=>`<div class="tag-mgr-row">
-      <span style="font-family:'DM Mono',monospace;font-size:.7rem">${new Date(r.remind_at).toLocaleDateString('ja-JP')}</span>
-      <span style="font-size:.78rem;flex:1;padding-left:.5rem">${esc(r.message||'')}</span>
-      <button class="tag-del" onclick="deleteReminder('${r.id}')">✕</button>
-    </div>`).join(''):'';
+  document.getElementById('existingReminders').innerHTML=existing.length
+    ?`<div style="font-size:.75rem;color:var(--ink3);margin-bottom:.3rem">設定済み</div>`+existing.map(r=>`<div class="tag-mgr-row"><span style="font-family:'DM Mono',monospace;font-size:.68rem">${new Date(r.remind_at).toLocaleDateString('ja-JP')}</span><span style="font-size:.76rem;flex:1;padding-left:.4rem">${esc(r.message||'')}</span><button class="tmr-btn" onclick="deleteReminder('${r.id}')">✕</button></div>`).join(''):'';
   openModal('reminderModal');
 }
 
@@ -1491,235 +1503,146 @@ async function saveReminder(){
   const date=document.getElementById('rDate').value;
   if(!date){toast('日付を選択してください','err');return;}
   const r={id:'r'+Date.now(),post_id:reminderPostId,remind_at:new Date(date).getTime(),message:document.getElementById('rMessage').value.trim(),done:false};
-  try{
-    await sb('reminders','POST',r);
-    reminders.push(r);
-    toast('リマインダーを設定しました ✓','ok');
-    closeModal('reminderModal');
-    renderReminderBar();
-  }catch(e){toast('エラー: '+e.message,'err');}
+  try{await sb('reminders','POST',r);reminders.push(r);toast('リマインダーを設定しました ✓','ok');closeModal('reminderModal');renderReminderBar();}
+  catch(e){toast('エラー: '+e.message,'err');}
 }
 
 async function deleteReminder(id){
-  try{
-    await sb('reminders?id=eq.'+id,'DELETE');
-    reminders=reminders.filter(r=>r.id!==id);
-    toast('リマインダーを削除しました');
-    if(reminderPostId) openReminderModal(reminderPostId);
-    renderReminderBar();
-  }catch(e){toast('エラー: '+e.message,'err');}
+  try{await sb('reminders?id=eq.'+id,'DELETE');reminders=reminders.filter(r=>r.id!==id);toast('削除しました');if(reminderPostId)openReminderModal(reminderPostId);renderReminderBar();}
+  catch(e){toast('エラー: '+e.message,'err');}
 }
 
-// ══════════════════════════════════════════════════════
-// YOUTUBE PLAYLIST（Homeタブ内プレイヤー）
-// ══════════════════════════════════════════════════════
-let ytPlayer=null, ytApiReady=false;
+// ════════════════════════════════════════════════
+// YOUTUBE PLAYER
+// ════════════════════════════════════════════════
+function loadYtApi(){
+  const tag=document.createElement('script');tag.src='https://www.youtube.com/iframe_api';document.head.appendChild(tag);
+}
+window.onYouTubeIframeAPIReady=function(){ytApiReady=true;};
 
-(function(){
-  const tag=document.createElement('script');
-  tag.src='https://www.youtube.com/iframe_api';
-  document.head.appendChild(tag);
-})();
-
-window.onYouTubeIframeAPIReady=function(){ ytApiReady=true; };
-
-// カードの「▶ 再生」ボタン → 現在のフィルタ内のYTをプレイリスト化して起動
 function playYt(id){
   const filtered=getFiltered().filter(p=>p.type==='youtube');
-  if(!filtered.length){ toast('YouTubeがありません','err'); return; }
-  ytPlaylist=filtered.sort((a,b)=>(b.youtube_priority?1:0)-(a.youtube_priority?1:0));
+  if(!filtered.length){toast('YouTubeがありません','err');return;}
+  ytPlaylist=filtered;
   const idx=ytPlaylist.findIndex(p=>p.id===id);
   ytPlayIdx=idx>=0?idx:0;
   openHomePlayer();
 }
 
-// サイドバー「▶ 連続再生」→ フィルタ後の未視聴YTを再生
 function startHomePlaylist(){
-  const filtered=getFiltered().filter(p=>p.type==='youtube'&&p.youtube_status!=='watched');
-  if(!filtered.length){ toast('未視聴のYouTubeがありません','err'); return; }
-  ytPlaylist=filtered.sort((a,b)=>(b.youtube_priority?1:0)-(a.youtube_priority?1:0));
-  ytPlayIdx=0;
+  const includeWatched=document.getElementById('includeWatched')?.checked||false;
+  // フィルター判定: yt-watchlater や fav フィルターが active なら未視聴のみ
+  const forceUnwatchedOnly=curFilter==='yt-watchlater'||curFilter==='fav';
+  let filtered=getFiltered().filter(p=>p.type==='youtube');
+  if(!includeWatched&&(forceUnwatchedOnly||!includeWatched)){
+    filtered=filtered.filter(p=>p.youtube_status!=='watched');
+  }
+  if(!filtered.length){toast('再生できるYouTubeがありません','err');return;}
+  ytPlaylist=filtered;ytPlayIdx=0;
   openHomePlayer();
 }
 
-// Settings用（互換性維持）
-function startPlaylist(){
-  startHomePlaylist();
-  switchTab('home');
-}
+function startPlaylist(){startHomePlaylist();switchTab('home');}
 
 function openHomePlayer(){
   document.getElementById('homeYtPanel').style.display='block';
-  // スクロールして見えるように
   document.getElementById('homeYtPanel').scrollIntoView({behavior:'smooth',block:'start'});
-  loadHomeYtVideo();
-  renderYtQueue();
+  loadHomeYtVideo();renderYtQueue();
 }
 
 function closeHomePlayer(){
   document.getElementById('homeYtPanel').style.display='none';
-  // iframeを空にして再生停止
   document.getElementById('homeYtIframeContainer').innerHTML='';
   ytPlayer=null;
 }
 
 function loadHomeYtVideo(){
-  const p=ytPlaylist[ytPlayIdx]; if(!p) return;
-  const vid=getYtId(p.url); if(!vid) return;
-  if(ytPlayer&&ytPlayer.loadVideoById){
-    ytPlayer.loadVideoById(vid);
-  } else if(ytApiReady&&window.YT&&window.YT.Player){
-    document.getElementById('homeYtIframeContainer').innerHTML='<div id="ytIframeEl" style="width:100%;height:100%;position:absolute;top:0;left:0"></div>';
-    ytPlayer=new YT.Player('ytIframeEl',{
-      videoId:vid, width:'100%', height:'100%',
-      playerVars:{autoplay:1,rel:0},
-      events:{
-        onStateChange(e){
-          if(e.data===YT.PlayerState.ENDED) ytNextAuto();
-        }
-      }
-    });
+  const p=ytPlaylist[ytPlayIdx];if(!p)return;
+  const vid=getYtId(p.url);if(!vid)return;
+  if(ytPlayer&&ytPlayer.loadVideoById){ytPlayer.loadVideoById(vid);}
+  else if(ytApiReady&&window.YT&&window.YT.Player){
+    document.getElementById('homeYtIframeContainer').innerHTML='<div id="ytIframeEl" style="width:100%;height:100%;position:absolute;inset:0"></div>';
+    ytPlayer=new YT.Player('ytIframeEl',{videoId:vid,width:'100%',height:'100%',playerVars:{autoplay:1,rel:0},events:{onStateChange(e){if(e.data===YT.PlayerState.ENDED)ytNextAuto();}}});
   } else {
-    document.getElementById('homeYtIframeContainer').innerHTML=
-      `<iframe src="https://www.youtube.com/embed/${vid}?autoplay=1&rel=0"
-        style="width:100%;height:100%;position:absolute;top:0;left:0"
-        frameborder="0" allowfullscreen allow="autoplay"></iframe>`;
+    document.getElementById('homeYtIframeContainer').innerHTML=`<iframe src="https://www.youtube.com/embed/${vid}?autoplay=1&rel=0" style="width:100%;height:100%;position:absolute;inset:0" frameborder="0" allowfullscreen allow="autoplay"></iframe>`;
   }
-  updateYtPlayInfo();
-  renderYtQueue();
+  updateYtPlayInfo();renderYtQueue();
 }
 
 function updateYtPlayInfo(){
-  const p=ytPlaylist[ytPlayIdx]; if(!p) return;
+  const p=ytPlaylist[ytPlayIdx];if(!p)return;
   const el=document.getElementById('homeYtPlayInfo');
-  if(el) el.innerHTML=
-    `<span style="font-family:'DM Mono',monospace;font-size:.65rem;opacity:.6">${ytPlayIdx+1} / ${ytPlaylist.length}</span>
-     <span style="font-weight:500;margin-left:.4rem">${esc(p.author)}</span>
-     ${p.youtube_priority?'<span style="color:#fbbf24"> ⭐</span>':''}
-     ${p.youtube_status==='watched'?'<span style="font-size:.68rem;background:rgba(255,255,255,.15);padding:1px 6px;border-radius:10px;margin-left:.3rem">視聴済</span>':''}`;
-  // Settings側も更新
-  const el2=document.getElementById('ytPlayInfo');
-  if(el2) el2.innerHTML=el?.innerHTML||'';
+  if(el) el.innerHTML=`<span style="font-family:'DM Mono',monospace;font-size:.62rem;opacity:.5">${ytPlayIdx+1}/${ytPlaylist.length}</span> <span style="font-weight:500">${esc(p.author)}</span>${p.is_favorite?' ⭐':''}${p.watch_later?' 📌':''}`;
 }
 
 function renderYtQueue(){
-  const el=document.getElementById('homeYtQueue'); if(!el) return;
-  el.innerHTML=ytPlaylist.map((p,i)=>`
-    <div onclick="ytJump(${i})" style="display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem;border-radius:4px;cursor:pointer;transition:background .15s;background:${i===ytPlayIdx?'rgba(255,255,255,.15)':'transparent'};margin-bottom:2px">
-      <img src="https://img.youtube.com/vi/${getYtId(p.url)}/default.jpg" style="width:40px;height:28px;object-fit:cover;border-radius:2px;flex-shrink:0" onerror="this.style.display='none'">
-      <div style="min-width:0">
-        <div style="font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:${p.youtube_status==='watched'?.5:1}">${esc(p.author)}</div>
-        ${p.youtube_priority?'<span style="font-size:.6rem;color:#fbbf24">⭐</span>':''}
-        ${p.youtube_status==='watched'?'<span style="font-size:.6rem;opacity:.5">✅</span>':''}
-      </div>
-    </div>`).join('');
+  const el=document.getElementById('homeYtQueue');if(!el)return;
+  const showWatched=document.getElementById('plIncludeWatched')?.checked;
+  const list=showWatched?ytPlaylist:ytPlaylist.filter(p=>p.youtube_status!=='watched'||ytPlaylist.indexOf(p)===ytPlayIdx);
+  el.innerHTML=ytPlaylist.map((p,i)=>{
+    if(!showWatched&&p.youtube_status==='watched'&&i!==ytPlayIdx) return '';
+    return `<div class="yt-queue-item${i===ytPlayIdx?' active':''}" onclick="ytJump(${i})">
+      <img class="yt-queue-thumb" src="https://img.youtube.com/vi/${getYtId(p.url)}/default.jpg" onerror="this.style.display='none'" alt="">
+      <div class="yt-queue-title" style="opacity:${p.youtube_status==='watched'?.4:1}">${esc(p.author)}${p.is_favorite?' ⭐':''}${p.youtube_status==='watched'?' ✅':''}</div>
+    </div>`;
+  }).join('');
 }
 
-function ytJump(idx){
-  ytPlayIdx=idx;
-  loadHomeYtVideo();
-}
-
-function ytPrev(){
-  if(ytPlayIdx>0){ ytPlayIdx--; loadHomeYtVideo(); }
-  else toast('最初の動画です');
-}
-
-function ytNext(){
-  if(ytPlayIdx<ytPlaylist.length-1){ ytPlayIdx++; loadHomeYtVideo(); }
-  else { toast('プレイリスト終了 🎉','ok'); closeHomePlayer(); }
-}
+function ytJump(idx){ytPlayIdx=idx;loadHomeYtVideo();}
+function ytPrev(){if(ytPlayIdx>0){ytPlayIdx--;loadHomeYtVideo();}else toast('最初の動画です');}
+function ytNext(){if(ytPlayIdx<ytPlaylist.length-1){ytPlayIdx++;loadHomeYtVideo();}else{toast('プレイリスト終了 🎉','ok');closeHomePlayer();}}
 
 async function ytNextAuto(){
   const p=ytPlaylist[ytPlayIdx];
   if(p&&p.youtube_status!=='watched'){
-    p.youtube_status='watched';
-    try{ await sb('posts?id=eq.'+p.id,'PATCH',{youtube_status:'watched'}); }catch(e){}
+    p.youtube_status='watched';p.watch_later=false;
+    try{await sb('posts?id=eq.'+p.id,'PATCH',{youtube_status:'watched',watch_later:false});}catch(e){}
   }
-  // 次の未視聴を探す
   let next=ytPlayIdx+1;
-  while(next<ytPlaylist.length&&ytPlaylist[next].youtube_status==='watched') next++;
-  if(next<ytPlaylist.length){
-    ytPlayIdx=next; loadHomeYtVideo();
-    toast(`次の動画へ: ${ytPlaylist[ytPlayIdx].author}`);
-  } else {
-    toast('プレイリスト終了 🎉','ok');
-    closeHomePlayer();
-    renderAll();
-  }
+  const includeWatched=document.getElementById('plIncludeWatched')?.checked;
+  while(!includeWatched&&next<ytPlaylist.length&&ytPlaylist[next].youtube_status==='watched') next++;
+  if(next<ytPlaylist.length){ytPlayIdx=next;loadHomeYtVideo();toast(`次: ${ytPlaylist[ytPlayIdx].author}`);}
+  else{toast('プレイリスト終了 🎉','ok');closeHomePlayer();renderAll();}
 }
 
 async function markWatched(){
-  const p=ytPlaylist[ytPlayIdx]; if(!p) return;
-  p.youtube_status='watched';
+  const p=ytPlaylist[ytPlayIdx];if(!p)return;
+  p.youtube_status='watched';p.watch_later=false;
   try{
-    await sb('posts?id=eq.'+p.id,'PATCH',{youtube_status:'watched'});
-    toast('視聴済みにしました ✓','ok');
-    renderYtQueue();
+    await sb('posts?id=eq.'+p.id,'PATCH',{youtube_status:'watched',watch_later:false});
+    toast('視聴済みにしました ✓','ok');renderYtQueue();
     await ytNextAuto();
-  }catch(e){ toast('エラー: '+e.message,'err'); }
+  }catch(e){toast('エラー: '+e.message,'err');}
 }
 
-// ══════════════════════════════════════════════════════
-// EDIT GEOCODE
-// ══════════════════════════════════════════════════════
-async function geocodeEditArea(){
-  const area=document.getElementById('eArea').value.trim();
-  const country=document.getElementById('eCountry').value.trim();
-  const q=[area,country].filter(Boolean).join(', ');
-  if(!q){ toast('場所名を入力してください','err'); return; }
-  const status=document.getElementById('eAreaStatus');
-  status.textContent='検索中...';
-  try {
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&addressdetails=1`);
-    const d=await r.json();
-    if(!d.length){ status.textContent='場所が見つかりませんでした'; return; }
-    const addr=d[0].address||{};
-    document.getElementById('eLat').value=d[0].lat;
-    document.getElementById('eLng').value=d[0].lon;
-    if(!document.getElementById('eCountry').value&&addr.country) document.getElementById('eCountry').value=addr.country;
-    if(!document.getElementById('ePrefecture').value){
-      const pref=addr.state||addr.province||addr.region||'';
-      if(pref){ const el=document.getElementById('ePrefecture'); if(el&&!el.value) el.value=pref; }
-    }
-    status.textContent='✓ 位置情報を取得しました';
-  } catch(e){ status.textContent='エラーが発生しました'; }
-}
-
-// ══════════════════════════════════════════════════════
-// SETTINGS RENDER
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════════════
 function renderSettings(){
-  // タグ管理
   const parentTags=tags.filter(t=>!t.parent_id);
   const childTags=tags.filter(t=>t.parent_id);
   let html='';
-  parentTags.forEach(pt=>{
-    const children=childTags.filter(c=>c.parent_id===pt.id);
-    html+=`<div class="tag-mgr-row">
-      <div style="width:8px;height:8px;border-radius:50%;background:${pt.color};flex-shrink:0"></div>
-      <span class="tn">${esc(pt.name)}</span>
-      <button class="tag-del" onclick="startRenameTag('${pt.id}')">✏️</button>
-      <button class="tag-del" onclick="delTag('${pt.id}')">✕</button>
+  tags.forEach((t,i)=>{
+    const isParent=!t.parent_id;
+    html+=`<div class="tag-mgr-row" style="${isParent?'':'padding-left:1.5rem;background:var(--off);border-radius:3px;margin-bottom:1px'}">
+      <div class="tmr-order">
+        <button onclick="moveTag('${t.id}',-1)" title="上へ">▲</button>
+        <button onclick="moveTag('${t.id}',1)" title="下へ">▼</button>
+      </div>
+      <div class="t-dot" style="background:${t.color};width:${isParent?8:6}px;height:${isParent?8:6}px;margin-left:.2rem"></div>
+      <input type="color" value="${t.color}" onchange="changeTagColor('${t.id}',this.value)" style="width:20px;height:20px;padding:1px;border:1px solid var(--line);border-radius:50%;cursor:pointer" title="色を変更">
+      <span class="tmr-name">${isParent?'':' └ '}${esc(t.name)}</span>
+      <button class="tmr-btn" onclick="renameTag('${t.id}')">✏️</button>
+      <button class="tmr-btn" onclick="delTag('${t.id}')">✕</button>
     </div>`;
-    children.forEach(ct=>{
-      html+=`<div class="tag-mgr-row" style="padding-left:1.5rem;background:var(--off);margin-bottom:1px;border-radius:3px">
-        <div style="width:5px;height:5px;border-radius:50%;background:${ct.color};flex-shrink:0"></div>
-        <span class="tn" style="font-size:.75rem;color:var(--ink3)">└ ${esc(ct.name)}</span>
-        <button class="tag-del" onclick="startRenameTag('${ct.id}')">✏️</button>
-        <button class="tag-del" onclick="delTag('${ct.id}')">✕</button>
-      </div>`;
-    });
   });
   document.getElementById('tagMgrList').innerHTML=html;
 
   // 親タグセレクト更新
   const psel=document.getElementById('parentTagSelect');
   if(psel) psel.innerHTML='<option value="">親タグを選択...</option>'+parentTags.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
-
-  // YouTube タグセレクト
   const ytSel=document.getElementById('ytPlayTag');
-  if(ytSel) ytSel.innerHTML='<option value="">すべて（タグ絞り込みなし）</option>'+tags.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  if(ytSel) ytSel.innerHTML='<option value="">すべて（絞り込みなし）</option>'+tags.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
 
   // リマインダー一覧
   const allR=document.getElementById('allRemindersList');
@@ -1728,11 +1651,12 @@ function renderSettings(){
     allR.innerHTML=upcoming.length?upcoming.map(r=>{
       const p=posts.find(p=>p.id===r.post_id);
       return `<div class="tag-mgr-row">
-        <span style="font-family:'DM Mono',monospace;font-size:.68rem;color:var(--ink3)">${new Date(r.remind_at).toLocaleDateString('ja-JP')}</span>
-        <span style="font-size:.78rem;flex:1;padding-left:.5rem">${esc(p?.author||'')} ${esc(r.message||'')}</span>
-        <button class="tag-del" onclick="deleteReminder('${r.id}')">✕</button>
+        <input type="checkbox" onchange="completeReminder('${r.id}')" style="accent-color:var(--green)">
+        <span style="font-family:'DM Mono',monospace;font-size:.66rem;color:var(--ink3)">${new Date(r.remind_at).toLocaleDateString('ja-JP')}</span>
+        <span style="font-size:.76rem;flex:1;padding-left:.35rem">${esc(p?.author||'')} ${esc(r.message||'')}</span>
+        <button class="tmr-btn" onclick="deleteReminder('${r.id}')">✕</button>
       </div>`;
-    }).join(''):`<div style="font-size:.8rem;color:var(--ink3)">リマインダーなし</div>`;
+    }).join(''):`<div style="font-size:.78rem;color:var(--ink3)">リマインダーなし</div>`;
   }
 
   // 統計
@@ -1742,117 +1666,21 @@ function renderSettings(){
     <div>総クリップ数: <b>${posts.length}</b></div>
     <div>Xポスト: <b>${posts.filter(p=>p.type==='x').length}</b></div>
     <div>Web記事: <b>${posts.filter(p=>p.type==='web').length}</b></div>
-    <div>YouTube: <b>${yt.length}</b>（未視聴: <b>${yt.filter(p=>p.youtube_status!=='watched').length}</b>）</div>
+    <div>YouTube: <b>${yt.length}</b>（未視聴: <b>${yt.filter(p=>p.youtube_status!=='watched').length}</b>、あとで見る: <b>${yt.filter(p=>p.watch_later).length}</b>）</div>
     <div>メモ: <b>${posts.filter(p=>p.type==='memo').length}</b></div>
+    <div>お気に入り: <b>${posts.filter(p=>p.is_favorite).length}</b></div>
     <div>タグ数: <b>${tags.length}</b></div>
     <div>リマインダー: <b>${reminders.filter(r=>!r.done).length}</b> 件</div>`;
 }
 
-// ══════════════════════════════════════════════════════
-// MOBILE FILTER BAR
-// ══════════════════════════════════════════════════════
-function renderMobileFilterBar(){
-  // タグピル
-  const mfbTags = document.getElementById('mfbTags');
-  if(mfbTags){
-    const parentTags=tags.filter(t=>!t.parent_id);
-    const childTags=tags.filter(t=>t.parent_id);
-    let html='';
-    parentTags.forEach(pt=>{
-      const active=tagFilter===pt.id;
-      html+=`<button class="mfb-expand-pill${active?' active':''}" style="border-color:${pt.color};${active?'':'color:'+pt.color}" onclick="mfbTag('${pt.id}')">${esc(pt.name)}</button>`;
-      childTags.filter(c=>c.parent_id===pt.id).forEach(ct=>{
-        const ca=tagFilter===ct.id;
-        html+=`<button class="mfb-expand-pill${ca?' active':''}" style="border-color:${ct.color};${ca?'':'color:'+ct.color}" onclick="mfbTag('${ct.id}')">└ ${esc(ct.name)}</button>`;
-      });
-    });
-    mfbTags.innerHTML=html;
-  }
-  // エリアセレクト同期
-  syncMobileAreaFilter();
+async function completeReminder(id){
+  try{await sb('reminders?id=eq.'+id,'PATCH',{done:true});const r=reminders.find(r=>r.id===id);if(r)r.done=true;renderSettings();renderReminderBar();toast('リマインダーを完了にしました','ok');}
+  catch(e){toast('エラー: '+e.message,'err');}
 }
 
-function syncMobileAreaFilter(){
-  const countries=[...new Set(posts.map(p=>p.country).filter(Boolean))].sort();
-  const mcs=document.getElementById('mCountrySelect');
-  if(mcs){
-    const cur=areaFilter.country||'';
-    mcs.innerHTML='<option value="">国を選択...</option>'+countries.map(c=>`<option value="${esc(c)}"${cur===c?' selected':''}>${esc(c)}</option>`).join('');
-  }
-  const mps=document.getElementById('mPrefSelect');
-  if(mps){
-    if(areaFilter.country){
-      const prefs=[...new Set(posts.filter(p=>p.country===areaFilter.country).map(p=>p.prefecture).filter(Boolean))].sort();
-      if(prefs.length){
-        mps.style.display='block';
-        mps.innerHTML='<option value="">都道府県...</option>'+prefs.map(pr=>`<option value="${esc(pr)}"${areaFilter.prefecture===pr?' selected':''}>${esc(pr)}</option>`).join('');
-      } else { mps.style.display='none'; }
-    } else { mps.style.display='none'; mps.value=''; }
-  }
-}
-
-function mfbFilter(f){
-  curFilter=f; tagFilter=null;
-  // ピルのactive更新
-  document.querySelectorAll('#mfbMain .mfb-pill[data-f]').forEach(el=>{
-    el.classList.toggle('active', el.dataset.f===f);
-  });
-  // サイドバー側も同期
-  ['fAll','fRecent','fMemo','fImg','fYt','fYtUn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  const map={all:'fAll',recent:'fRecent',memo:'fMemo',img:'fImg',youtube:'fYt','yt-unwatch':'fYtUn'};
-  document.getElementById(map[f])?.classList.add('active');
-  renderMobileFilterBar();
-  renderHome();
-  scrollToContent();
-}
-
-function mfbTag(id){
-  tagFilter=tagFilter===id?null:id;
-  renderMobileFilterBar();
-  renderHome();
-  scrollToContent();
-  // エリアを閉じる
-  document.getElementById('mfbTags').classList.remove('open');
-}
-
-function mfbSetCountry(v){
-  areaFilter.country=v||null; areaFilter.prefecture=null;
-  syncMobileAreaFilter(); renderAreaFilter(); renderHome(); scrollToContent();
-}
-function mfbSetPref(v){
-  areaFilter.prefecture=v||null;
-  renderHome(); scrollToContent();
-}
-
-let mfbOpenExpand=null;
-function toggleMfbExpand(name){
-  const el=document.getElementById('mfb'+name.charAt(0).toUpperCase()+name.slice(1));
-  if(!el) return;
-  const isOpen=el.classList.contains('open');
-  // 他を閉じる
-  document.querySelectorAll('.mfb-expand').forEach(e=>e.classList.remove('open'));
-  if(!isOpen) el.classList.add('open');
-}
-
-function scrollToContent(){
-  const anchor=document.getElementById('contentAnchor');
-  if(anchor) anchor.scrollIntoView({behavior:'smooth', block:'start'});
-}
-
-// ══════════════════════════════════════════════════════
-// FILTER / VIEW
-// ══════════════════════════════════════════════════════
-function setFilter(f){
-  curFilter=f; tagFilter=null;
-  ['fAll','fRecent','fMemo','fImg','fYt','fYtUn'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
-  const map={all:'fAll',recent:'fRecent',memo:'fMemo',img:'fImg',youtube:'fYt','yt-unwatch':'fYtUn'};
-  document.getElementById(map[f])?.classList.add('active');
-  // モバイルバー同期
-  document.querySelectorAll('#mfbMain .mfb-pill[data-f]').forEach(el=>el.classList.toggle('active',el.dataset.f===f));
-  renderHome();
-  scrollToContent();
-}
-
+// ════════════════════════════════════════════════
+// VIEW / MODE / STATS
+// ════════════════════════════════════════════════
 function setView(v){
   viewMode=v;
   ['vGrid','vList','vMap'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
@@ -1869,43 +1697,36 @@ function setMode(m){
   renderHome();
 }
 
-// ══════════════════════════════════════════════════════
-// STATS
-// ══════════════════════════════════════════════════════
 function updateStats(){
   const now=Date.now(),wk=7*864e5;
   document.getElementById('totalCount').textContent=posts.length;
   document.getElementById('tagCount').textContent=tags.length;
-  document.getElementById('cAll').textContent=posts.length;
-  document.getElementById('cRec').textContent=posts.filter(p=>now-p.createdAt<wk).length;
-  document.getElementById('cMemo').textContent=posts.filter(p=>p.memo).length;
-  document.getElementById('cImg').textContent=posts.filter(p=>p.image).length;
   const yt=posts.filter(p=>p.type==='youtube');
-  document.getElementById('cYt').textContent=yt.length;
-  document.getElementById('cYtUn').textContent=yt.filter(p=>p.youtube_status!=='watched').length;
+  document.getElementById('cAll').textContent=posts.length;
+  document.getElementById('cFav').textContent=posts.filter(p=>p.is_favorite).length;
+  document.getElementById('cYtWl').textContent=yt.filter(p=>p.watch_later&&p.youtube_status!=='watched').length;
+  document.getElementById('cRec').textContent=posts.filter(p=>now-p.createdAt<wk).length;
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // MODAL
-// ══════════════════════════════════════════════════════
-function openModal(id){ document.getElementById(id).classList.add('open'); }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+// ════════════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
 
-// ══════════════════════════════════════════════════════
-// TOAST & UTILS
-// ══════════════════════════════════════════════════════
-function esc(s){ return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
+// ════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 let tTimer;
 function toast(msg,type=''){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.className='toast show'+(type?' '+type:'');
-  clearTimeout(tTimer); tTimer=setTimeout(()=>{el.className='toast';},3000);
+  const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');
+  clearTimeout(tTimer);tTimer=setTimeout(()=>{el.className='toast';},3000);
 }
 
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 // EVENTS
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
 document.getElementById('newTagIn')?.addEventListener('keydown',e=>{if(e.key==='Enter')addTag();});
 ['detailModal','editModal','reminderModal'].forEach(id=>{
   document.getElementById(id)?.addEventListener('click',e=>{if(e.target===document.getElementById(id))closeModal(id);});
