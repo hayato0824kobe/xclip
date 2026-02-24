@@ -463,6 +463,7 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
         <button class="type-tab active" id="typeX" onclick="setType('x')">𝕏 ポスト</button>
         <button class="type-tab" id="typeWeb" onclick="setType('web')">🌐 Web記事</button>
         <button class="type-tab" id="typeYt" onclick="setType('youtube')">▶ YouTube</button>
+        <button class="type-tab" id="typeTiktok" onclick="setType('tiktok')">🎵 TikTok</button>
         <button class="type-tab" id="typeMemo" onclick="setType('memo')">📝 メモ</button>
       </div>
       <div id="urlRow" class="url-row">
@@ -516,6 +517,10 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
                 <button class="btn-ghost" onclick="geocodeArea('f')" style="font-size:.7rem;white-space:nowrap">位置取得</button>
               </div>
               <div id="fAreaStatus" style="font-size:.68rem;color:var(--ink3);margin-top:.2rem"></div>
+              <div style="margin-top:.35rem;display:flex;gap:.35rem">
+                <input class="fi" id="fMapUrlInput" placeholder="GoogleマップURL..." style="flex:1;font-size:.72rem">
+                <button class="btn-ghost" onclick="geocodeFromMapUrl('f')" style="font-size:.7rem;white-space:nowrap">🗺 地図URL取得</button>
+              </div>
             </div>
           </div>
           <input type="hidden" id="fLat"><input type="hidden" id="fLng">
@@ -644,6 +649,10 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
           <button class="btn-ghost" onclick="geocodeArea('e')" style="font-size:.7rem;white-space:nowrap">位置取得</button>
         </div>
         <div id="eAreaStatus" style="font-size:.68rem;color:var(--ink3);margin-top:.2rem"></div>
+        <div style="margin-top:.35rem;display:flex;gap:.35rem">
+          <input class="fi" id="eMapUrlInput" placeholder="GoogleマップURL（位置情報の修正に）..." style="flex:1;font-size:.72rem">
+          <button class="btn-ghost" onclick="geocodeFromMapUrl('e')" style="font-size:.7rem;white-space:nowrap">🗺 地図URL取得</button>
+        </div>
         <input type="hidden" id="eLat"><input type="hidden" id="eLng">
       </div>
       <div class="fg-full">
@@ -739,9 +748,15 @@ let map=null,mapMarkers=[];
 let ytPlaylist=[],ytPlayIdx=0;
 let ytPlayer=null,ytApiReady=false;
 const COLORS=['#3b82f6','#8b5cf6','#e11d48','#d97706','#059669','#0891b2','#65a30d','#9333ea','#ea580c','#6366f1'];
-// LocalStorage: タグ並び順
+// LocalStorage: タグ並び順（ローカルキャッシュ）
 function loadTagOrder(){return JSON.parse(localStorage.getItem('xclip_tag_order')||'[]');}
-function saveTagOrder(ids){localStorage.setItem('xclip_tag_order',JSON.stringify(ids));}
+function saveTagOrder(ids){
+  localStorage.setItem('xclip_tag_order',JSON.stringify(ids));
+  // Supabaseにも非同期で保存（デバイス間同期）
+  ids.forEach((id,i)=>{
+    sb('tags?id=eq.'+id,'PATCH',{sort_order:i}).catch(()=>{});
+  });
+}
 
 // ════════════════════════════════════════════════
 // INIT
@@ -772,11 +787,14 @@ async function init(){
 }
 
 function applyTagOrder(rawTags){
+  // Supabaseのsort_orderで一次ソート、LocalStorageで補完
+  const bySortOrder=[...rawTags].sort((a,b)=>(a.sort_order??999)-(b.sort_order??999));
   const order=loadTagOrder();
-  if(!order.length) return rawTags;
-  const map=new Map(rawTags.map(t=>[t.id,t]));
+  if(!order.length) return bySortOrder;
+  // LocalStorageの順序があればそちらを優先（より新しい可能性がある）
+  const map=new Map(bySortOrder.map(t=>[t.id,t]));
   const sorted=order.map(id=>map.get(id)).filter(Boolean);
-  rawTags.forEach(t=>{if(!order.includes(t.id)) sorted.push(t);});
+  bySortOrder.forEach(t=>{if(!order.includes(t.id)) sorted.push(t);});
   return sorted;
 }
 
@@ -1054,35 +1072,45 @@ function renderGrouped(filtered,wrap,groupBy){
   const ungrouped=groupBy==='tag'?'タグなし':'エリアなし';
   const groups={};
   if(groupBy==='tag'){
-    const parentTags=tags.filter(t=>!t.parent_id);
     filtered.forEach(p=>{
       const ptags=(p.tags||[]).map(id=>tags.find(t=>t.id===id)).filter(t=>t&&!t.parent_id);
-      if(ptags.length) ptags.forEach(pt=>{(groups[pt.name]=groups[pt.name]||[]).push(p);});
-      else (groups[ungrouped]=groups[ungrouped]||[]).push(p);
+      if(ptags.length) ptags.forEach(pt=>{(groups[pt.id]=groups[pt.id]||{name:pt.name,items:[]}).items.push(p);});
+      else (groups['__ungrouped__']=groups['__ungrouped__']||{name:ungrouped,items:[]}).items.push(p);
     });
+    // タグの並び順に従ってキーをソート
+    const parentTagIds=tags.filter(t=>!t.parent_id).map(t=>t.id);
+    const sortedKeys=[...parentTagIds.filter(id=>groups[id]),'__ungrouped__'].filter(k=>groups[k]);
+    let html='';
+    sortedKeys.forEach(k=>{
+      const g=groups[k];
+      html+=`<div class="group-header">${esc(g.name)} <span style="opacity:.4">(${g.items.length})</span></div>`;
+      if(viewMode==='grid') html+=`<div class="posts-grid" style="margin-bottom:.9rem">${g.items.map(cardHTML).join('')}</div>`;
+      else html+=`<div class="posts-list" style="margin-bottom:.9rem">${g.items.map(rowHTML).join('')}</div>`;
+    });
+    wrap.innerHTML=html;
   } else {
     filtered.forEach(p=>{
       const key=[p.country,p.prefecture].filter(Boolean).join(' › ')||ungrouped;
       (groups[key]=groups[key]||[]).push(p);
     });
+    const sortedKeys=Object.keys(groups).sort((a,b)=>a===ungrouped?1:b===ungrouped?-1:a.localeCompare(b,'ja'));
+    let html='';
+    sortedKeys.forEach(k=>{
+      html+=`<div class="group-header">${esc(k)} <span style="opacity:.4">(${groups[k].length})</span></div>`;
+      if(viewMode==='grid') html+=`<div class="posts-grid" style="margin-bottom:.9rem">${groups[k].map(cardHTML).join('')}</div>`;
+      else html+=`<div class="posts-list" style="margin-bottom:.9rem">${groups[k].map(rowHTML).join('')}</div>`;
+    });
+    wrap.innerHTML=html;
   }
-  const sortedKeys=Object.keys(groups).sort((a,b)=>a===ungrouped?1:b===ungrouped?-1:a.localeCompare(b,'ja'));
-  let html='';
-  sortedKeys.forEach(k=>{
-    html+=`<div class="group-header">${esc(k)} <span style="opacity:.4">(${groups[k].length})</span></div>`;
-    if(viewMode==='grid') html+=`<div class="posts-grid" style="margin-bottom:.9rem">${groups[k].map(cardHTML).join('')}</div>`;
-    else html+=`<div class="posts-list" style="margin-bottom:.9rem">${groups[k].map(rowHTML).join('')}</div>`;
-  });
-  wrap.innerHTML=html;
 }
 
 // ════════════════════════════════════════════════
 // CARD / ROW HTML
 // ════════════════════════════════════════════════
 function typeBadge(type){
-  const label={x:'𝕏',web:'WEB',youtube:'▶',memo:'MEMO'};
-  const bg={x:'#111',web:'#0369a1',youtube:'#dc2626',memo:'#166534'};
-  const fg={x:'#fff',web:'#e0f2fe',youtube:'#fee2e2',memo:'#f0fdf4'};
+  const label={x:'𝕏',web:'WEB',youtube:'▶',memo:'MEMO',tiktok:'TT'};
+  const bg={x:'#111',web:'#0369a1',youtube:'#dc2626',memo:'#166534',tiktok:'#010101'};
+  const fg={x:'#fff',web:'#e0f2fe',youtube:'#fee2e2',memo:'#f0fdf4',tiktok:'#69c9d0'};
   return `<span class="type-badge" style="background:${bg[type]||'#111'};color:${fg[type]||'#fff'}">${label[type]||type}</span>`;
 }
 
@@ -1092,7 +1120,8 @@ function cardHTML(p){
   const areaStr=[p.country,p.prefecture,p.area].filter(Boolean).join(' › ');
   const distBadge=p._dist&&p._dist<Infinity?`<span class="c-dist">${p._dist<1?Math.round(p._dist*1000)+'m':p._dist.toFixed(1)+'km'}</span>`:'';
   const ytThumb=p.type==='youtube'&&p.url?`https://img.youtube.com/vi/${getYtId(p.url)}/mqdefault.jpg`:'';
-  const imgSrc=p.image||ytThumb;
+  const tiktokThumb=p.type==='tiktok'&&p.image?p.image:'';
+  const imgSrc=p.image||ytThumb||tiktokThumb;
   const favFlag=p.is_favorite?`<span class="flag-fav">⭐</span>`:'';
   const wlFlag=p.watch_later?`<span class="flag-wl">📌</span>`:'';
   const ytStatusBadge=p.type==='youtube'?`<span class="yt-status-badge ${p.youtube_status}">${p.youtube_status==='watched'?'✅ 視聴済':'▶ 未視聴'}</span>`:'';
@@ -1114,6 +1143,8 @@ function cardHTML(p){
       ${tagS?`<div class="c-tags">${tagS}</div>`:''}
       <div class="c-footer">
         <button class="c-btn" onclick="openDetail('${p.id}')">詳細</button>
+        <button class="c-btn${p.is_favorite?' active-fav':''}" onclick="quickToggleFav('${p.id}')" title="お気に入り" style="${p.is_favorite?'background:#fff8e1;border-color:#f59e0b;color:#d97706':''}">⭐</button>
+        <button class="c-btn${p.watch_later?' active-wl':''}" onclick="quickToggleWL('${p.id}')" title="あとで見る" style="${p.watch_later?'background:#eff6ff;border-color:#3b82f6;color:#2563eb':''}">📌</button>
         <button class="c-btn" onclick="openReminderModal('${p.id}')" title="リマインダー">🔔${reminderEl}</button>
         ${p.type==='youtube'?`<button class="c-btn" onclick="playYt('${p.id}')">▶</button>`:''}
         ${p.url?`<a class="c-link" href="${esc(p.url)}" target="_blank" rel="noopener">↗</a>`:''}
@@ -1242,7 +1273,7 @@ function openEdit(id){
   document.getElementById('eArea').value=p.area||'';
   document.getElementById('eLat').value='';
   document.getElementById('eLng').value='';
-  document.getElementById('eMapUrl').value=p.map_url||'';
+  document.getElementById('eMapUrlInput').value='';
   document.getElementById('eAreaStatus').textContent=p.lat?`現在の位置: ${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`:'';
   document.getElementById('eFavorite').checked=p.is_favorite;
   eImgPrev();
@@ -1294,14 +1325,16 @@ async function saveEdit(){
     if(p.youtube_status==='watched') p.watch_later=false;
   }
   try{
-    await sb('posts?id=eq.'+p.id,'PATCH',{
+    const patch={
       author:p.author,handle:p.handle,content:p.content,memo:p.memo,
       image:p.image,country:p.country,prefecture:p.prefecture,area:p.area,
       lat:p.lat||null,lng:p.lng||null,tags:p.tags,
       is_favorite:p.is_favorite,watch_later:p.watch_later,
-      youtube_status:p.youtube_status,youtube_priority:p.youtube_priority,
-      map_url:p.map_url||null
-    });
+      youtube_status:p.youtube_status,youtube_priority:p.youtube_priority
+    };
+    // map_urlはDBにカラムがある場合のみ送信
+    if(p.map_url!==undefined) patch.memo=p.memo; // map_urlはmemoフィールドに保存しない
+    await sb('posts?id=eq.'+p.id,'PATCH',patch);
     closeModal('editModal');renderAll();toast('更新しました ✓','ok');
   }catch(e){toast('エラー: '+e.message,'err');}
 }
@@ -1324,6 +1357,23 @@ async function toggleWatched(id){
 }
 
 // ════════════════════════════════════════════════
+// QUICK TOGGLES (カードから直接操作)
+// ════════════════════════════════════════════════
+async function quickToggleFav(id){
+  const p=posts.find(p=>p.id===id);if(!p)return;
+  p.is_favorite=!p.is_favorite;
+  try{await sb('posts?id=eq.'+id,'PATCH',{is_favorite:p.is_favorite});renderAll();toast(p.is_favorite?'⭐ お気に入りに追加':'お気に入り解除');}
+  catch(e){p.is_favorite=!p.is_favorite;toast('エラー: '+e.message,'err');}
+}
+
+async function quickToggleWL(id){
+  const p=posts.find(p=>p.id===id);if(!p)return;
+  p.watch_later=!p.watch_later;
+  try{await sb('posts?id=eq.'+id,'PATCH',{watch_later:p.watch_later});renderAll();toast(p.watch_later?'📌 あとで見るに追加':'あとで見るを解除');}
+  catch(e){p.watch_later=!p.watch_later;toast('エラー: '+e.message,'err');}
+}
+
+// ════════════════════════════════════════════════
 // DELETE
 // ════════════════════════════════════════════════
 async function delPost(id){
@@ -1343,6 +1393,7 @@ async function savePost(){
   const now=Date.now();
   let author='',handle='',summary='';
   if(currentType==='x'){author=document.getElementById('fAuthor').value.trim()||'不明';handle=document.getElementById('fHandle').value.trim();}
+  else if(currentType==='tiktok'){author=document.getElementById('fAuthor').value.trim()||'TikTok';handle=document.getElementById('fHandle').value.trim();}
   else if(currentType==='web'){const title=document.getElementById('fTitle').value.trim();const site=document.getElementById('fSite').value.trim();author=document.getElementById('fAuthorWeb').value.trim()||title||'Web記事';handle=site;summary=document.getElementById('fSummary').value.trim();}
   else if(currentType==='youtube'){author=document.getElementById('fYtTitle').value.trim()||'YouTube動画';handle=document.getElementById('fYtChannel').value.trim();}
   else{author='メモ';}
@@ -1408,6 +1459,25 @@ async function fetchFromUrl(){
         if(d.author_name) document.getElementById('fAuthor').value=d.author_name;
       }
       status.textContent='✓ X投稿の情報を取得しました';
+    } else if(currentType==='tiktok'){
+      // TikTok oEmbed APIでサムネイル・作者名を取得
+      const m=url.match(/tiktok\.com\/@([\w.]+)\/video\/(\d+)/i)||url.match(/vm\.tiktok\.com\/([\w]+)/i)||url.match(/vt\.tiktok\.com\/([\w]+)/i);
+      if(!m){toast('TikTokのURLを入力してください','err');return;}
+      try{
+        const oeResp=await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
+        const oe=await oeResp.json();
+        if(oe.author_name) document.getElementById('fAuthor').value=oe.author_name;
+        if(oe.author_url){const h=oe.author_url.match(/tiktok\.com\/@([^\/\?]+)/);if(h) document.getElementById('fHandle').value='@'+h[1];}
+        if(oe.title) document.getElementById('fContent').value=oe.title;
+        if(oe.thumbnail_url){document.getElementById('fImgUrl').value=oe.thumbnail_url;prevImgUrl();}
+        status.textContent='✓ TikTok動画の情報を取得しました';
+      }catch(e){
+        // oEmbedが失敗した場合はURLから作者名を取得
+        const handle=url.match(/tiktok\.com\/@([\w.]+)/)?.[1]||'';
+        if(handle){document.getElementById('fHandle').value='@'+handle;document.getElementById('fAuthor').value=handle;}
+        status.textContent='✓ URLからハンドル名を取得しました（サムネイル取得に失敗）';
+      }
+      document.getElementById('fWatchLater').checked=true;
     } else if(currentType==='youtube'){
       const vid=getYtId(url);
       if(!vid){toast('YouTubeのURLを入力してください','err');return;}
@@ -1462,7 +1532,7 @@ async function fetchFromUrl(){
 // ════════════════════════════════════════════════
 function setType(t){
   currentType=t;
-  ['x','web','youtube','memo'].forEach(tt=>{
+  ['x','web','youtube','tiktok','memo'].forEach(tt=>{
     const el=document.getElementById('type'+tt.charAt(0).toUpperCase()+tt.slice(1));
     if(el) el.classList.toggle('active',tt===t);
   });
@@ -1470,11 +1540,15 @@ function setType(t){
   document.getElementById('xFields').style.display=t==='x'?'contents':'none';
   document.getElementById('webFields').style.display=t==='web'?'block':'none';
   document.getElementById('ytFields').style.display=t==='youtube'?'block':'none';
+  // TikTok: x用フィールドを流用（作者名・ハンドル）
+  if(t==='tiktok'){
+    document.getElementById('xFields').style.display='contents';
+  }
   document.getElementById('summaryField').style.display=t==='web'?'block':'none';
-  document.getElementById('watchLaterLabel').style.display=t==='youtube'?'inline-flex':'none';
-  document.getElementById('ytWatchedLabel').style.display=t==='youtube'?'inline-flex':'none';
+  document.getElementById('watchLaterLabel').style.display=(t==='youtube'||t==='tiktok')?'inline-flex':'none';
+  document.getElementById('ytWatchedLabel').style.display='none';
   document.getElementById('statusBar').style.display='none';
-  const ph={x:'https://x.com/username/status/...',web:'https://example.com/article...',youtube:'https://youtube.com/watch?v=...',memo:''};
+  const ph={x:'https://x.com/username/status/...',web:'https://example.com/article...',youtube:'https://youtube.com/watch?v=...',tiktok:'https://www.tiktok.com/@user/video/...',memo:''};
   const urlIn=document.getElementById('urlIn');
   if(urlIn) urlIn.placeholder=ph[t]||'';
 }
@@ -1513,17 +1587,55 @@ async function geocodeArea(prefix){
   const statusId=prefix+'AreaStatus';
   document.getElementById(statusId).textContent='検索中...';
   try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&addressdetails=1`);
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&addressdetails=1&accept-language=ja`);
     const d=await r.json();
     if(!d.length){document.getElementById(statusId).textContent='場所が見つかりませんでした';return;}
     const addr=d[0].address||{};
     document.getElementById(prefix+'Lat').value=d[0].lat;
     document.getElementById(prefix+'Lng').value=d[0].lon;
-    if(!document.getElementById(prefix+'Country').value&&addr.country) document.getElementById(prefix+'Country').value=addr.country;
-    if(!document.getElementById(prefix+'Prefecture').value){const pref=addr.state||addr.province||addr.region||'';if(pref) document.getElementById(prefix+'Prefecture').value=pref;}
-    document.getElementById(statusId).textContent='✓ 位置情報を取得しました';
+    // 国を自動入力（常に上書き）
+    if(addr.country) document.getElementById(prefix+'Country').value=addr.country;
+    // 都道府県を自動入力（常に上書き）
+    const pref=addr.state||addr.province||addr.region||addr.county||'';
+    if(pref) document.getElementById(prefix+'Prefecture').value=pref;
+    document.getElementById(statusId).textContent=`✓ ${addr.country||''}${pref?' / '+pref:''} に設定しました`;
   }catch(e){document.getElementById(statusId).textContent='エラーが発生しました';}
 }
+
+async function geocodeFromMapUrl(prefix){
+  const mapUrlId=prefix==='f'?'fMapUrlInput':'eMapUrlInput';
+  const mapUrl=document.getElementById(mapUrlId)?.value.trim();
+  if(!mapUrl){toast('GoogleマップURLを入力してください','err');return;}
+  const statusId=prefix+'AreaStatus';
+  document.getElementById(statusId).textContent='GoogleマップURLから取得中...';
+  try{
+    let lat=null,lng=null;
+    const m1=mapUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if(m1){lat=parseFloat(m1[1]);lng=parseFloat(m1[2]);}
+    if(!lat){const m2=mapUrl.match(/\/place\/([^\/]+)\/@(-?\d+\.\d+),(-?\d+\.\d+)/);if(m2){lat=parseFloat(m2[2]);lng=parseFloat(m2[3]);}}
+    if(!lat){const m3=mapUrl.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);if(m3){lat=parseFloat(m3[1]);lng=parseFloat(m3[2]);}}
+    if(!lat){const m4=mapUrl.match(/ll=(-?\d+\.\d+),(-?\d+\.\d+)/);if(m4){lat=parseFloat(m4[1]);lng=parseFloat(m4[2]);}}
+    if(lat&&lng){
+      document.getElementById(prefix+'Lat').value=lat;
+      document.getElementById(prefix+'Lng').value=lng;
+      const rev=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ja`);
+      const rd=await rev.json();
+      const addr=rd.address||{};
+      if(addr.country) document.getElementById(prefix+'Country').value=addr.country;
+      const pref=addr.state||addr.province||addr.region||addr.county||'';
+      if(pref) document.getElementById(prefix+'Prefecture').value=pref;
+      const place=addr.city||addr.town||addr.village||addr.suburb||addr.neighbourhood||'';
+      if(place) document.getElementById(prefix+'Area').value=place;
+      document.getElementById(statusId).textContent=`✓ Googleマップから取得: ${rd.display_name?.split(',').slice(0,2).join(',') ||''}`;
+    } else {
+      // URLから地名を抽出して検索
+      const placeName=decodeURIComponent((mapUrl.match(/\/place\/([^\/\?@+]+)/)?.[1]||mapUrl.match(/[?&]q=([^&@]+)/)?.[1]||'').replace(/\+/g,' '));
+      if(placeName){document.getElementById(prefix+'Area').value=placeName;await geocodeArea(prefix);}
+      else document.getElementById(statusId).textContent='⚠️ URLから座標を取得できませんでした';
+    }
+  }catch(e){document.getElementById(statusId).textContent='エラーが発生しました';}
+}
+
 
 // ════════════════════════════════════════════════
 // TAG PICKERS
@@ -1763,14 +1875,37 @@ function updateYtPlayInfo(){
 function renderYtQueue(){
   const el=document.getElementById('homeYtQueue');if(!el)return;
   const showWatched=document.getElementById('plIncludeWatched')?.checked;
-  const list=showWatched?ytPlaylist:ytPlaylist.filter(p=>p.youtube_status!=='watched'||ytPlaylist.indexOf(p)===ytPlayIdx);
   el.innerHTML=ytPlaylist.map((p,i)=>{
     if(!showWatched&&p.youtube_status==='watched'&&i!==ytPlayIdx) return '';
-    return `<div class="yt-queue-item${i===ytPlayIdx?' active':''}" onclick="ytJump(${i})">
+    return `<div class="yt-queue-item${i===ytPlayIdx?' active':''}" 
+      draggable="true"
+      ondragstart="ytDragStart(event,${i})"
+      ondragover="ytDragOver(event)"
+      ondrop="ytDrop(event,${i})"
+      ondragend="ytDragEnd(event)"
+      onclick="ytJump(${i})">
+      <span style="font-size:.65rem;color:var(--ink3);cursor:grab;padding:0 .2rem;user-select:none">⠿</span>
       <img class="yt-queue-thumb" src="https://img.youtube.com/vi/${getYtId(p.url)}/default.jpg" onerror="this.style.display='none'" alt="">
       <div class="yt-queue-title" style="opacity:${p.youtube_status==='watched'?.4:1}">${esc(p.author)}${p.is_favorite?' ⭐':''}${p.youtube_status==='watched'?' ✅':''}</div>
+      <span style="font-family:'DM Mono',monospace;font-size:.55rem;color:var(--ink3);flex-shrink:0">${i+1}</span>
     </div>`;
   }).join('');
+}
+
+let ytDragIdx=null;
+function ytDragStart(e,idx){ytDragIdx=idx;e.currentTarget.style.opacity='.4';}
+function ytDragOver(e){e.preventDefault();e.currentTarget.style.background='rgba(255,255,255,.15)';}
+function ytDragEnd(e){e.currentTarget.style.opacity='';e.currentTarget.style.background='';}
+function ytDrop(e,toIdx){
+  e.preventDefault();e.currentTarget.style.background='';
+  if(ytDragIdx===null||ytDragIdx===toIdx)return;
+  const item=ytPlaylist.splice(ytDragIdx,1)[0];
+  ytPlaylist.splice(toIdx,0,item);
+  if(ytPlayIdx===ytDragIdx) ytPlayIdx=toIdx;
+  else if(ytDragIdx<ytPlayIdx&&toIdx>=ytPlayIdx) ytPlayIdx--;
+  else if(ytDragIdx>ytPlayIdx&&toIdx<=ytPlayIdx) ytPlayIdx++;
+  ytDragIdx=null;
+  renderYtQueue();updateYtPlayInfo();
 }
 
 function ytJump(idx){ytPlayIdx=idx;loadHomeYtVideo();}
