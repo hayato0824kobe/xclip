@@ -6,7 +6,10 @@
 <title>XCLIP</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <style>
 :root{
   --white:#fff;--off:#f7f6f3;--paper:#faf9f6;
@@ -61,12 +64,12 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .mfb-scroll::-webkit-scrollbar{display:none;}
 .mfb-pill{flex-shrink:0;padding:.3rem .8rem;border-radius:20px;border:1.5px solid var(--line);background:var(--white);color:var(--ink2);font-size:.74rem;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .mfb-pill.active{background:var(--ink);border-color:var(--ink);color:#fff;}
-.mfb-pill.yt-pill.active{background:#dc2626;border-color:#dc2626;color:#fff;}
+.mfb-pill.yt-pill.active{background:#2563eb;border-color:#2563eb;color:#fff;}
 .mfb-pill.fav-pill.active{background:#f59e0b;border-color:#f59e0b;color:#fff;}
 .mfb-expand{display:none;padding:.35rem 1rem .5rem;gap:.3rem;flex-wrap:wrap;border-bottom:1px solid var(--line);}
 .mfb-expand.open{display:flex;}
-.mfb-ep{flex-shrink:0;padding:.25rem .7rem;border-radius:14px;border:1.5px solid var(--line);background:var(--off);color:var(--ink2);font-size:.71rem;cursor:pointer;white-space:nowrap;transition:all .15s;}
-.mfb-ep.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.mfb-ep{flex-shrink:0;padding:.3rem .8rem;border-radius:16px;border:1.5px solid var(--line);background:var(--off);color:var(--ink2);font-size:.76rem;cursor:pointer;white-space:nowrap;transition:all .15s;font-family:'Noto Sans JP',sans-serif;display:inline-flex;align-items:center;gap:.3rem;}
+.mfb-ep.active{color:#fff !important;border-color:transparent !important;}
 #contentAnchor{scroll-margin-top:160px;}
 
 /* ─── HOME LAYOUT ─── */
@@ -79,7 +82,7 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .filter-btn{display:flex;align-items:center;gap:.5rem;width:100%;padding:.38rem .55rem;background:transparent;border:none;border-radius:4px;color:var(--ink2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:.79rem;font-weight:300;text-align:left;transition:all .15s;margin-bottom:1px;}
 .filter-btn:hover{background:var(--off);}
 .filter-btn.active{background:var(--ink);color:#fff;}
-.filter-btn.yt-btn.active{background:#dc2626;}
+.filter-btn.yt-btn.active{background:#2563eb;color:#fff;}
 .filter-btn.fav-btn.active{background:#f59e0b;color:#fff;}
 .filter-btn .fc{margin-left:auto;font-family:'DM Mono',monospace;font-size:.6rem;opacity:.55;}
 .tag-tree-parent{margin-bottom:2px;}
@@ -188,19 +191,26 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .img-area-prev{width:100%;max-height:220px;object-fit:contain;display:block;}
 .img-area-ph{display:flex;flex-direction:column;align-items:center;gap:.3rem;color:var(--ink3);font-size:.76rem;pointer-events:none;}
 /* ─── HIERARCHICAL TAG PICKER ─── */
-.tag-picker{display:flex;flex-direction:column;gap:.55rem;}
-.tp-group{border:1.5px solid var(--line);border-radius:8px;overflow:hidden;}
-.tp-parent-row{display:flex;align-items:center;gap:.5rem;padding:.45rem .65rem;cursor:pointer;user-select:none;transition:background .15s;}
+.tag-picker{display:flex;flex-direction:column;gap:.5rem;}
+.tp-group{border:1.5px solid var(--line);border-radius:10px;overflow:hidden;}
+.tp-parent-row{display:flex;align-items:center;gap:.55rem;padding:.6rem .75rem;cursor:pointer;user-select:none;transition:background .15s;min-height:48px;}
 .tp-parent-row:hover{background:#ebebeb;}
-.tp-parent-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
-.tp-parent-name{font-size:.8rem;font-weight:500;flex:1;color:var(--ink);}
-.tp-parent-check{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0;transition:all .15s;background:#fff;}
+.tp-parent-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.tp-parent-name{font-size:.88rem;font-weight:500;flex:1;color:var(--ink);}
+.tp-parent-check{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0;transition:all .15s;background:#fff;}
 .tp-parent-row.selected .tp-parent-check{color:#fff;border-color:transparent;}
-.tp-children{display:flex;flex-wrap:wrap;gap:.35rem;padding:.4rem .65rem .55rem 2rem;border-top:1px solid var(--line);background:#fdfdfd;}
-.tp-child-pill{font-size:.72rem;padding:.25rem .65rem;border-radius:12px;cursor:pointer;border:1.5px solid;transition:all .15s;display:inline-flex;align-items:center;gap:.25rem;background:#fff;}
+.tp-children{display:flex;flex-wrap:wrap;gap:.4rem;padding:.5rem .75rem .65rem 1.5rem;border-top:1px solid var(--line);background:#fdfdfd;}
+.tp-child-pill{font-size:.78rem;padding:.35rem .75rem;border-radius:14px;cursor:pointer;border:1.5px solid;transition:all .15s;display:inline-flex;align-items:center;gap:.3rem;background:#fff;min-height:36px;}
 .tp-child-pill:hover{opacity:.82;}
 .tp-child-pill.selected{color:#fff !important;border-color:transparent !important;}
-.tp-lone-row{display:flex;flex-wrap:wrap;gap:.35rem;}
+.tp-lone-row{display:flex;flex-wrap:wrap;gap:.4rem;}
+@media(max-width:768px){
+  .tp-parent-row{min-height:52px;padding:.65rem .85rem;}
+  .tp-parent-name{font-size:.92rem;}
+  .tp-parent-check{width:26px;height:26px;font-size:.82rem;}
+  .tp-child-pill{font-size:.82rem;padding:.4rem .85rem;min-height:40px;}
+  .tp-children{gap:.45rem;padding:.6rem .85rem .75rem 1.5rem;}
+}
 .status-bar{font-size:.76rem;color:var(--ink3);background:var(--off);border-left:2px solid var(--accent);padding:.45rem .7rem;border-radius:0 4px 4px 0;margin-bottom:.7rem;display:none;}
 .form-actions{display:flex;justify-content:flex-end;gap:.5rem;margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--line);}
 .btn-ghost{background:transparent;border:1px solid var(--line);border-radius:6px;padding:.45rem 1.1rem;font-size:.8rem;cursor:pointer;color:var(--ink2);transition:all .15s;}
@@ -210,7 +220,27 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .flag-row{display:flex;align-items:center;gap:1.25rem;padding:.45rem 0;}
 .flag-row label{display:flex;align-items:center;gap:.4rem;font-size:.8rem;cursor:pointer;color:var(--ink2);}
 
-/* ─── SETTINGS TAB ─── */
+/* ─── QUICK ADD (SP) ─── */
+.quick-add-card{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:12px;padding:1.1rem 1.1rem .9rem;margin-bottom:.85rem;color:#fff;}
+.qa-label{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:#a5b4fc;margin-bottom:.3rem;}
+.qa-desc{font-size:.78rem;color:#c7d2fe;margin-bottom:.75rem;line-height:1.5;}
+.qa-row{display:flex;gap:.4rem;margin-bottom:.4rem;}
+.qa-input{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.55rem .75rem;font-size:.85rem;color:#fff;outline:none;font-family:'Noto Sans JP',sans-serif;}
+.qa-input::placeholder{color:rgba(255,255,255,.4);}
+.qa-input:focus{border-color:rgba(165,180,252,.7);background:rgba(255,255,255,.15);}
+.qa-btn{background:#6366f1;border:none;border-radius:8px;color:#fff;padding:.55rem 1.1rem;font-size:.85rem;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;transition:background .15s;}
+.qa-btn:hover{background:#4f46e5;}
+.qa-btn:disabled{opacity:.5;cursor:not-allowed;}
+.qa-status{font-size:.72rem;color:#a5b4fc;min-height:1.1rem;margin-bottom:.4rem;}
+.qa-toggle{background:transparent;border:none;color:rgba(255,255,255,.5);font-size:.72rem;cursor:pointer;padding:.2rem 0;font-family:'Noto Sans JP',sans-serif;}
+.qa-toggle:hover{color:rgba(255,255,255,.8);}
+@media(min-width:769px){
+  .quick-add-card{display:none;}/* PC は常に詳細フォームのみ表示 */
+}
+@media(max-width:768px){
+  #detailAddCard{display:none;}/* SP はデフォルトで詳細フォームを隠す */
+  #detailAddCard.sp-show{display:block;}
+}
 .settings-wrap{max-width:980px;margin:0 auto;padding:1.5rem;}
 .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
 .settings-card{background:var(--white);border:1px solid var(--line);border-radius:8px;padding:1.1rem;}
@@ -283,6 +313,42 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .leaflet-popup-content-wrapper{border-radius:10px !important;box-shadow:0 4px 20px rgba(0,0,0,.15) !important;padding:0 !important;overflow:hidden;}
 .leaflet-popup-content{margin:10px 12px !important;font-family:'Noto Sans JP',sans-serif !important;}
 .leaflet-div-icon{background:transparent !important;border:none !important;}
+
+/* ─── QUICK ADD SHEET (SP) ─── */
+#quickAddSheet{position:fixed;inset:0;z-index:800;display:none;}
+#quickAddSheet.open{display:block;}
+.qa-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);}
+.qa-panel{position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:0 0 env(safe-area-inset-bottom,0);max-height:85vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,1,.28,1);}
+#quickAddSheet.open .qa-panel{transform:translateY(0);}
+.qa-handle{width:40px;height:4px;background:var(--line);border-radius:2px;margin:.75rem auto .25rem;}
+.qa-head{padding:.6rem 1.25rem .75rem;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+.qa-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;}
+.qa-close{background:var(--off);border:1px solid var(--line);border-radius:20px;padding:.28rem .75rem;font-size:.78rem;cursor:pointer;color:var(--ink2);}
+.qa-body{padding:1rem 1.25rem;overflow-y:auto;flex:1;}
+.qa-url-wrap{display:flex;gap:.5rem;margin-bottom:.85rem;}
+.qa-url-input{flex:1;border:2px solid var(--line);border-radius:10px;padding:.7rem 1rem;font-size:.9rem;font-family:'Noto Sans JP',sans-serif;outline:none;background:var(--off);transition:border-color .2s;}
+.qa-url-input:focus{border-color:var(--accent);background:#fff;}
+.qa-fetch-btn{background:var(--ink);border:none;border-radius:10px;color:#fff;padding:.7rem 1.1rem;font-size:.82rem;cursor:pointer;white-space:nowrap;font-family:'Noto Sans JP',sans-serif;transition:background .15s;flex-shrink:0;}
+.qa-fetch-btn:hover{background:var(--accent);}
+.qa-status{font-size:.75rem;color:var(--ink3);background:var(--off);border-radius:8px;padding:.45rem .75rem;margin-bottom:.75rem;display:none;line-height:1.5;}
+.qa-status.show{display:block;}
+.qa-preview{background:var(--off);border:1px solid var(--line);border-radius:10px;padding:.75rem 1rem;margin-bottom:.85rem;display:none;}
+.qa-preview.show{display:block;}
+.qa-preview-img{width:100%;height:120px;object-fit:cover;border-radius:6px;margin-bottom:.5rem;display:block;}
+.qa-preview-title{font-size:.88rem;font-weight:600;margin-bottom:.2rem;line-height:1.4;}
+.qa-preview-sub{font-size:.72rem;color:var(--ink3);}
+.qa-memo-wrap{margin-bottom:.75rem;}
+.qa-memo-label{font-size:.72rem;color:var(--ink3);margin-bottom:.3rem;display:block;}
+.qa-memo{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:.6rem .9rem;font-size:.84rem;font-family:'Noto Sans JP',sans-serif;outline:none;resize:none;min-height:60px;background:var(--off);}
+.qa-memo:focus{border-color:var(--accent);background:#fff;}
+.qa-save-btn{width:100%;padding:.85rem;background:var(--accent);border:none;border-radius:12px;color:#fff;font-size:.95rem;font-family:'Noto Sans JP',sans-serif;font-weight:500;cursor:pointer;transition:opacity .15s;letter-spacing:.03em;}
+.qa-save-btn:active{opacity:.85;}
+.qa-save-btn:disabled{opacity:.45;cursor:not-allowed;}
+.qa-detail-link{display:block;text-align:center;font-size:.75rem;color:var(--ink3);margin-top:.6rem;cursor:pointer;text-decoration:underline;}
+
+/* ─── タグなし一覧グループ ─── */
+.untagged-group{background:#fff8f5;border:1.5px dashed #f0c4b4;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;}
+.untagged-group-head{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;}
 
 /* ─── TOAST / LOADING ─── */
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:#fff;padding:.55rem 1.2rem;border-radius:6px;font-size:.8rem;z-index:1000;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;}
@@ -376,6 +442,7 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
     <button class="mfb-pill active" data-f="all" onclick="setFilter('all')">すべて</button>
     <button class="mfb-pill fav-pill" data-f="fav" onclick="setFilter('fav')">⭐ お気に入り</button>
     <button class="mfb-pill yt-pill" data-f="yt-watchlater" onclick="setFilter('yt-watchlater')">📌 あとで見る</button>
+    <button class="mfb-pill" data-f="untagged" onclick="setFilter('untagged')" style="color:var(--accent);border-color:var(--accent)">🏷 タグ設定前</button>
     <button class="mfb-pill" data-f="recent" onclick="setFilter('recent')">最近追加</button>
     <button class="mfb-pill accent" onclick="startHomePlaylist()">▶ 連続再生</button>
     <button class="mfb-pill" onclick="toggleMfbExpand('Tags')">🏷 タグ ▾</button>
@@ -397,8 +464,9 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
         <div class="sb-head">Filter</div>
         <button class="filter-btn active" id="fAll" onclick="setFilter('all')">すべて <span class="fc" id="cAll">0</span></button>
         <button class="filter-btn fav-btn" id="fFav" onclick="setFilter('fav')">⭐ お気に入り <span class="fc" id="cFav">0</span></button>
-        <button class="filter-btn yt-btn" id="fYtWl" onclick="setFilter('yt-watchlater')">📌 あとで見る（未視聴） <span class="fc" id="cYtWl">0</span></button>
+        <button class="filter-btn yt-btn" id="fYtWl" onclick="setFilter('yt-watchlater')">📌 あとで見る <span class="fc" id="cYtWl">0</span></button>
         <button class="filter-btn" id="fRecent" onclick="setFilter('recent')">最近追加 <span class="fc" id="cRec">0</span></button>
+        <button class="filter-btn" id="fUntagged" onclick="setFilter('untagged')" style="color:var(--accent)">🏷 タグ設定前 <span class="fc" id="cUntagged">0</span></button>
       </div>
 
       <div class="sb-section">
@@ -475,7 +543,19 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
 <!-- ═════════════ ADD TAB ═════════════ -->
 <div class="tab-pane" id="tab-add">
   <div class="add-wrap">
-    <div class="add-card">
+    <!-- スマホ用クイック登録 -->
+    <div class="quick-add-card" id="quickAddCard">
+      <div class="qa-label">⚡ クイック登録</div>
+      <div class="qa-desc">URLを貼るだけで即保存。タグは後で設定できます。</div>
+      <div class="qa-row">
+        <input class="qa-input" id="qaUrl" placeholder="URLを貼り付け..." oninput="qaAutoDetect()">
+        <button class="qa-btn" id="qaBtn" onclick="quickSave()">保存</button>
+      </div>
+      <div class="qa-status" id="qaStatus"></div>
+      <button class="qa-toggle" onclick="toggleQuickAdd(false)">詳細フォームで入力 ▸</button>
+    </div>
+    <!-- 詳細フォーム（デフォルト非表示: SP、PC は常に表示） -->
+    <div class="add-card" id="detailAddCard">
       <div class="type-tabs">
         <button class="type-tab active" id="typeX" onclick="setType('x')">𝕏 ポスト</button>
         <button class="type-tab" id="typeWeb" onclick="setType('web')">🌐 Web記事</button>
@@ -561,7 +641,7 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
         <button class="btn-ghost" onclick="clearForm()">クリア</button>
         <button class="btn-solid" onclick="savePost()">保存する</button>
       </div>
-    </div>
+    </div><!-- /detailAddCard -->
   </div>
 </div>
 
@@ -718,12 +798,42 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
 </div>
 
 <!-- BOTTOM NAV -->
+<!-- QUICK ADD SHEET (SP only) -->
+<div id="quickAddSheet">
+  <div class="qa-overlay" onclick="closeQuickAdd()"></div>
+  <div class="qa-panel">
+    <div class="qa-handle"></div>
+    <div class="qa-head">
+      <span class="qa-title">クイック保存</span>
+      <button class="qa-close" onclick="closeQuickAdd()">✕ 閉じる</button>
+    </div>
+    <div class="qa-body">
+      <div class="qa-url-wrap">
+        <input class="qa-url-input" id="qaUrl" placeholder="URLを貼り付け..." oninput="onQaUrlInput()">
+        <button class="qa-fetch-btn" id="qaFetchBtn" onclick="qaFetch()">取得</button>
+      </div>
+      <div class="qa-status" id="qaStatus"></div>
+      <div class="qa-preview" id="qaPreview">
+        <img class="qa-preview-img" id="qaPreviewImg" style="display:none">
+        <div class="qa-preview-title" id="qaPreviewTitle"></div>
+        <div class="qa-preview-sub" id="qaPreviewSub"></div>
+      </div>
+      <div class="qa-memo-wrap">
+        <label class="qa-memo-label">📝 メモ（任意）</label>
+        <textarea class="qa-memo" id="qaMemo" placeholder="メモや感想..."></textarea>
+      </div>
+      <button class="qa-save-btn" id="qaSaveBtn" onclick="qaSave()" disabled>保存する</button>
+      <span class="qa-detail-link" onclick="closeQuickAdd();switchTab('add')">詳細設定（タグ・エリアなど）▶</span>
+    </div>
+  </div>
+</div>
+
 <nav id="bottomNav">
   <div class="bn-inner">
     <button class="bn-btn active" id="bnHome" onclick="switchTab('home');bnActive('bnHome')">
       <span class="bn-icon">🏠</span><span>HOME</span>
     </button>
-    <button class="bn-btn" id="bnAdd" onclick="switchTab('add');bnActive('bnAdd')">
+    <button class="bn-btn" id="bnAdd" onclick="onBnAdd()">
       <span class="bn-icon">＋</span><span>追加</span>
     </button>
     <button class="bn-btn" id="bnSettings" onclick="switchTab('settings');bnActive('bnSettings')">
@@ -847,11 +957,166 @@ function switchTab(tab){
   document.getElementById(bnMap[tab])?.classList.add('active');
   if(tab==='home') renderHome();
   if(tab==='settings') renderSettings();
+  // タブ切り替え時に常に最上部へ
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function bnActive(id){
   document.querySelectorAll('.bn-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id)?.classList.add('active');
+}
+
+function onBnAdd(){
+  // スマホ: クイック登録シート / PC: 通常のAddタブ
+  if(window.innerWidth<=768){openQuickAdd();}
+  else{switchTab('add');bnActive('bnAdd');}
+}
+
+// ════════════════════════════════════════════════
+// QUICK ADD SHEET
+// ════════════════════════════════════════════════
+let qaData={url:'',type:'x',author:'',handle:'',content:'',image:'',title:''};
+
+function openQuickAdd(){
+  document.getElementById('quickAddSheet').classList.add('open');
+  document.getElementById('qaUrl').value='';
+  document.getElementById('qaMemo').value='';
+  document.getElementById('qaStatus').className='qa-status';
+  document.getElementById('qaPreview').className='qa-preview';
+  document.getElementById('qaSaveBtn').disabled=true;
+  qaData={url:'',type:'x',author:'',handle:'',content:'',image:'',title:''};
+  setTimeout(()=>document.getElementById('qaUrl').focus(),350);
+}
+
+function closeQuickAdd(){
+  document.getElementById('quickAddSheet').classList.remove('open');
+}
+
+function onQaUrlInput(){
+  const url=document.getElementById('qaUrl').value.trim();
+  document.getElementById('qaSaveBtn').disabled=!url;
+}
+
+async function qaFetch(){
+  const url=document.getElementById('qaUrl').value.trim();
+  if(!url) return;
+  const btn=document.getElementById('qaFetchBtn');
+  const status=document.getElementById('qaStatus');
+  btn.disabled=true;btn.textContent='取得中...';
+  status.textContent='情報を取得中...';status.className='qa-status show';
+
+  try{
+    // URLの種別を自動判定
+    if(/(?:twitter\.com|x\.com)\/@?[\w]+\/status\/\d+/.test(url)){
+      qaData.type='x';
+      const m=url.match(/(?:twitter\.com|x\.com)\/@?([\w]+)\/status\/(\d+)/);
+      if(m){qaData.handle='@'+m[1];qaData.author=m[1];}
+      try{
+        const r=await fetch(`https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`);
+        const d=await r.json();
+        if(d.html){const txt=new DOMParser().parseFromString(d.html,'text/html').querySelector('p')?.textContent||'';qaData.content=txt;}
+        if(d.author_name){qaData.author=d.author_name;}
+      }catch(e){}
+      qaData.url=url;
+      showQaPreview(qaData.author,qaData.handle,'',null);
+      status.textContent='✓ X(Twitter)の情報を取得しました';
+    } else if(/(?:youtube\.com\/watch|youtu\.be\/)/.test(url)){
+      qaData.type='youtube';
+      const vid=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/)?.[1];
+      if(vid){
+        try{
+          const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+          const d=await r.json();
+          qaData.author=d.title||'YouTube動画';
+          qaData.handle=d.author_name||'';
+          qaData.image=`https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
+        }catch(e){qaData.author='YouTube動画';qaData.image=`https://img.youtube.com/vi/${vid}/mqdefault.jpg`;}
+      }
+      qaData.url=url;qaData.content='';
+      showQaPreview(qaData.author,qaData.handle,qaData.image,null);
+      status.textContent='✓ YouTube動画の情報を取得しました';
+    } else if(/tiktok\.com/.test(url)){
+      qaData.type='tiktok';
+      const handle=url.match(/tiktok\.com\/@([\w.]+)/)?.[1]||'';
+      qaData.handle='@'+handle;qaData.author=handle;
+      try{
+        const r=await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
+        const d=await r.json();
+        if(d.author_name)qaData.author=d.author_name;
+        if(d.thumbnail_url)qaData.image=d.thumbnail_url;
+        if(d.title)qaData.content=d.title;
+      }catch(e){}
+      qaData.url=url;
+      showQaPreview(qaData.author,qaData.handle,qaData.image,null);
+      status.textContent='✓ TikTokの情報を取得しました';
+    } else {
+      // Web記事
+      qaData.type='web';
+      let html='';
+      const proxies=[`https://corsproxy.io/?${encodeURIComponent(url)}`,`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`];
+      for(const px of proxies){
+        try{const r=await fetch(px,{signal:AbortSignal.timeout(6000)});html=px.includes('allorigins')?(await r.json()).contents||'':await r.text();if(html)break;}catch(e){continue;}
+      }
+      if(html){
+        const doc=new DOMParser().parseFromString(html,'text/html');
+        const get=(sel,attr)=>doc.querySelector(sel)?.getAttribute(attr)||'';
+        qaData.author=get('meta[property="og:title"]','content')||get('meta[name="twitter:title"]','content')||doc.querySelector('title')?.textContent||url;
+        qaData.handle=get('meta[property="og:site_name"]','content')||new URL(url).hostname;
+        qaData.content=get('meta[property="og:description"]','content')||get('meta[name="description"]','content')||'';
+        qaData.image=get('meta[property="og:image"]','content')||get('meta[name="twitter:image"]','content')||'';
+        status.textContent='✓ 記事の情報を取得しました';
+      } else {
+        qaData.author=url;qaData.handle=new URL(url).hostname;
+        status.textContent='⚠ 詳細情報の取得に失敗。URLのみ保存できます';
+      }
+      qaData.url=url;
+      showQaPreview(qaData.author,qaData.handle,qaData.image,qaData.content);
+    }
+    document.getElementById('qaSaveBtn').disabled=false;
+  }catch(e){
+    status.textContent='⚠ 取得に失敗しました。URLのみ保存されます';
+    qaData.url=url;qaData.type='web';qaData.author=url;
+    document.getElementById('qaSaveBtn').disabled=false;
+  }
+  btn.disabled=false;btn.textContent='取得';
+}
+
+function showQaPreview(title,sub,imgUrl,content){
+  const prev=document.getElementById('qaPreview');
+  const img=document.getElementById('qaPreviewImg');
+  document.getElementById('qaPreviewTitle').textContent=title||'';
+  document.getElementById('qaPreviewSub').textContent=[sub,content?content.slice(0,60)+'…':''].filter(Boolean).join(' · ');
+  if(imgUrl){img.src=imgUrl;img.style.display='block';img.onerror=()=>{img.style.display='none';};}
+  else{img.style.display='none';}
+  prev.className='qa-preview show';
+}
+
+async function qaSave(){
+  const url=document.getElementById('qaUrl').value.trim();
+  if(!url&&!qaData.url){toast('URLを入力してください','err');return;}
+  const btn=document.getElementById('qaSaveBtn');
+  btn.disabled=true;btn.textContent='保存中...';
+  const now=Date.now();
+  const memo=document.getElementById('qaMemo').value.trim();
+  const p={
+    id:'p'+now,url:qaData.url||url,created_at:now,
+    author:qaData.author||url,handle:qaData.handle||'',
+    content:qaData.content||'',memo,
+    image:qaData.image||'',tags:[],
+    area:null,country:null,prefecture:null,lat:null,lng:null,
+    type:qaData.type||'web',summary:null,
+    youtube_status:'unwatch',youtube_priority:false,
+    is_favorite:false,
+    watch_later:qaData.type==='youtube'||qaData.type==='tiktok',
+  };
+  try{
+    await sb('posts','POST',p);
+    posts.unshift(mapPost({...p}));
+    renderAll();renderReminderBar();
+    toast('保存しました ✓','ok');
+    closeQuickAdd();
+    switchTab('home');
+  }catch(e){toast('保存エラー: '+e.message,'err');btn.disabled=false;btn.textContent='保存する';}
 }
 
 // ════════════════════════════════════════════════
@@ -920,15 +1185,24 @@ function renderMobileFilterBar(){
   parentTags.forEach(pt=>{
     const children=childTags.filter(c=>c.parent_id===pt.id);
     const active=tagFilter===pt.id;
-    html+=`<button class="mfb-ep${active?' active':''}" style="${active?'':'border-color:'+pt.color+';color:'+pt.color}" onclick="mfbTag('${pt.id}')">${esc(pt.name)}</button>`;
+    const bg=active?pt.color:`${pt.color}18`;
+    const border=active?pt.color:`${pt.color}55`;
+    const color=active?'#fff':pt.color;
+    html+=`<button class="mfb-ep${active?' active':''}" style="background:${bg};border-color:${border};color:${color}" onclick="mfbTag('${pt.id}')">
+      <span style="width:7px;height:7px;border-radius:50%;background:${active?'rgba(255,255,255,.8)':pt.color};flex-shrink:0;display:inline-block"></span>${esc(pt.name)}
+    </button>`;
     children.forEach(ct=>{
       const ca=tagFilter===ct.id;
-      html+=`<button class="mfb-ep${ca?' active':''}" style="${ca?'':'border-color:'+ct.color+';color:'+ct.color}" onclick="mfbTag('${ct.id}')">└ ${esc(ct.name)}</button>`;
+      const cbg=ca?ct.color:`${ct.color}12`;
+      const cborder=ca?ct.color:`${ct.color}44`;
+      const ccolor=ca?'#fff':ct.color;
+      html+=`<button class="mfb-ep${ca?' active':''}" style="background:${cbg};border-color:${cborder};color:${ccolor};padding-left:.6rem" onclick="mfbTag('${ct.id}')">
+        <span style="width:5px;height:5px;border-radius:50%;background:${ca?'rgba(255,255,255,.8)':ct.color};flex-shrink:0;display:inline-block"></span>└ ${esc(ct.name)}
+      </button>`;
     });
   });
   const mfbTags=document.getElementById('mfbTags');
   if(mfbTags) mfbTags.innerHTML=html;
-  // ピルのactive同期
   document.querySelectorAll('#mfbMain .mfb-pill[data-f]').forEach(el=>el.classList.toggle('active',el.dataset.f===curFilter));
   renderAreaFilter();
 }
@@ -972,6 +1246,7 @@ function getFiltered(){
     if(curFilter==='fav'&&!p.is_favorite) return false;
     if(curFilter==='yt-watchlater'&&!(p.watch_later&&(p.type!=='youtube'||(p.type==='youtube'&&p.youtube_status!=='watched')))) return false;
     if(curFilter==='recent'&&now-p.createdAt>wk) return false;
+    if(curFilter==='untagged'&&p.tags&&p.tags.length>0) return false;
     if(areaFilter.country&&p.country!==areaFilter.country) return false;
     if(areaFilter.prefecture&&p.prefecture!==areaFilter.prefecture) return false;
     if(displayMode==='B'&&!p.area&&!p.country) return false;
@@ -1019,7 +1294,26 @@ function haversine(la1,lo1,la2,lo2){
 
 function locateMe(){
   if(!navigator.geolocation){toast('位置情報が使えません','err');return;}
-  navigator.geolocation.getCurrentPosition(pos=>{myLat=pos.coords.latitude;myLng=pos.coords.longitude;toast('現在地を取得しました','ok');renderHome();},()=>toast('位置情報の取得に失敗しました','err'));
+  toast('現在地を取得中...','');
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      myLat=pos.coords.latitude;myLng=pos.coords.longitude;
+      toast('現在地を取得しました ✓','ok');
+      // マップビューに即切り替えてズーム
+      if(viewMode==='map'){
+        // すでにマップなら即ズーム
+        if(map) map.setView([myLat,myLng],14,{animate:true});
+        renderMap();
+      } else {
+        setView('map');
+      }
+    },
+    err=>{
+      const msg=err.code===1?'位置情報の許可が必要です':err.code===2?'位置情報を取得できませんでした':'タイムアウトしました';
+      toast(msg,'err');
+    },
+    {enableHighAccuracy:true,timeout:10000,maximumAge:0}
+  );
 }
 
 // ════════════════════════════════════════════════
@@ -1028,7 +1322,7 @@ function locateMe(){
 function setFilter(f){
   curFilter=f; tagFilter=null;
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  const map={all:'fAll',fav:'fFav','yt-watchlater':'fYtWl',recent:'fRecent'};
+  const map={all:'fAll',fav:'fFav','yt-watchlater':'fYtWl',recent:'fRecent',untagged:'fUntagged'};
   document.getElementById(map[f]||'fAll')?.classList.add('active');
   document.querySelectorAll('#mfbMain .mfb-pill[data-f]').forEach(el=>el.classList.toggle('active',el.dataset.f===f));
   renderBadgeBar(); renderHome(); scrollToContent();
@@ -1049,7 +1343,26 @@ function renderHome(){
   // リマインダーセクション
   renderHomeReminders();
   const wrap=document.getElementById('postsWrap');
-  if(!filtered.length){wrap.innerHTML=`<div class="empty"><div class="empty-mark">—</div><h3>クリップがありません</h3><p>フィルターを変更するか「Add」から追加してください</p></div>`;return;}
+  if(!filtered.length){
+    wrap.innerHTML=`<div class="empty"><div class="empty-mark">—</div>
+      <h3>${curFilter==='untagged'?'タグ設定前のクリップはありません 🎉':'クリップがありません'}</h3>
+      <p>${curFilter==='untagged'?'すべてのクリップにタグが設定されています':'フィルターを変更するか「Add」から追加してください'}</p></div>`;
+    return;
+  }
+  // untaggedフィルター時はフラットリストで表示（タグ付けしやすいように）
+  if(curFilter==='untagged'){
+    wrap.innerHTML=`<div class="untagged-group">
+      <div class="untagged-group-head">
+        <span style="font-size:.9rem">🏷</span>
+        タグ設定前 — ${filtered.length}件
+        <span style="font-size:.72rem;color:var(--ink3);font-weight:300;margin-left:.3rem">クリップを開いて「編集」からタグを設定できます</span>
+      </div>
+      ${viewMode==='grid'
+        ?`<div class="posts-grid">${filtered.map(cardHTML).join('')}</div>`
+        :`<div class="posts-list">${filtered.map(rowHTML).join('')}</div>`}
+    </div>`;
+    return;
+  }
   if(displayMode==='A') renderGrouped(filtered,wrap,'tag');
   else renderGrouped(filtered,wrap,'area');
 }
@@ -1074,7 +1387,7 @@ function renderHomeReminders(){
       const dDiff=Math.ceil((r.remind_at-now)/864e5);
       const dateStr=dDiff<=0?'今日':(dDiff===1?'明日':dDiff+'日後');
       const tagColor=p?.tags?.[0]?tags.find(t=>t.id===p.tags[0])?.color||'#f59e0b':'#f59e0b';
-      return `<div class="hrs-card" onclick="p&&openDetail('${r.post_id}')" style="border-color:${tagColor}55">
+      return `<div class="hrs-card" onclick="openDetail('${r.post_id}')" style="border-color:${tagColor}55">
         <div class="hrs-dot">🔔</div>
         <div class="hrs-info">
           <div class="hrs-title">${esc(p?.author||r.message||'リマインダー')}</div>
@@ -1086,31 +1399,46 @@ function renderHomeReminders(){
 }
 
 function renderGrouped(filtered,wrap,groupBy){
-  const ungrouped=groupBy==='tag'?'タグなし':'エリアなし';
+  const ungrouped=groupBy==='tag'?'__untagged__':'エリアなし';
   const groups={};
   if(groupBy==='tag'){
     filtered.forEach(p=>{
       const ptags=(p.tags||[]).map(id=>tags.find(t=>t.id===id)).filter(t=>t&&!t.parent_id);
       if(ptags.length) ptags.forEach(pt=>{(groups[pt.id]=groups[pt.id]||{name:pt.name,items:[]}).items.push(p);});
-      else (groups['__ungrouped__']=groups['__ungrouped__']||{name:ungrouped,items:[]}).items.push(p);
+      else (groups['__untagged__']=groups['__untagged__']||{name:'__untagged__',items:[]}).items.push(p);
     });
-    // タグの並び順に従ってキーをソート
     const parentTagIds=tags.filter(t=>!t.parent_id).map(t=>t.id);
-    const sortedKeys=[...parentTagIds.filter(id=>groups[id]),'__ungrouped__'].filter(k=>groups[k]);
+    const sortedKeys=[...parentTagIds.filter(id=>groups[id]),'__untagged__'].filter(k=>groups[k]);
     let html='';
     sortedKeys.forEach(k=>{
       const g=groups[k];
-      html+=`<div class="group-header">${esc(g.name)} <span style="opacity:.4">(${g.items.length})</span></div>`;
-      if(viewMode==='grid') html+=`<div class="posts-grid" style="margin-bottom:.9rem">${g.items.map(cardHTML).join('')}</div>`;
-      else html+=`<div class="posts-list" style="margin-bottom:.9rem">${g.items.map(rowHTML).join('')}</div>`;
+      if(k==='__untagged__'){
+        // タグ設定前：専用の目立つデザイン
+        const cnt=g.items.length;
+        html+=`<div class="untagged-group">
+          <div class="untagged-group-head">
+            <span style="font-size:.9rem">🏷</span>
+            タグ設定前
+            <span style="margin-left:.3rem;background:var(--accent);color:#fff;border-radius:10px;padding:0 8px;font-size:.65rem">${cnt}</span>
+            <button onclick="switchTab('settings')" style="margin-left:auto;background:transparent;border:1px solid var(--accent);border-radius:4px;color:var(--accent);font-size:.65rem;padding:.15rem .5rem;cursor:pointer;font-family:'Noto Sans JP',sans-serif">タグ管理</button>
+          </div>
+          ${viewMode==='grid'
+            ?`<div class="posts-grid">${g.items.map(cardHTML).join('')}</div>`
+            :`<div class="posts-list">${g.items.map(rowHTML).join('')}</div>`}
+        </div>`;
+      } else {
+        html+=`<div class="group-header">${esc(g.name)} <span style="opacity:.4">(${g.items.length})</span></div>`;
+        if(viewMode==='grid') html+=`<div class="posts-grid" style="margin-bottom:.9rem">${g.items.map(cardHTML).join('')}</div>`;
+        else html+=`<div class="posts-list" style="margin-bottom:.9rem">${g.items.map(rowHTML).join('')}</div>`;
+      }
     });
     wrap.innerHTML=html;
   } else {
     filtered.forEach(p=>{
-      const key=[p.country,p.prefecture].filter(Boolean).join(' › ')||ungrouped;
+      const key=[p.country,p.prefecture].filter(Boolean).join(' › ')||'エリアなし';
       (groups[key]=groups[key]||[]).push(p);
     });
-    const sortedKeys=Object.keys(groups).sort((a,b)=>a===ungrouped?1:b===ungrouped?-1:a.localeCompare(b,'ja'));
+    const sortedKeys=Object.keys(groups).sort((a,b)=>a==='エリアなし'?1:b==='エリアなし'?-1:a.localeCompare(b,'ja'));
     let html='';
     sortedKeys.forEach(k=>{
       html+=`<div class="group-header">${esc(k)} <span style="opacity:.4">(${groups[k].length})</span></div>`;
@@ -1198,6 +1526,7 @@ function getYtId(url){const m=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)
 // ════════════════════════════════════════════════
 // MAP
 // ════════════════════════════════════════════════
+let markerCluster=null;
 function renderMap(){
   document.getElementById('mapWrap').style.display='block';
   document.getElementById('postsWrap').style.display='none';
@@ -1205,75 +1534,83 @@ function renderMap(){
   if(!map){
     map=L.map('mapWrap').setView([initLat,initLng],initZoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
-  } else if(myLat) map.setView([myLat,myLng],13);
+  }
+
+  // 既存マーカーをすべて除去
   mapMarkers.forEach(m=>m.remove()); mapMarkers=[];
+  if(markerCluster){map.removeLayer(markerCluster);markerCluster=null;}
 
   // 現在地マーカー
   if(myLat){
-    const icon=L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 2px 8px rgba(59,130,246,.5)"></div>',iconSize:[16,16],iconAnchor:[8,8]});
-    L.marker([myLat,myLng],{icon}).addTo(map).bindPopup('📍 現在地');
+    const icon=L.divIcon({className:'',html:'<div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 2px 10px rgba(59,130,246,.6)"></div>',iconSize:[18,18],iconAnchor:[9,9]});
+    L.marker([myLat,myLng],{icon,zIndexOffset:1000}).addTo(map).bindPopup('📍 現在地');
+    map.setView([myLat,myLng],14,{animate:true});
   }
 
   const filtered=getFiltered().filter(p=>p.lat&&p.lng);
   document.getElementById('resultInfo').textContent=filtered.length?filtered.length+' clips (地図)':'地図表示できる投稿がありません';
   const bounds=[];
 
+  // MarkerClusterGroupを作成（重なり解消）
+  markerCluster=L.markerClusterGroup({
+    maxClusterRadius:50,
+    iconCreateFunction:cluster=>{
+      const count=cluster.getChildCount();
+      // クラスター内の最初のマーカーの画像をプレビューに使う
+      const firstChild=cluster.getAllChildMarkers()[0];
+      const thumbUrl=firstChild?.options?._thumbUrl;
+      const size=count<5?44:count<10?50:56;
+      const html=thumbUrl
+        ?`<div style="width:${size}px;height:${size}px;border-radius:50%;border:3px solid var(--accent);background:#fff;overflow:hidden;position:relative;box-shadow:0 2px 10px rgba(0,0,0,.25)">
+            <img src="${thumbUrl}" style="width:100%;height:100%;object-fit:cover">
+            <div style="position:absolute;bottom:0;right:0;background:var(--accent);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;font-family:'DM Mono',monospace">${count}</div>
+          </div>`
+        :`<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.85rem;font-family:'DM Mono',monospace">${count}</div>`;
+      return L.divIcon({className:'',html,iconSize:[size,size],iconAnchor:[size/2,size/2]});
+    }
+  });
+
   filtered.forEach(p=>{
     const ytThumb=p.type==='youtube'&&p.url?`https://img.youtube.com/vi/${getYtId(p.url)}/mqdefault.jpg`:'';
     const imgSrc=p.image||ytThumb;
-    // タグ色（最初のタグの色、なければtype別のデフォルト色）
     const tagColor=p.tags?.[0]?tags.find(t=>t.id===p.tags[0])?.color||'#3b82f6':'#3b82f6';
     const typeEmoji={x:'𝕏',web:'🌐',youtube:'▶',memo:'📝',tiktok:'🎵'};
 
     let iconHtml;
     if(imgSrc){
-      // 画像あり：丸い画像マーカー
-      iconHtml=`<div style="
-        width:52px;height:52px;border-radius:50%;
-        border:3px solid ${tagColor};
-        background:#fff;
-        box-shadow:0 2px 10px rgba(0,0,0,.25);
-        overflow:hidden;position:relative;cursor:pointer;
-        transition:transform .15s;
-      " onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
-        <img src="${esc(imgSrc)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.innerHTML+='<div style=width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px>${typeEmoji[p.type]||'📌'}</div>'">
-        ${p.is_favorite?'<div style="position:absolute;top:-1px;right:-1px;font-size:10px;line-height:1">⭐</div>':''}
+      iconHtml=`<div style="width:52px;height:52px;border-radius:50%;border:3px solid ${tagColor};background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25);overflow:hidden;position:relative;cursor:pointer">
+        <img src="${esc(imgSrc)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.background='${tagColor}22';this.style.display='none'">
+        ${p.is_favorite?'<div style="position:absolute;top:-2px;right:-2px;font-size:11px">⭐</div>':''}
       </div>
-      <div style="width:2px;height:8px;background:${tagColor};margin:0 auto;opacity:.7"></div>`;
+      <div style="width:2px;height:8px;background:${tagColor};margin:0 auto;opacity:.8"></div>`;
     } else {
-      // 画像なし：色付き円マーカー
-      iconHtml=`<div style="
-        width:44px;height:44px;border-radius:50%;
-        background:${tagColor};
-        border:3px solid #fff;
-        box-shadow:0 2px 10px rgba(0,0,0,.25);
-        display:flex;align-items:center;justify-content:center;
-        font-size:18px;cursor:pointer;
-        transition:transform .15s;
-      " onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
+      iconHtml=`<div style="width:44px;height:44px;border-radius:50%;background:${tagColor};border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer">
         ${typeEmoji[p.type]||'📌'}
       </div>
-      <div style="width:2px;height:8px;background:${tagColor};margin:0 auto;opacity:.7"></div>`;
+      <div style="width:2px;height:8px;background:${tagColor};margin:0 auto;opacity:.8"></div>`;
     }
 
     const size=imgSrc?[52,62]:[44,54];
     const anchor=imgSrc?[26,62]:[22,54];
-    const icon=L.divIcon({className:'',html:iconHtml,iconSize:size,iconAnchor:anchor,popupAnchor:[0,-60]});
+    const icon=L.divIcon({className:'',html:iconHtml,iconSize:size,iconAnchor:anchor,popupAnchor:[0,-62]});
 
-    const popup=`<div style="min-width:180px;font-family:sans-serif;line-height:1.5">
-      ${imgSrc?`<img src="${esc(imgSrc)}" style="width:100%;max-height:100px;object-fit:cover;border-radius:4px;margin-bottom:6px">` :''}
+    const popup=`<div style="min-width:180px;font-family:'Noto Sans JP',sans-serif;line-height:1.5">
+      ${imgSrc?`<img src="${esc(imgSrc)}" style="width:100%;max-height:110px;object-fit:cover;border-radius:6px 6px 0 0;display:block;margin:-10px -12px 8px;width:calc(100% + 24px)">`:''}
       <div style="font-weight:600;font-size:13px">${esc(p.author)}</div>
       ${p.handle?`<div style="font-size:11px;color:#888">${esc(p.handle)}</div>`:''}
-      ${p.content?`<div style="font-size:11px;color:#555;margin-top:3px">${esc((p.content||'').slice(0,60))}${p.content.length>60?'…':''}</div>`:''}
-      <button onclick="openDetail('${p.id}')" style="margin-top:6px;font-size:11px;padding:3px 10px;background:#111;color:#fff;border:none;border-radius:4px;cursor:pointer;width:100%">詳細を見る</button>
+      ${p.content?`<div style="font-size:11px;color:#555;margin-top:4px;line-height:1.5">${esc((p.content||'').slice(0,60))}${p.content.length>60?'…':''}</div>`:''}
+      <button onclick="openDetail('${p.id}')" style="margin-top:8px;font-size:12px;padding:5px 12px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;width:100%;font-family:'Noto Sans JP',sans-serif">詳細を見る →</button>
     </div>`;
 
-    const m=L.marker([p.lat,p.lng],{icon}).addTo(map).bindPopup(popup,{maxWidth:200});
-    mapMarkers.push(m); bounds.push([p.lat,p.lng]);
+    const marker=L.marker([p.lat,p.lng],{icon,_thumbUrl:imgSrc||''}).bindPopup(popup,{maxWidth:220});
+    markerCluster.addLayer(marker);
+    mapMarkers.push(marker);
+    bounds.push([p.lat,p.lng]);
   });
 
-  if(myLat){bounds.push([myLat,myLng]);map.fitBounds(bounds,{padding:[40,40],maxZoom:14});}
-  else if(bounds.length) map.fitBounds(bounds,{padding:[40,40]});
+  map.addLayer(markerCluster);
+
+  if(!myLat&&bounds.length) map.fitBounds(bounds,{padding:[40,40],maxZoom:15});
   setTimeout(()=>map.invalidateSize(),100);
 }
 
@@ -1447,6 +1784,116 @@ async function quickToggleWL(id){
 }
 
 // ════════════════════════════════════════════════
+// QUICK ADD (スマホ用クイック登録)
+// ════════════════════════════════════════════════
+function qaAutoDetect(){
+  const url=document.getElementById('qaUrl').value.trim();
+  const status=document.getElementById('qaStatus');
+  if(!url){status.textContent='';return;}
+  if(/youtube\.com|youtu\.be/.test(url)) status.textContent='▶ YouTube として登録します';
+  else if(/tiktok\.com/.test(url)) status.textContent='🎵 TikTok として登録します';
+  else if(/x\.com|twitter\.com/.test(url)) status.textContent='𝕏 Xポスト として登録します';
+  else status.textContent='🌐 Web記事 として登録します';
+}
+
+async function quickSave(){
+  const url=document.getElementById('qaUrl').value.trim();
+  if(!url){toast('URLを入力してください','err');return;}
+  const btn=document.getElementById('qaBtn');
+  btn.disabled=true;btn.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
+  const status=document.getElementById('qaStatus');
+  status.textContent='情報を取得中...';
+
+  let type='web',author='',handle='',content='',image='';
+
+  try{
+    if(/youtube\.com|youtu\.be/.test(url)){
+      type='youtube';
+      const vid=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/)?.[1]||'';
+      try{
+        const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+        const d=await r.json();
+        author=d.title||'YouTube動画';handle=d.author_name||'';
+        if(vid) image=`https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
+      }catch(e){author='YouTube動画';}
+    } else if(/tiktok\.com/.test(url)){
+      type='tiktok';
+      try{
+        const r=await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
+        const d=await r.json();
+        author=d.author_name||'TikTok';
+        handle=d.author_url?.match(/tiktok\.com\/@([^\/\?]+)/)?.[1]?('@'+(d.author_url.match(/tiktok\.com\/@([^\/\?]+)/)[1])):'';
+        content=d.title||'';image=d.thumbnail_url||'';
+      }catch(e){
+        handle=url.match(/tiktok\.com\/@([\w.]+)/)?.[1]||'';
+        author=handle||'TikTok';if(handle) handle='@'+handle;
+      }
+    } else if(/x\.com|twitter\.com/.test(url)){
+      type='x';
+      const m=url.match(/(?:twitter\.com|x\.com)\/@?([\w]+)\/status\/(\d+)/);
+      if(m){
+        handle='@'+m[1];author=m[1];
+        try{
+          const r=await fetch(`https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`);
+          const d=await r.json();
+          const doc=new DOMParser().parseFromString(d.html||'','text/html');
+          content=doc.querySelector('p')?.textContent||'';
+          if(d.author_name) author=d.author_name;
+        }catch(e){}
+      }
+    } else {
+      // Web記事
+      const proxies=[`https://corsproxy.io/?${encodeURIComponent(url)}`,`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`];
+      let html='';
+      for(const px of proxies){
+        try{const r=await fetch(px,{signal:AbortSignal.timeout(6000)});html=px.includes('allorigins')?(await r.json()).contents||'':await r.text();if(html)break;}catch(e){continue;}
+      }
+      if(html){
+        const doc=new DOMParser().parseFromString(html,'text/html');
+        const get=(sel,attr)=>doc.querySelector(sel)?.getAttribute(attr)||'';
+        const title=get('meta[property="og:title"]','content')||doc.querySelector('title')?.textContent||url;
+        author=title;
+        handle=get('meta[property="og:site_name"]','content')||new URL(url).hostname;
+        content=get('meta[property="og:description"]','content')||get('meta[name="description"]','content')||'';
+        image=get('meta[property="og:image"]','content')||'';
+      } else {
+        author=new URL(url).hostname;handle=new URL(url).hostname;
+      }
+    }
+
+    const now=Date.now();
+    const p={id:'p'+now,url,created_at:now,author:author||'不明',handle,content,memo:'',image,
+      tags:[],area:null,country:null,prefecture:null,lat:null,lng:null,
+      type,summary:null,youtube_status:'unwatch',youtube_priority:false,
+      is_favorite:false,watch_later:false};
+    await sb('posts','POST',p);
+    posts.unshift(mapPost({...p}));
+    document.getElementById('qaUrl').value='';
+    status.textContent='';
+    renderAll();renderReminderBar();
+    toast('保存しました ✓ タグは後で設定できます','ok');
+    switchTab('home');
+  }catch(e){
+    status.textContent='⚠️ 取得失敗。もう一度試すか詳細フォームで入力してください';
+    toast('保存エラー: '+e.message,'err');
+  }
+  btn.disabled=false;btn.innerHTML='保存';
+}
+
+function toggleQuickAdd(showQuick){
+  const quick=document.getElementById('quickAddCard');
+  const detail=document.getElementById('detailAddCard');
+  if(showQuick===false){
+    // 詳細フォームを表示
+    if(detail) detail.classList.add('sp-show');
+    if(quick) quick.style.display='none';
+  } else {
+    if(detail) detail.classList.remove('sp-show');
+    if(quick) quick.style.display='';
+  }
+}
+
+// ════════════════════════════════════════════════
 // DELETE
 // ════════════════════════════════════════════════
 async function delPost(id){
@@ -1550,7 +1997,7 @@ async function fetchFromUrl(){
         if(handle){document.getElementById('fHandle').value='@'+handle;document.getElementById('fAuthor').value=handle;}
         status.textContent='✓ URLからハンドル名を取得しました（サムネイル取得に失敗）';
       }
-      document.getElementById('fWatchLater').checked=true;
+      // watch_laterは自動設定しない（ユーザーが手動で設定）
     } else if(currentType==='youtube'){
       const vid=getYtId(url);
       if(!vid){toast('YouTubeのURLを入力してください','err');return;}
@@ -1562,8 +2009,7 @@ async function fetchFromUrl(){
         document.getElementById('fImgUrl').value=`https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
         prevImgUrl();
       }catch(e){}
-      // YouTube はデフォルトで「あとで見る」ON
-      document.getElementById('fWatchLater').checked=true;
+      // watch_laterは自動設定しない（ユーザーが手動で設定）
       status.textContent='✓ YouTube動画の情報を取得しました';
     } else if(currentType==='web'){
       let html='';
@@ -1660,17 +2106,23 @@ async function geocodeArea(prefix){
   const statusId=prefix+'AreaStatus';
   document.getElementById(statusId).textContent='検索中...';
   try{
-    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&addressdetails=1&accept-language=ja`);
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=3&addressdetails=1&accept-language=ja`);
     const d=await r.json();
     if(!d.length){document.getElementById(statusId).textContent='場所が見つかりませんでした';return;}
-    const addr=d[0].address||{};
-    document.getElementById(prefix+'Lat').value=d[0].lat;
-    document.getElementById(prefix+'Lng').value=d[0].lon;
-    // 国を自動入力（常に上書き）
+    const best=d[0];
+    const addr=best.address||{};
+    document.getElementById(prefix+'Lat').value=best.lat;
+    document.getElementById(prefix+'Lng').value=best.lon;
+    // 国を自動入力
     if(addr.country) document.getElementById(prefix+'Country').value=addr.country;
-    // 都道府県を自動入力（常に上書き）
-    const pref=addr.state||addr.province||addr.region||addr.county||'';
+    // 都道府県：日本は state、海外は多様なフィールドを試みる
+    const pref=addr.state||addr.state_district||addr.province||addr.region||addr.county||
+      addr['ISO3166-2-lvl4']?.split('-').slice(-1)[0]||'';
     if(pref) document.getElementById(prefix+'Prefecture').value=pref;
+    // 場所名が空なら display_name の先頭を使う
+    if(!document.getElementById(prefix+'Area').value&&best.display_name){
+      document.getElementById(prefix+'Area').value=best.display_name.split(',')[0];
+    }
     document.getElementById(statusId).textContent=`✓ ${addr.country||''}${pref?' / '+pref:''} に設定しました`;
   }catch(e){document.getElementById(statusId).textContent='エラーが発生しました';}
 }
@@ -2169,6 +2621,8 @@ function updateStats(){
   document.getElementById('cFav').textContent=posts.filter(p=>p.is_favorite).length;
   document.getElementById('cYtWl').textContent=posts.filter(p=>p.watch_later&&(p.type!=='youtube'||(p.type==='youtube'&&p.youtube_status!=='watched'))).length;
   document.getElementById('cRec').textContent=posts.filter(p=>now-p.createdAt<wk).length;
+  const untaggedEl=document.getElementById('cUntagged');
+  if(untaggedEl) untaggedEl.textContent=posts.filter(p=>!p.tags||p.tags.length===0).length;
 }
 
 // ════════════════════════════════════════════════
