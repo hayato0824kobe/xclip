@@ -187,8 +187,20 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .img-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
 .img-area-prev{width:100%;max-height:220px;object-fit:contain;display:block;}
 .img-area-ph{display:flex;flex-direction:column;align-items:center;gap:.3rem;color:var(--ink3);font-size:.76rem;pointer-events:none;}
-.tag-picker{display:flex;flex-wrap:wrap;gap:.3rem;}
-.tp-pill{font-size:.72rem;padding:.22rem .62rem;border-radius:12px;cursor:pointer;border:1.5px solid;transition:all .15s;}
+/* ─── HIERARCHICAL TAG PICKER ─── */
+.tag-picker{display:flex;flex-direction:column;gap:.55rem;}
+.tp-group{border:1.5px solid var(--line);border-radius:8px;overflow:hidden;}
+.tp-parent-row{display:flex;align-items:center;gap:.5rem;padding:.45rem .65rem;cursor:pointer;user-select:none;transition:background .15s;}
+.tp-parent-row:hover{background:#ebebeb;}
+.tp-parent-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.tp-parent-name{font-size:.8rem;font-weight:500;flex:1;color:var(--ink);}
+.tp-parent-check{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0;transition:all .15s;background:#fff;}
+.tp-parent-row.selected .tp-parent-check{color:#fff;border-color:transparent;}
+.tp-children{display:flex;flex-wrap:wrap;gap:.35rem;padding:.4rem .65rem .55rem 2rem;border-top:1px solid var(--line);background:#fdfdfd;}
+.tp-child-pill{font-size:.72rem;padding:.25rem .65rem;border-radius:12px;cursor:pointer;border:1.5px solid;transition:all .15s;display:inline-flex;align-items:center;gap:.25rem;background:#fff;}
+.tp-child-pill:hover{opacity:.82;}
+.tp-child-pill.selected{color:#fff !important;border-color:transparent !important;}
+.tp-lone-row{display:flex;flex-wrap:wrap;gap:.35rem;}
 .status-bar{font-size:.76rem;color:var(--ink3);background:var(--off);border-left:2px solid var(--accent);padding:.45rem .7rem;border-radius:0 4px 4px 0;margin-bottom:.7rem;display:none;}
 .form-actions{display:flex;justify-content:flex-end;gap:.5rem;margin-top:.9rem;padding-top:.9rem;border-top:1px solid var(--line);}
 .btn-ghost{background:transparent;border:1px solid var(--line);border-radius:6px;padding:.45rem 1.1rem;font-size:.8rem;cursor:pointer;color:var(--ink2);transition:all .15s;}
@@ -266,6 +278,11 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .detail-img-wrap img{max-width:100%;max-height:320px;object-fit:contain;}
 .yt-embed-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;margin-bottom:1rem;}
 .yt-embed-wrap iframe{position:absolute;inset:0;width:100%;height:100%;}
+
+/* ─── MAP MARKERS ─── */
+.leaflet-popup-content-wrapper{border-radius:10px !important;box-shadow:0 4px 20px rgba(0,0,0,.15) !important;padding:0 !important;overflow:hidden;}
+.leaflet-popup-content{margin:10px 12px !important;font-family:'Noto Sans JP',sans-serif !important;}
+.leaflet-div-icon{background:transparent !important;border:none !important;}
 
 /* ─── TOAST / LOADING ─── */
 .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ink);color:#fff;padding:.55rem 1.2rem;border-radius:6px;font-size:.8rem;z-index:1000;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;}
@@ -1190,15 +1207,71 @@ function renderMap(){
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
   } else if(myLat) map.setView([myLat,myLng],13);
   mapMarkers.forEach(m=>m.remove()); mapMarkers=[];
-  if(myLat){const icon=L.divIcon({className:'',html:'<div style="width:14px;height:14px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 0 3px rgba(59,130,246,.4)"></div>',iconSize:[14,14],iconAnchor:[7,7]});L.marker([myLat,myLng],{icon}).addTo(map).bindPopup('📍 現在地');}
+
+  // 現在地マーカー
+  if(myLat){
+    const icon=L.divIcon({className:'',html:'<div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 2px 8px rgba(59,130,246,.5)"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+    L.marker([myLat,myLng],{icon}).addTo(map).bindPopup('📍 現在地');
+  }
+
   const filtered=getFiltered().filter(p=>p.lat&&p.lng);
   document.getElementById('resultInfo').textContent=filtered.length?filtered.length+' clips (地図)':'地図表示できる投稿がありません';
   const bounds=[];
+
   filtered.forEach(p=>{
-    const popup=`<div style="min-width:160px;font-family:sans-serif"><b>${esc(p.author)}</b><br><span style="font-size:11px;color:#555">${esc((p.content||'').slice(0,60))}</span><br><button onclick="openDetail('${p.id}')" style="margin-top:4px;font-size:11px;padding:2px 8px;background:#111;color:#fff;border:none;border-radius:2px;cursor:pointer">詳細</button></div>`;
-    const m=L.marker([p.lat,p.lng]).addTo(map).bindPopup(popup);
+    const ytThumb=p.type==='youtube'&&p.url?`https://img.youtube.com/vi/${getYtId(p.url)}/mqdefault.jpg`:'';
+    const imgSrc=p.image||ytThumb;
+    // タグ色（最初のタグの色、なければtype別のデフォルト色）
+    const tagColor=p.tags?.[0]?tags.find(t=>t.id===p.tags[0])?.color||'#3b82f6':'#3b82f6';
+    const typeEmoji={x:'𝕏',web:'🌐',youtube:'▶',memo:'📝',tiktok:'🎵'};
+
+    let iconHtml;
+    if(imgSrc){
+      // 画像あり：丸い画像マーカー
+      iconHtml=`<div style="
+        width:52px;height:52px;border-radius:50%;
+        border:3px solid ${tagColor};
+        background:#fff;
+        box-shadow:0 2px 10px rgba(0,0,0,.25);
+        overflow:hidden;position:relative;cursor:pointer;
+        transition:transform .15s;
+      " onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
+        <img src="${esc(imgSrc)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.innerHTML+='<div style=width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px>${typeEmoji[p.type]||'📌'}</div>'">
+        ${p.is_favorite?'<div style="position:absolute;top:-1px;right:-1px;font-size:10px;line-height:1">⭐</div>':''}
+      </div>
+      <div style="width:2px;height:8px;background:${tagColor};margin:0 auto;opacity:.7"></div>`;
+    } else {
+      // 画像なし：色付き円マーカー
+      iconHtml=`<div style="
+        width:44px;height:44px;border-radius:50%;
+        background:${tagColor};
+        border:3px solid #fff;
+        box-shadow:0 2px 10px rgba(0,0,0,.25);
+        display:flex;align-items:center;justify-content:center;
+        font-size:18px;cursor:pointer;
+        transition:transform .15s;
+      " onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'">
+        ${typeEmoji[p.type]||'📌'}
+      </div>
+      <div style="width:2px;height:8px;background:${tagColor};margin:0 auto;opacity:.7"></div>`;
+    }
+
+    const size=imgSrc?[52,62]:[44,54];
+    const anchor=imgSrc?[26,62]:[22,54];
+    const icon=L.divIcon({className:'',html:iconHtml,iconSize:size,iconAnchor:anchor,popupAnchor:[0,-60]});
+
+    const popup=`<div style="min-width:180px;font-family:sans-serif;line-height:1.5">
+      ${imgSrc?`<img src="${esc(imgSrc)}" style="width:100%;max-height:100px;object-fit:cover;border-radius:4px;margin-bottom:6px">` :''}
+      <div style="font-weight:600;font-size:13px">${esc(p.author)}</div>
+      ${p.handle?`<div style="font-size:11px;color:#888">${esc(p.handle)}</div>`:''}
+      ${p.content?`<div style="font-size:11px;color:#555;margin-top:3px">${esc((p.content||'').slice(0,60))}${p.content.length>60?'…':''}</div>`:''}
+      <button onclick="openDetail('${p.id}')" style="margin-top:6px;font-size:11px;padding:3px 10px;background:#111;color:#fff;border:none;border-radius:4px;cursor:pointer;width:100%">詳細を見る</button>
+    </div>`;
+
+    const m=L.marker([p.lat,p.lng],{icon}).addTo(map).bindPopup(popup,{maxWidth:200});
     mapMarkers.push(m); bounds.push([p.lat,p.lng]);
   });
+
   if(myLat){bounds.push([myLat,myLng]);map.fitBounds(bounds,{padding:[40,40],maxZoom:14});}
   else if(bounds.length) map.fitBounds(bounds,{padding:[40,40]});
   setTimeout(()=>map.invalidateSize(),100);
@@ -1638,31 +1711,89 @@ async function geocodeFromMapUrl(prefix){
 
 
 // ════════════════════════════════════════════════
-// TAG PICKERS
+// TAG PICKERS (階層型: 親→子)
 // ════════════════════════════════════════════════
 function renderPickers(){renderPicker('formPicker',fSel);renderPicker('editPicker',eSel);}
 
-function renderPicker(id,sel){
-  const el=document.getElementById(id);if(!el)return;
-  el.innerHTML=tags.map(t=>`<span class="tp-pill" style="border-color:${t.color};color:${t.color};${sel.has(t.id)?'background:'+t.color+'22':''}" onclick="togglePill('${t.id}','${id}',this)">${esc(t.name)}</span>`).join('');
+function renderPicker(pickerId,sel){
+  const el=document.getElementById(pickerId);if(!el)return;
+  const parentTags=tags.filter(t=>!t.parent_id);
+  let html='';
+
+  parentTags.forEach(pt=>{
+    const children=tags.filter(c=>c.parent_id===pt.id);
+    const parentSel=sel.has(pt.id);
+
+    if(children.length){
+      // 子タグあり：アコーディオン形式グループ
+      const bgStyle=parentSel?`background:${pt.color}18;border-color:${pt.color}55`:'background:var(--off)';
+      const checkStyle=parentSel?`background:${pt.color};border-color:${pt.color}`:'';
+      html+=`<div class="tp-group" style="${parentSel?'border-color:'+pt.color+'55':''}">
+        <div class="tp-parent-row${parentSel?' selected':''}" style="${bgStyle}" onclick="togglePill('${pt.id}','${pickerId}',this)">
+          <div class="tp-parent-dot" style="background:${pt.color}"></div>
+          <span class="tp-parent-name">${esc(pt.name)}</span>
+          <div class="tp-parent-check" style="${checkStyle}">${parentSel?'✓':''}</div>
+        </div>
+        <div class="tp-children">
+          ${children.map(ct=>{
+            const childSel=sel.has(ct.id);
+            const cStyle=childSel?`background:${ct.color};border-color:${ct.color}`:`border-color:${ct.color};color:${ct.color}`;
+            return `<span class="tp-child-pill${childSel?' selected':''}" style="${cStyle}" onclick="togglePill('${ct.id}','${pickerId}',this)">
+              <span style="width:6px;height:6px;border-radius:50%;background:${childSel?'rgba(255,255,255,.7)':ct.color};display:inline-block;flex-shrink:0"></span>
+              ${esc(ct.name)}
+            </span>`;
+          }).join('')}
+        </div>
+      </div>`;
+    } else {
+      // 子タグなし：シンプルな行表示
+      const pSel=sel.has(pt.id);
+      const bgStyle=pSel?`background:${pt.color}18;border-color:${pt.color}55`:'';
+      const checkStyle=pSel?`background:${pt.color};border-color:${pt.color}`:'';
+      if(!html.includes('tp-lone-wrap')) html+=`<div class="tp-lone-wrap" style="display:flex;flex-wrap:wrap;gap:.35rem">`;
+      // 単体ピル（子なし親）は後でまとめて出力するため一時退避
+      html+=`__LONE__${pt.id}__${pSel}__${pt.color}__${esc(pt.name)}__END`;
+    }
+  });
+
+  // 単体ピルをまとめてラップ
+  const loneMatches=[...html.matchAll(/__LONE__([^_]+)__(true|false)__([^_]+)__(.+?)__END/g)];
+  if(loneMatches.length){
+    const lonePillsHtml=loneMatches.map(m=>{
+      const[,pid,pselStr,color,name]=m;
+      const pSel=pselStr==='true';
+      const style=pSel?`background:${color};border-color:${color};color:#fff`:`border-color:${color};color:${color}`;
+      return `<span class="tp-child-pill${pSel?' selected':''}" style="${style}" onclick="togglePill('${pid}','${pickerId}',this)">
+        <span style="width:7px;height:7px;border-radius:50%;background:${pSel?'rgba(255,255,255,.7)':color};display:inline-block;flex-shrink:0"></span>
+        ${name}
+      </span>`;
+    }).join('');
+    html=html.replace(/__LONE__[^]*?__END/g,'');
+    html+=`<div style="display:flex;flex-wrap:wrap;gap:.35rem">${lonePillsHtml}</div>`;
+  }
+
+  el.innerHTML=html;
 }
 
 function togglePill(id,pickerId,el){
   const sel=pickerId==='formPicker'?fSel:eSel;
   const t=tags.find(t=>t.id===id);
   if(sel.has(id)){
-    sel.delete(id);el.style.background='';
+    sel.delete(id);
     // 子タグ解除時：他の子タグがなければ親も解除
     if(t?.parent_id){
       const remainSiblings=tags.filter(c=>c.parent_id===t.parent_id&&sel.has(c.id));
       if(!remainSiblings.length) sel.delete(t.parent_id);
     }
+    // 親タグ解除時：子タグもすべて解除
+    if(!t?.parent_id){
+      tags.filter(c=>c.parent_id===t.id).forEach(c=>sel.delete(c.id));
+    }
   } else {
-    sel.add(id);el.style.background=t?.color+'22'||'';
+    sel.add(id);
     // 子タグ選択時：親タグを自動追加
     if(t?.parent_id) sel.add(t.parent_id);
   }
-  // ピルのスタイルを全体更新
   renderPicker(pickerId,sel);
 }
 
