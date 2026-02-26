@@ -534,7 +534,21 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
         <button class="c-btn" onclick="locateMe()" title="現在地" style="white-space:nowrap">📍 現在地</button>
       </div>
       <div class="result-info" id="resultInfo"></div>
-      <div id="mapWrap" style="display:none;height:460px;border-radius:6px;border:1px solid var(--line);overflow:hidden;margin-bottom:1rem"></div>
+      <!-- マップ エリア絞り込みバー（マップ表示時のみ表示） -->
+      <div id="mapFilterBar" style="display:none;background:var(--white);border:1px solid var(--line);border-radius:8px;padding:.6rem .85rem;margin-bottom:.6rem;display:none">
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+          <span style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3);white-space:nowrap">エリア</span>
+          <select id="mapCountrySelect" onchange="setMapCountryFilter(this.value)" style="flex:1;min-width:100px;max-width:160px;background:var(--off);border:1px solid var(--line);border-radius:5px;padding:.32rem .5rem;font-size:.76rem;font-family:'Noto Sans JP',sans-serif;color:var(--ink);outline:none;cursor:pointer">
+            <option value="">すべての国</option>
+          </select>
+          <select id="mapPrefSelect" onchange="setMapPrefFilter(this.value)" style="display:none;flex:1;min-width:100px;max-width:160px;background:var(--off);border:1px solid var(--line);border-radius:5px;padding:.32rem .5rem;font-size:.76rem;font-family:'Noto Sans JP',sans-serif;color:var(--ink);outline:none;cursor:pointer">
+            <option value="">すべての都道府県</option>
+          </select>
+          <button onclick="clearMapFilter()" style="background:transparent;border:1px solid var(--line);border-radius:5px;padding:.3rem .65rem;font-size:.7rem;color:var(--ink3);cursor:pointer;white-space:nowrap">クリア</button>
+          <span id="mapFilterCount" style="font-family:'DM Mono',monospace;font-size:.64rem;color:var(--accent);margin-left:auto"></span>
+        </div>
+      </div>
+      <div id="mapWrap" style="display:none;height:480px;border-radius:6px;border:1px solid var(--line);overflow:hidden;margin-bottom:1rem"></div>
       <div id="postsWrap"></div>
     </div>
   </div>
@@ -543,18 +557,6 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
 <!-- ═════════════ ADD TAB ═════════════ -->
 <div class="tab-pane" id="tab-add">
   <div class="add-wrap">
-    <!-- スマホ用クイック登録 -->
-    <div class="quick-add-card" id="quickAddCard">
-      <div class="qa-label">⚡ クイック登録</div>
-      <div class="qa-desc">URLを貼るだけで即保存。タグは後で設定できます。</div>
-      <div class="qa-row">
-        <input class="qa-input" id="qaUrl" placeholder="URLを貼り付け..." oninput="qaAutoDetect()">
-        <button class="qa-btn" id="qaBtn" onclick="quickSave()">保存</button>
-      </div>
-      <div class="qa-status" id="qaStatus"></div>
-      <button class="qa-toggle" onclick="toggleQuickAdd(false)">詳細フォームで入力 ▸</button>
-    </div>
-    <!-- 詳細フォーム（デフォルト非表示: SP、PC は常に表示） -->
     <div class="add-card" id="detailAddCard">
       <div class="type-tabs">
         <button class="type-tab active" id="typeX" onclick="setType('x')">𝕏 ポスト</button>
@@ -804,26 +806,37 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
   <div class="qa-panel">
     <div class="qa-handle"></div>
     <div class="qa-head">
-      <span class="qa-title">クイック保存</span>
-      <button class="qa-close" onclick="closeQuickAdd()">✕ 閉じる</button>
+      <div>
+        <div class="qa-title">クイック保存</div>
+        <div style="font-size:.7rem;color:var(--ink3);margin-top:.1rem">URLを貼るだけで保存。タグは後で設定できます。</div>
+      </div>
+      <button class="qa-close" onclick="closeQuickAdd()">✕</button>
     </div>
     <div class="qa-body">
+      <!-- URL入力 -->
       <div class="qa-url-wrap">
-        <input class="qa-url-input" id="qaUrl" placeholder="URLを貼り付け..." oninput="onQaUrlInput()">
-        <button class="qa-fetch-btn" id="qaFetchBtn" onclick="qaFetch()">取得</button>
+        <input class="qa-url-input" id="qsUrl" placeholder="URLを貼り付け..."
+               oninput="qsOnInput()" onpaste="setTimeout(qsOnPaste,50)">
+        <button class="qa-fetch-btn" id="qsFetchBtn" onclick="qsFetch()" style="display:none">取得</button>
       </div>
-      <div class="qa-status" id="qaStatus"></div>
-      <div class="qa-preview" id="qaPreview">
-        <img class="qa-preview-img" id="qaPreviewImg" style="display:none">
-        <div class="qa-preview-title" id="qaPreviewTitle"></div>
-        <div class="qa-preview-sub" id="qaPreviewSub"></div>
+      <!-- 自動判別バッジ -->
+      <div id="qsTypeBadge" style="display:none;margin-bottom:.6rem"></div>
+      <!-- ステータス -->
+      <div class="qa-status" id="qsStatus"></div>
+      <!-- プレビュー -->
+      <div class="qa-preview" id="qsPreview">
+        <img class="qa-preview-img" id="qsPreviewImg" style="display:none">
+        <div class="qa-preview-title" id="qsPreviewTitle"></div>
+        <div class="qa-preview-sub" id="qsPreviewSub"></div>
       </div>
+      <!-- メモ -->
       <div class="qa-memo-wrap">
         <label class="qa-memo-label">📝 メモ（任意）</label>
-        <textarea class="qa-memo" id="qaMemo" placeholder="メモや感想..."></textarea>
+        <textarea class="qa-memo" id="qsMemo" placeholder="感想・メモ..."></textarea>
       </div>
-      <button class="qa-save-btn" id="qaSaveBtn" onclick="qaSave()" disabled>保存する</button>
-      <span class="qa-detail-link" onclick="closeQuickAdd();switchTab('add')">詳細設定（タグ・エリアなど）▶</span>
+      <!-- 保存ボタン -->
+      <button class="qa-save-btn" id="qsSaveBtn" onclick="qsSave()" disabled>保存する</button>
+      <span class="qa-detail-link" onclick="closeQuickAdd();switchTab('add')">詳細設定（タグ・エリアなど）はこちら ▶</span>
     </div>
   </div>
 </div>
@@ -975,139 +988,190 @@ function onBnAdd(){
 // ════════════════════════════════════════════════
 // QUICK ADD SHEET
 // ════════════════════════════════════════════════
-let qaData={url:'',type:'x',author:'',handle:'',content:'',image:'',title:''};
+let qsData={url:'',type:'web',author:'',handle:'',content:'',image:''};
+let qsFetching=false;
+
+const QS_TYPE_INFO={
+  youtube:{label:'▶ YouTube',bg:'#dc2626'},
+  tiktok:{label:'🎵 TikTok',bg:'#010101'},
+  x:{label:'𝕏 X(Twitter)',bg:'#111'},
+  web:{label:'🌐 Web記事',bg:'#0369a1'},
+};
+function qsDetectType(url){
+  if(/youtube\.com|youtu\.be/.test(url)) return 'youtube';
+  if(/tiktok\.com/.test(url)) return 'tiktok';
+  if(/x\.com\/|twitter\.com\//.test(url)) return 'x';
+  return 'web';
+}
 
 function openQuickAdd(){
   document.getElementById('quickAddSheet').classList.add('open');
-  document.getElementById('qaUrl').value='';
-  document.getElementById('qaMemo').value='';
-  document.getElementById('qaStatus').className='qa-status';
-  document.getElementById('qaPreview').className='qa-preview';
-  document.getElementById('qaSaveBtn').disabled=true;
-  qaData={url:'',type:'x',author:'',handle:'',content:'',image:'',title:''};
-  setTimeout(()=>document.getElementById('qaUrl').focus(),350);
+  ['qsUrl','qsMemo'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const s=document.getElementById('qsStatus');if(s){s.textContent='';s.className='qa-status';}
+  const pr=document.getElementById('qsPreview');if(pr)pr.className='qa-preview';
+  const sb=document.getElementById('qsSaveBtn');if(sb)sb.disabled=true;
+  const fb=document.getElementById('qsFetchBtn');if(fb)fb.style.display='none';
+  const tb=document.getElementById('qsTypeBadge');if(tb)tb.style.display='none';
+  qsData={url:'',type:'web',author:'',handle:'',content:'',image:''};
+  qsFetching=false;
+  setTimeout(()=>{const e=document.getElementById('qsUrl');if(e)e.focus();},350);
 }
 
 function closeQuickAdd(){
   document.getElementById('quickAddSheet').classList.remove('open');
 }
 
-function onQaUrlInput(){
-  const url=document.getElementById('qaUrl').value.trim();
-  document.getElementById('qaSaveBtn').disabled=!url;
+function qsOnInput(){
+  const urlEl=document.getElementById('qsUrl'); if(!urlEl) return;
+  const url=urlEl.value.trim();
+  const badge=document.getElementById('qsTypeBadge');
+  const fetchBtn=document.getElementById('qsFetchBtn');
+  const saveBtn=document.getElementById('qsSaveBtn');
+  if(!url){
+    if(badge)badge.style.display='none';
+    if(fetchBtn)fetchBtn.style.display='none';
+    if(saveBtn)saveBtn.disabled=true;
+    return;
+  }
+  const type=qsDetectType(url);
+  const t=QS_TYPE_INFO[type];
+  if(badge){
+    badge.innerHTML=`<span style="background:${t.bg};color:#fff;font-size:.72rem;padding:.2rem .75rem;border-radius:12px;font-family:'DM Mono',monospace;display:inline-block">${t.label}</span>`;
+    badge.style.display='block';
+  }
+  if(fetchBtn)fetchBtn.style.display='block';
+  if(saveBtn)saveBtn.disabled=false;
+  qsData.url=url;qsData.type=type;
 }
 
-async function qaFetch(){
-  const url=document.getElementById('qaUrl').value.trim();
-  if(!url) return;
-  const btn=document.getElementById('qaFetchBtn');
-  const status=document.getElementById('qaStatus');
-  btn.disabled=true;btn.textContent='取得中...';
-  status.textContent='情報を取得中...';status.className='qa-status show';
+async function qsOnPaste(){
+  // ペースト後50ms待ってから入力処理 → 自動取得
+  setTimeout(async()=>{
+    qsOnInput();
+    const url=(document.getElementById('qsUrl')||{}).value?.trim();
+    if(url&&!qsFetching) await qsFetch();
+  },80);
+}
+
+async function qsFetch(){
+  const urlEl=document.getElementById('qsUrl');if(!urlEl)return;
+  const url=urlEl.value.trim();
+  if(!url||qsFetching) return;
+  qsFetching=true;
+  const fetchBtn=document.getElementById('qsFetchBtn');
+  const status=document.getElementById('qsStatus');
+  if(fetchBtn){fetchBtn.disabled=true;fetchBtn.textContent='取得中...';}
+  if(status){status.textContent='情報を取得中...';status.className='qa-status show';}
+
+  const type=qsDetectType(url);
+  qsData.type=type;qsData.url=url;
 
   try{
-    // URLの種別を自動判定
-    if(/(?:twitter\.com|x\.com)\/@?[\w]+\/status\/\d+/.test(url)){
-      qaData.type='x';
-      const m=url.match(/(?:twitter\.com|x\.com)\/@?([\w]+)\/status\/(\d+)/);
-      if(m){qaData.handle='@'+m[1];qaData.author=m[1];}
+    if(type==='youtube'){
+      const vid=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/)?.[1]||'';
       try{
-        const r=await fetch(`https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`);
+        const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
         const d=await r.json();
-        if(d.html){const txt=new DOMParser().parseFromString(d.html,'text/html').querySelector('p')?.textContent||'';qaData.content=txt;}
-        if(d.author_name){qaData.author=d.author_name;}
-      }catch(e){}
-      qaData.url=url;
-      showQaPreview(qaData.author,qaData.handle,'',null);
-      status.textContent='✓ X(Twitter)の情報を取得しました';
-    } else if(/(?:youtube\.com\/watch|youtu\.be\/)/.test(url)){
-      qaData.type='youtube';
-      const vid=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/)?.[1];
-      if(vid){
-        try{
-          const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
-          const d=await r.json();
-          qaData.author=d.title||'YouTube動画';
-          qaData.handle=d.author_name||'';
-          qaData.image=`https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
-        }catch(e){qaData.author='YouTube動画';qaData.image=`https://img.youtube.com/vi/${vid}/mqdefault.jpg`;}
+        qsData.author=d.title||'YouTube動画';qsData.handle=d.author_name||'';
+        if(vid) qsData.image=`https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
+        if(status) status.textContent='✓ YouTube情報を取得しました';
+      }catch(e){
+        qsData.author='YouTube動画';
+        if(vid) qsData.image=`https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
+        if(status) status.textContent='✓ YouTube動画として登録します';
       }
-      qaData.url=url;qaData.content='';
-      showQaPreview(qaData.author,qaData.handle,qaData.image,null);
-      status.textContent='✓ YouTube動画の情報を取得しました';
-    } else if(/tiktok\.com/.test(url)){
-      qaData.type='tiktok';
+
+    }else if(type==='tiktok'){
       const handle=url.match(/tiktok\.com\/@([\w.]+)/)?.[1]||'';
-      qaData.handle='@'+handle;qaData.author=handle;
+      qsData.handle='@'+handle;qsData.author=handle||'TikTok';
       try{
         const r=await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
         const d=await r.json();
-        if(d.author_name)qaData.author=d.author_name;
-        if(d.thumbnail_url)qaData.image=d.thumbnail_url;
-        if(d.title)qaData.content=d.title;
-      }catch(e){}
-      qaData.url=url;
-      showQaPreview(qaData.author,qaData.handle,qaData.image,null);
-      status.textContent='✓ TikTokの情報を取得しました';
-    } else {
-      // Web記事
-      qaData.type='web';
+        if(d.author_name)qsData.author=d.author_name;
+        if(d.thumbnail_url)qsData.image=d.thumbnail_url;
+        if(d.title)qsData.content=d.title;
+        if(status) status.textContent='✓ TikTok情報を取得しました';
+      }catch(e){if(status) status.textContent='✓ TikTokとして登録します';}
+
+    }else if(type==='x'){
+      const m=url.match(/(?:twitter\.com|x\.com)\/@?([\w]+)\/status\/(\d+)/);
+      if(m){qsData.handle='@'+m[1];qsData.author=m[1];}
+      try{
+        const r=await fetch(`https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`);
+        const d=await r.json();
+        if(d.author_name) qsData.author=d.author_name;
+        const doc=new DOMParser().parseFromString(d.html||'','text/html');
+        qsData.content=doc.querySelector('p')?.textContent||'';
+        if(status) status.textContent='✓ X(Twitter)情報を取得しました';
+      }catch(e){if(status) status.textContent='✓ Xポストとして登録します';}
+
+    }else{
+      const proxies=[
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+      ];
       let html='';
-      const proxies=[`https://corsproxy.io/?${encodeURIComponent(url)}`,`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`];
       for(const px of proxies){
-        try{const r=await fetch(px,{signal:AbortSignal.timeout(6000)});html=px.includes('allorigins')?(await r.json()).contents||'':await r.text();if(html)break;}catch(e){continue;}
+        try{
+          const r=await fetch(px,{signal:AbortSignal.timeout(7000)});
+          html=px.includes('allorigins')?(await r.json()).contents||'':await r.text();
+          if(html) break;
+        }catch(e){continue;}
       }
       if(html){
         const doc=new DOMParser().parseFromString(html,'text/html');
-        const get=(sel,attr)=>doc.querySelector(sel)?.getAttribute(attr)||'';
-        qaData.author=get('meta[property="og:title"]','content')||get('meta[name="twitter:title"]','content')||doc.querySelector('title')?.textContent||url;
-        qaData.handle=get('meta[property="og:site_name"]','content')||new URL(url).hostname;
-        qaData.content=get('meta[property="og:description"]','content')||get('meta[name="description"]','content')||'';
-        qaData.image=get('meta[property="og:image"]','content')||get('meta[name="twitter:image"]','content')||'';
-        status.textContent='✓ 記事の情報を取得しました';
-      } else {
-        qaData.author=url;qaData.handle=new URL(url).hostname;
-        status.textContent='⚠ 詳細情報の取得に失敗。URLのみ保存できます';
+        const g=(sel,a)=>doc.querySelector(sel)?.getAttribute(a)||'';
+        qsData.author=g('meta[property="og:title"]','content')||g('meta[name="twitter:title"]','content')||doc.querySelector('title')?.textContent||url;
+        qsData.handle=g('meta[property="og:site_name"]','content')||new URL(url).hostname;
+        qsData.content=g('meta[property="og:description"]','content')||g('meta[name="description"]','content')||'';
+        qsData.image=g('meta[property="og:image"]','content')||g('meta[name="twitter:image"]','content')||'';
+        if(status) status.textContent='✓ 記事情報を取得しました';
+      }else{
+        try{qsData.author=new URL(url).hostname;qsData.handle=qsData.author;}catch(e){qsData.author=url;}
+        if(status) status.textContent='⚠ 情報取得失敗。URLのみ保存できます';
       }
-      qaData.url=url;
-      showQaPreview(qaData.author,qaData.handle,qaData.image,qaData.content);
     }
-    document.getElementById('qaSaveBtn').disabled=false;
+    // プレビュー表示
+    const prev=document.getElementById('qsPreview');
+    const img=document.getElementById('qsPreviewImg');
+    const tEl=document.getElementById('qsPreviewTitle');
+    const sEl=document.getElementById('qsPreviewSub');
+    if(tEl) tEl.textContent=qsData.author||'';
+    if(sEl) sEl.textContent=[qsData.handle,qsData.content?qsData.content.slice(0,50)+'…':''].filter(Boolean).join(' · ');
+    if(img){
+      if(qsData.image){img.src=qsData.image;img.style.display='block';img.onerror=()=>img.style.display='none';}
+      else img.style.display='none';
+    }
+    if(prev) prev.className='qa-preview show';
+    const sb2=document.getElementById('qsSaveBtn');if(sb2)sb2.disabled=false;
+
   }catch(e){
-    status.textContent='⚠ 取得に失敗しました。URLのみ保存されます';
-    qaData.url=url;qaData.type='web';qaData.author=url;
-    document.getElementById('qaSaveBtn').disabled=false;
+    if(status) status.textContent='⚠ 取得エラー。URLのみ保存します';
+    const sb2=document.getElementById('qsSaveBtn');if(sb2)sb2.disabled=false;
   }
-  btn.disabled=false;btn.textContent='取得';
+  if(fetchBtn){fetchBtn.disabled=false;fetchBtn.textContent='再取得';}
+  qsFetching=false;
 }
 
-function showQaPreview(title,sub,imgUrl,content){
-  const prev=document.getElementById('qaPreview');
-  const img=document.getElementById('qaPreviewImg');
-  document.getElementById('qaPreviewTitle').textContent=title||'';
-  document.getElementById('qaPreviewSub').textContent=[sub,content?content.slice(0,60)+'…':''].filter(Boolean).join(' · ');
-  if(imgUrl){img.src=imgUrl;img.style.display='block';img.onerror=()=>{img.style.display='none';};}
-  else{img.style.display='none';}
-  prev.className='qa-preview show';
-}
-
-async function qaSave(){
-  const url=document.getElementById('qaUrl').value.trim();
-  if(!url&&!qaData.url){toast('URLを入力してください','err');return;}
-  const btn=document.getElementById('qaSaveBtn');
-  btn.disabled=true;btn.textContent='保存中...';
+async function qsSave(){
+  const urlEl=document.getElementById('qsUrl');
+  const url=(urlEl?.value||'').trim();
+  if(!url){toast('URLを入力してください','err');return;}
+  const btn=document.getElementById('qsSaveBtn');
+  if(btn){btn.disabled=true;btn.textContent='保存中...';}
   const now=Date.now();
-  const memo=document.getElementById('qaMemo').value.trim();
+  const memoEl=document.getElementById('qsMemo');
+  const memo=(memoEl?.value||'').trim();
   const p={
-    id:'p'+now,url:qaData.url||url,created_at:now,
-    author:qaData.author||url,handle:qaData.handle||'',
-    content:qaData.content||'',memo,
-    image:qaData.image||'',tags:[],
+    id:'p'+now,url:qsData.url||url,created_at:now,
+    author:qsData.author||url,handle:qsData.handle||'',
+    content:qsData.content||'',memo,
+    image:qsData.image||'',tags:[],
     area:null,country:null,prefecture:null,lat:null,lng:null,
-    type:qaData.type||'web',summary:null,
+    type:qsData.type||'web',summary:null,
     youtube_status:'unwatch',youtube_priority:false,
     is_favorite:false,
-    watch_later:qaData.type==='youtube'||qaData.type==='tiktok',
+    watch_later:['youtube','tiktok'].includes(qsData.type),
   };
   try{
     await sb('posts','POST',p);
@@ -1115,8 +1179,11 @@ async function qaSave(){
     renderAll();renderReminderBar();
     toast('保存しました ✓','ok');
     closeQuickAdd();
-    switchTab('home');
-  }catch(e){toast('保存エラー: '+e.message,'err');btn.disabled=false;btn.textContent='保存する';}
+    switchTab('home');bnActive('bnHome');
+  }catch(e){
+    toast('保存エラー: '+e.message,'err');
+    if(btn){btn.disabled=false;btn.textContent='保存する';}
+  }
 }
 
 // ════════════════════════════════════════════════
@@ -1434,16 +1501,43 @@ function renderGrouped(filtered,wrap,groupBy){
     });
     wrap.innerHTML=html;
   } else {
+    // Bモード：国 → 都道府県 の2階層でグループ化
+    const countryGroups={}; // {country: {pref: [posts]}}
     filtered.forEach(p=>{
-      const key=[p.country,p.prefecture].filter(Boolean).join(' › ')||'エリアなし';
-      (groups[key]=groups[key]||[]).push(p);
+      const country=p.country||'__no_country__';
+      const pref=p.prefecture||'__no_pref__';
+      if(!countryGroups[country]) countryGroups[country]={};
+      if(!countryGroups[country][pref]) countryGroups[country][pref]=[];
+      countryGroups[country][pref].push(p);
     });
-    const sortedKeys=Object.keys(groups).sort((a,b)=>a==='エリアなし'?1:b==='エリアなし'?-1:a.localeCompare(b,'ja'));
+
+    const sortedCountries=Object.keys(countryGroups)
+      .sort((a,b)=>a==='__no_country__'?1:b==='__no_country__'?-1:a.localeCompare(b,'ja'));
+
     let html='';
-    sortedKeys.forEach(k=>{
-      html+=`<div class="group-header">${esc(k)} <span style="opacity:.4">(${groups[k].length})</span></div>`;
-      if(viewMode==='grid') html+=`<div class="posts-grid" style="margin-bottom:.9rem">${groups[k].map(cardHTML).join('')}</div>`;
-      else html+=`<div class="posts-list" style="margin-bottom:.9rem">${groups[k].map(rowHTML).join('')}</div>`;
+    sortedCountries.forEach(country=>{
+      const prefs=countryGroups[country];
+      const sortedPrefs=Object.keys(prefs)
+        .sort((a,b)=>a==='__no_pref__'?1:b==='__no_pref__'?-1:a.localeCompare(b,'ja'));
+      const totalCnt=sortedPrefs.reduce((s,k)=>s+prefs[k].length,0);
+
+      // 国ヘッダー
+      const countryLabel=country==='__no_country__'?'国未設定':country;
+      html+=`<div style="margin-top:1.1rem;margin-bottom:.35rem;display:flex;align-items:center;gap:.5rem">
+        <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:var(--ink)">${esc(countryLabel)}</div>
+        <div style="flex:1;height:1px;background:var(--line)"></div>
+        <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--ink3)">${totalCnt}</div>
+      </div>`;
+
+      sortedPrefs.forEach(pref=>{
+        const items=prefs[pref];
+        const prefLabel=pref==='__no_pref__'?'都道府県未設定':pref;
+        html+=`<div class="group-header" style="margin-top:.55rem;padding-left:.35rem;border-left:2px solid var(--line)">
+          ${esc(prefLabel)} <span style="opacity:.4">(${items.length})</span>
+        </div>`;
+        if(viewMode==='grid') html+=`<div class="posts-grid" style="margin-bottom:.75rem">${items.map(cardHTML).join('')}</div>`;
+        else html+=`<div class="posts-list" style="margin-bottom:.75rem">${items.map(rowHTML).join('')}</div>`;
+      });
     });
     wrap.innerHTML=html;
   }
@@ -1527,27 +1621,57 @@ function getYtId(url){const m=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)
 // MAP
 // ════════════════════════════════════════════════
 let markerCluster=null;
+let mapAreaFilter={country:null,prefecture:null};
+
+function setMapCountryFilter(val){
+  mapAreaFilter.country=val||null;mapAreaFilter.prefecture=null;
+  const ps=document.getElementById('mapPrefSelect');
+  if(mapAreaFilter.country){
+    const prefs=[...new Set(posts.filter(p=>p.country===mapAreaFilter.country&&p.lat&&p.lng).map(p=>p.prefecture).filter(Boolean))].sort();
+    if(prefs.length){
+      ps.innerHTML='<option value="">すべての都道府県</option>'+prefs.map(pr=>`<option value="${esc(pr)}">${esc(pr)}</option>`).join('');
+      ps.style.display='block';
+    } else ps.style.display='none';
+  } else {ps.style.display='none';}
+  renderMap();
+}
+function setMapPrefFilter(val){mapAreaFilter.prefecture=val||null;renderMap();}
+function clearMapFilter(){
+  mapAreaFilter={country:null,prefecture:null};
+  document.getElementById('mapCountrySelect').value='';
+  document.getElementById('mapPrefSelect').style.display='none';
+  renderMap();
+}
+function updateMapFilterBar(){
+  const bar=document.getElementById('mapFilterBar');if(!bar)return;
+  bar.style.display='block';
+  const sel=document.getElementById('mapCountrySelect');
+  // 国リストを更新
+  const countries=[...new Set(posts.filter(p=>p.lat&&p.lng).map(p=>p.country).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">すべての国</option>'+countries.map(c=>`<option value="${esc(c)}"${mapAreaFilter.country===c?' selected':''}>${esc(c)}</option>`).join('');
+}
 function renderMap(){
   document.getElementById('mapWrap').style.display='block';
   document.getElementById('postsWrap').style.display='none';
+  updateMapFilterBar();
   const initLat=myLat||35.6812,initLng=myLng||139.7671,initZoom=myLat?13:10;
   if(!map){
     map=L.map('mapWrap').setView([initLat,initLng],initZoom);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
   }
-
-  // 既存マーカーをすべて除去
   mapMarkers.forEach(m=>m.remove()); mapMarkers=[];
   if(markerCluster){map.removeLayer(markerCluster);markerCluster=null;}
-
-  // 現在地マーカー
   if(myLat){
     const icon=L.divIcon({className:'',html:'<div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 2px 10px rgba(59,130,246,.6)"></div>',iconSize:[18,18],iconAnchor:[9,9]});
     L.marker([myLat,myLng],{icon,zIndexOffset:1000}).addTo(map).bindPopup('📍 現在地');
     map.setView([myLat,myLng],14,{animate:true});
   }
-
-  const filtered=getFiltered().filter(p=>p.lat&&p.lng);
+  // エリアフィルター適用
+  let filtered=getFiltered().filter(p=>p.lat&&p.lng);
+  if(mapAreaFilter.country) filtered=filtered.filter(p=>p.country===mapAreaFilter.country);
+  if(mapAreaFilter.prefecture) filtered=filtered.filter(p=>p.prefecture===mapAreaFilter.prefecture);
+  const cntEl=document.getElementById('mapFilterCount');
+  if(cntEl) cntEl.textContent=filtered.length+'件表示中';
   document.getElementById('resultInfo').textContent=filtered.length?filtered.length+' clips (地図)':'地図表示できる投稿がありません';
   const bounds=[];
 
@@ -1786,113 +1910,6 @@ async function quickToggleWL(id){
 // ════════════════════════════════════════════════
 // QUICK ADD (スマホ用クイック登録)
 // ════════════════════════════════════════════════
-function qaAutoDetect(){
-  const url=document.getElementById('qaUrl').value.trim();
-  const status=document.getElementById('qaStatus');
-  if(!url){status.textContent='';return;}
-  if(/youtube\.com|youtu\.be/.test(url)) status.textContent='▶ YouTube として登録します';
-  else if(/tiktok\.com/.test(url)) status.textContent='🎵 TikTok として登録します';
-  else if(/x\.com|twitter\.com/.test(url)) status.textContent='𝕏 Xポスト として登録します';
-  else status.textContent='🌐 Web記事 として登録します';
-}
-
-async function quickSave(){
-  const url=document.getElementById('qaUrl').value.trim();
-  if(!url){toast('URLを入力してください','err');return;}
-  const btn=document.getElementById('qaBtn');
-  btn.disabled=true;btn.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
-  const status=document.getElementById('qaStatus');
-  status.textContent='情報を取得中...';
-
-  let type='web',author='',handle='',content='',image='';
-
-  try{
-    if(/youtube\.com|youtu\.be/.test(url)){
-      type='youtube';
-      const vid=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/)?.[1]||'';
-      try{
-        const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
-        const d=await r.json();
-        author=d.title||'YouTube動画';handle=d.author_name||'';
-        if(vid) image=`https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
-      }catch(e){author='YouTube動画';}
-    } else if(/tiktok\.com/.test(url)){
-      type='tiktok';
-      try{
-        const r=await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
-        const d=await r.json();
-        author=d.author_name||'TikTok';
-        handle=d.author_url?.match(/tiktok\.com\/@([^\/\?]+)/)?.[1]?('@'+(d.author_url.match(/tiktok\.com\/@([^\/\?]+)/)[1])):'';
-        content=d.title||'';image=d.thumbnail_url||'';
-      }catch(e){
-        handle=url.match(/tiktok\.com\/@([\w.]+)/)?.[1]||'';
-        author=handle||'TikTok';if(handle) handle='@'+handle;
-      }
-    } else if(/x\.com|twitter\.com/.test(url)){
-      type='x';
-      const m=url.match(/(?:twitter\.com|x\.com)\/@?([\w]+)\/status\/(\d+)/);
-      if(m){
-        handle='@'+m[1];author=m[1];
-        try{
-          const r=await fetch(`https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`);
-          const d=await r.json();
-          const doc=new DOMParser().parseFromString(d.html||'','text/html');
-          content=doc.querySelector('p')?.textContent||'';
-          if(d.author_name) author=d.author_name;
-        }catch(e){}
-      }
-    } else {
-      // Web記事
-      const proxies=[`https://corsproxy.io/?${encodeURIComponent(url)}`,`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`];
-      let html='';
-      for(const px of proxies){
-        try{const r=await fetch(px,{signal:AbortSignal.timeout(6000)});html=px.includes('allorigins')?(await r.json()).contents||'':await r.text();if(html)break;}catch(e){continue;}
-      }
-      if(html){
-        const doc=new DOMParser().parseFromString(html,'text/html');
-        const get=(sel,attr)=>doc.querySelector(sel)?.getAttribute(attr)||'';
-        const title=get('meta[property="og:title"]','content')||doc.querySelector('title')?.textContent||url;
-        author=title;
-        handle=get('meta[property="og:site_name"]','content')||new URL(url).hostname;
-        content=get('meta[property="og:description"]','content')||get('meta[name="description"]','content')||'';
-        image=get('meta[property="og:image"]','content')||'';
-      } else {
-        author=new URL(url).hostname;handle=new URL(url).hostname;
-      }
-    }
-
-    const now=Date.now();
-    const p={id:'p'+now,url,created_at:now,author:author||'不明',handle,content,memo:'',image,
-      tags:[],area:null,country:null,prefecture:null,lat:null,lng:null,
-      type,summary:null,youtube_status:'unwatch',youtube_priority:false,
-      is_favorite:false,watch_later:false};
-    await sb('posts','POST',p);
-    posts.unshift(mapPost({...p}));
-    document.getElementById('qaUrl').value='';
-    status.textContent='';
-    renderAll();renderReminderBar();
-    toast('保存しました ✓ タグは後で設定できます','ok');
-    switchTab('home');
-  }catch(e){
-    status.textContent='⚠️ 取得失敗。もう一度試すか詳細フォームで入力してください';
-    toast('保存エラー: '+e.message,'err');
-  }
-  btn.disabled=false;btn.innerHTML='保存';
-}
-
-function toggleQuickAdd(showQuick){
-  const quick=document.getElementById('quickAddCard');
-  const detail=document.getElementById('detailAddCard');
-  if(showQuick===false){
-    // 詳細フォームを表示
-    if(detail) detail.classList.add('sp-show');
-    if(quick) quick.style.display='none';
-  } else {
-    if(detail) detail.classList.remove('sp-show');
-    if(quick) quick.style.display='';
-  }
-}
-
 // ════════════════════════════════════════════════
 // DELETE
 // ════════════════════════════════════════════════
@@ -1977,8 +1994,13 @@ async function fetchFromUrl(){
         const txt=doc.querySelector('p')?.textContent||'';
         document.getElementById('fContent').value=txt;
         if(d.author_name) document.getElementById('fAuthor').value=d.author_name;
+        // oEmbed HTMLから動画サムネイルを探す（動画付きポストの場合）
+        // twitter/x は公式oEmbedではサムネイルを返さないが thumbnail_url が含まれる場合がある
+        if(d.thumbnail_url){
+          document.getElementById('fImgUrl').value=d.thumbnail_url;prevImgUrl();
+        }
       }
-      status.textContent='✓ X投稿の情報を取得しました';
+      status.textContent='✓ X投稿の情報を取得しました（動画サムネイルは自動取得できない場合があります）';
     } else if(currentType==='tiktok'){
       // TikTok oEmbed APIでサムネイル・作者名を取得
       const m=url.match(/tiktok\.com\/@([\w.]+)\/video\/(\d+)/i)||url.match(/vm\.tiktok\.com\/([\w]+)/i)||url.match(/vt\.tiktok\.com\/([\w]+)/i);
@@ -2602,6 +2624,8 @@ function setView(v){
   document.getElementById('v'+v.charAt(0).toUpperCase()+v.slice(1))?.classList.add('active');
   document.getElementById('mapWrap').style.display=v==='map'?'block':'none';
   document.getElementById('postsWrap').style.display=v==='map'?'none':'block';
+  const mfb=document.getElementById('mapFilterBar');
+  if(mfb) mfb.style.display=v==='map'?'block':'none';
   renderHome();
 }
 
