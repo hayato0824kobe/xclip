@@ -309,6 +309,14 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .yt-embed-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;margin-bottom:1rem;}
 .yt-embed-wrap iframe{position:absolute;inset:0;width:100%;height:100%;}
 
+/* ─── INSTAGRAM IMAGE SELECTOR ─── */
+.insta-thumb-wrap{width:80px;height:80px;border-radius:8px;cursor:pointer;border:3px solid transparent;transition:all .18s;position:relative;flex-shrink:0;overflow:hidden;background:#f0f0f0;}
+.insta-thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.insta-thumb-wrap.selected{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);}
+.insta-sel-num{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:.62rem;font-weight:700;display:none;align-items:center;justify-content:center;font-family:'DM Mono',monospace;}
+.insta-thumb-wrap.selected .insta-sel-num{display:flex;}
+.insta-vid-badge{position:absolute;bottom:3px;left:3px;background:rgba(0,0,0,.6);color:#fff;font-size:.55rem;padding:1px 5px;border-radius:3px;}
+
 /* ─── MAP MARKERS ─── */
 .leaflet-popup-content-wrapper{border-radius:10px !important;box-shadow:0 4px 20px rgba(0,0,0,.15) !important;padding:0 !important;overflow:hidden;}
 .leaflet-popup-content{margin:10px 12px !important;font-family:'Noto Sans JP',sans-serif !important;}
@@ -560,6 +568,7 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
     <div class="add-card" id="detailAddCard">
       <div class="type-tabs">
         <button class="type-tab active" id="typeX" onclick="setType('x')">𝕏 ポスト</button>
+        <button class="type-tab" id="typeInsta" onclick="setType('instagram')">📸 Instagram</button>
         <button class="type-tab" id="typeWeb" onclick="setType('web')">🌐 Web記事</button>
         <button class="type-tab" id="typeYt" onclick="setType('youtube')">▶ YouTube</button>
         <button class="type-tab" id="typeTiktok" onclick="setType('tiktok')">🎵 TikTok</button>
@@ -599,6 +608,12 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
             <div class="img-area-ph" id="imgPh"><span style="font-size:1.4rem">📷</span><span>クリックして画像を選択</span></div>
             <img class="img-area-prev" id="imgPrev" style="display:none">
           </div>
+        </div>
+        <!-- Instagram 複数画像セレクター（Instagramタイプのみ表示） -->
+        <div class="fg-full" id="instaImageSelector" style="display:none">
+          <label class="fl">📸 Instagram 画像を選択（複数可）</label>
+          <div id="instaImgGrid" style="display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:.5rem"></div>
+          <div style="font-size:.7rem;color:var(--ink3);line-height:1.5" id="instaImgHint">情報取得後に画像一覧が表示されます。サムネイルにしたい画像をタップして選択してください（最初に選んだものがメイン画像になります）。</div>
         </div>
         <div class="fg-full">
           <label class="fl">🏷 タグ</label>
@@ -995,12 +1010,14 @@ const QS_TYPE_INFO={
   youtube:{label:'▶ YouTube',bg:'#dc2626'},
   tiktok:{label:'🎵 TikTok',bg:'#010101'},
   x:{label:'𝕏 X(Twitter)',bg:'#111'},
+  instagram:{label:'📸 Instagram',bg:'#c13584'},
   web:{label:'🌐 Web記事',bg:'#0369a1'},
 };
 function qsDetectType(url){
   if(/youtube\.com|youtu\.be/.test(url)) return 'youtube';
   if(/tiktok\.com/.test(url)) return 'tiktok';
   if(/x\.com\/|twitter\.com\//.test(url)) return 'x';
+  if(/instagram\.com\//.test(url)) return 'instagram';
   return 'web';
 }
 
@@ -1067,7 +1084,38 @@ async function qsFetch(){
   qsData.type=type;qsData.url=url;
 
   try{
-    if(type==='youtube'){
+    if(type==='instagram'){
+      // クイックシートではOGP1枚のみ取得（詳細フォームで複数選択推奨）
+      const shortcode=url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)?.[1]||'';
+      const usernameFromUrl=url.match(/instagram\.com\/([^\/\?]+)\/(?:p|reel)/)?.[1]||'';
+      qsData.handle=usernameFromUrl?'@'+usernameFromUrl:'';
+      qsData.author=usernameFromUrl||'Instagram';
+      let gotData=false;
+      const proxies=[
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+      ];
+      for(const px of proxies){
+        try{
+          const r=await fetch(px,{signal:AbortSignal.timeout(8000)});
+          const rawHtml=px.includes('allorigins')?(await r.json()).contents||'':await r.text();
+          if(!rawHtml) continue;
+          const doc=new DOMParser().parseFromString(rawHtml,'text/html');
+          const g=(sel,a)=>doc.querySelector(sel)?.getAttribute(a)||'';
+          const uMatch=rawHtml.match(/"username":"([^"]+)"/);
+          if(uMatch){qsData.author=uMatch[1];qsData.handle='@'+uMatch[1];}
+          const desc=g('meta[property="og:description"]','content')||'';
+          if(desc) qsData.content=desc.replace(/^[^:]+:\s*/,'').slice(0,200);
+          const img=g('meta[property="og:image"]','content')||g('meta[name="twitter:image"]','content')||'';
+          if(img) qsData.image=img;
+          gotData=true; break;
+        }catch(e){continue;}
+      }
+      if(status) status.textContent=gotData
+        ?'✓ Instagram情報を取得しました（詳細フォームで複数画像を選択できます）'
+        :'⚠ 詳細情報取得失敗。URLのみ保存します';
+
+    }else if(type==='x'){
       const vid=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/)?.[1]||'';
       try{
         const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
@@ -1547,9 +1595,9 @@ function renderGrouped(filtered,wrap,groupBy){
 // CARD / ROW HTML
 // ════════════════════════════════════════════════
 function typeBadge(type){
-  const label={x:'𝕏',web:'WEB',youtube:'▶',memo:'MEMO',tiktok:'TT'};
-  const bg={x:'#111',web:'#0369a1',youtube:'#dc2626',memo:'#166534',tiktok:'#010101'};
-  const fg={x:'#fff',web:'#e0f2fe',youtube:'#fee2e2',memo:'#f0fdf4',tiktok:'#69c9d0'};
+  const label={x:'𝕏',web:'WEB',youtube:'▶',memo:'MEMO',tiktok:'TT',instagram:'📸'};
+  const bg={x:'#111',web:'#0369a1',youtube:'#dc2626',memo:'#166534',tiktok:'#010101',instagram:'#c13584'};
+  const fg={x:'#fff',web:'#e0f2fe',youtube:'#fee2e2',memo:'#f0fdf4',tiktok:'#69c9d0',instagram:'#fff'};
   return `<span class="type-badge" style="background:${bg[type]||'#111'};color:${fg[type]||'#fff'}">${label[type]||type}</span>`;
 }
 
@@ -1698,7 +1746,7 @@ function renderMap(){
     const ytThumb=p.type==='youtube'&&p.url?`https://img.youtube.com/vi/${getYtId(p.url)}/mqdefault.jpg`:'';
     const imgSrc=p.image||ytThumb;
     const tagColor=p.tags?.[0]?tags.find(t=>t.id===p.tags[0])?.color||'#3b82f6':'#3b82f6';
-    const typeEmoji={x:'𝕏',web:'🌐',youtube:'▶',memo:'📝',tiktok:'🎵'};
+    const typeEmoji={x:'𝕏',web:'🌐',youtube:'▶',memo:'📝',tiktok:'🎵',instagram:'📸'};
 
     let iconHtml;
     if(imgSrc){
@@ -1930,6 +1978,7 @@ async function savePost(){
   const now=Date.now();
   let author='',handle='',summary='';
   if(currentType==='x'){author=document.getElementById('fAuthor').value.trim()||'不明';handle=document.getElementById('fHandle').value.trim();}
+  else if(currentType==='instagram'){author=document.getElementById('fAuthor').value.trim()||'Instagram';handle=document.getElementById('fHandle').value.trim();}
   else if(currentType==='tiktok'){author=document.getElementById('fAuthor').value.trim()||'TikTok';handle=document.getElementById('fHandle').value.trim();}
   else if(currentType==='web'){const title=document.getElementById('fTitle').value.trim();const site=document.getElementById('fSite').value.trim();author=document.getElementById('fAuthorWeb').value.trim()||title||'Web記事';handle=site;summary=document.getElementById('fSummary').value.trim();}
   else if(currentType==='youtube'){author=document.getElementById('fYtTitle').value.trim()||'YouTube動画';handle=document.getElementById('fYtChannel').value.trim();}
@@ -1947,7 +1996,9 @@ async function savePost(){
   const p={
     id:'p'+now,url,created_at:now,
     author,handle,content,memo,
-    image:document.getElementById('fImgUrl').value.trim(),
+    image:(currentType==='instagram'
+      ? (instaSelectedImages.length?instaSelectedImages[0]:'')
+      : document.getElementById('fImgUrl').value.trim()),
     tags:[...selectedTags],
     area:document.getElementById('fArea').value.trim()||null,
     country:document.getElementById('fCountry').value.trim()||null,
@@ -1982,7 +2033,9 @@ async function fetchFromUrl(){
   const status=document.getElementById('statusBar');
   status.style.display='block';status.textContent='取得中...';
   try{
-    if(currentType==='x'){
+    if(currentType==='instagram'){
+      await fetchInstagram(url,status);
+    } else if(currentType==='x'){
       const m=url.match(/(?:twitter\.com|x\.com)\/@?([\w]+)\/status\/(\d+)/);
       if(!m){toast('XのURLを入力してください','err');return;}
       document.getElementById('fHandle').value='@'+m[1];
@@ -2069,27 +2122,245 @@ async function fetchFromUrl(){
 }
 
 // ════════════════════════════════════════════════
+// INSTAGRAM FETCH & IMAGE SELECTOR
+// ════════════════════════════════════════════════
+let instaSelectedImages=[];   // 選択済み画像URLの配列（順序付き）
+let instaAllImages=[];        // 取得した全画像URL
+
+async function fetchInstagram(url, statusEl){
+  instaSelectedImages=[];instaAllImages=[];
+  renderInstaGrid([]);
+  statusEl.style.display='block';statusEl.textContent='Instagramから情報を取得中...';
+
+  // URLからショートコードを抽出
+  const shortcode=url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)?.[1];
+  if(!shortcode){
+    statusEl.textContent='⚠ InstagramのURLを入力してください（例: https://www.instagram.com/p/XXXXX/）';
+    return;
+  }
+
+  // ユーザー名をURLから抽出
+  const usernameFromUrl=url.match(/instagram\.com\/([^\/\?]+)\/(?:p|reel)/)?.[1]||'';
+
+  // OEmbed API（Instagramの公式oEmbed – アクセストークン不要バージョン）
+  let oembedOk=false;
+  try{
+    const oeUrl=`https://www.instagram.com/api/v1/oembed/?url=${encodeURIComponent(url)}&hidecaption=false&maxwidth=640`;
+    const proxied=`https://corsproxy.io/?${encodeURIComponent(oeUrl)}`;
+    const r=await fetch(proxied,{signal:AbortSignal.timeout(8000)});
+    if(r.ok){
+      const d=await r.json();
+      if(d.author_name){
+        document.getElementById('fAuthor').value=d.author_name;
+        document.getElementById('fHandle').value='@'+(d.author_url?.match(/instagram\.com\/([^\/\?]+)/)?.[1]||d.author_name);
+      }
+      if(d.title) document.getElementById('fContent').value=d.title;
+      // OGP画像をoEmbedから取得（thumbnail_url）
+      if(d.thumbnail_url){
+        instaAllImages.push({url:d.thumbnail_url,type:'image'});
+      }
+      oembedOk=true;
+    }
+  }catch(e){}
+
+  // OGPメタタグからも取得を試みる（プロキシ経由）
+  let ogImages=[];
+  let ogLocation=null;
+  const proxies=[
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+  ];
+  for(const px of proxies){
+    try{
+      const r=await fetch(px,{signal:AbortSignal.timeout(8000)});
+      const rawHtml=px.includes('allorigins')?(await r.json()).contents||'':await r.text();
+      if(!rawHtml) continue;
+      const doc=new DOMParser().parseFromString(rawHtml,'text/html');
+      const g=(sel,a)=>doc.querySelector(sel)?.getAttribute(a)||'';
+
+      // ユーザー名
+      if(!document.getElementById('fAuthor').value){
+        const authorMeta=g('meta[property="og:title"]','content')||g('meta[name="twitter:title"]','content')||'';
+        const usernameMatch=rawHtml.match(/"username":"([^"]+)"/)||rawHtml.match(/\"owner\":\{[^}]*\"username\":\"([^"]+)\"/);
+        if(usernameMatch){
+          document.getElementById('fHandle').value='@'+usernameMatch[1];
+          document.getElementById('fAuthor').value=usernameMatch[1];
+        } else if(usernameFromUrl){
+          document.getElementById('fHandle').value='@'+usernameFromUrl;
+          document.getElementById('fAuthor').value=usernameFromUrl;
+        }
+      }
+
+      // キャプション（本文）
+      if(!document.getElementById('fContent').value){
+        const desc=g('meta[property="og:description"]','content')||g('meta[name="description"]','content')||'';
+        if(desc) document.getElementById('fContent').value=desc.replace(/^[^:]+:\s*/,'').slice(0,500);
+      }
+
+      // OGP画像（通常1〜3枚）
+      doc.querySelectorAll('meta[property="og:image"]').forEach(m=>{
+        const imgUrl=m.getAttribute('content');
+        if(imgUrl&&!ogImages.includes(imgUrl)) ogImages.push(imgUrl);
+      });
+
+      // 動画サムネイル（リールの場合）
+      const videoThumb=g('meta[property="og:image:secure_url"]','content')||g('meta[name="twitter:image"]','content')||'';
+      if(videoThumb&&!ogImages.includes(videoThumb)) ogImages.push(videoThumb);
+
+      // isVideo判定（リール or 動画）
+      const isVideo=/reel|video/i.test(url)||rawHtml.includes('"is_video":true');
+
+      // 複数枚画像をJSONから掘り出す
+      const jsonMatches=rawHtml.matchAll(/"display_url":"(https:\/\/[^"]+)"/g);
+      for(const m of jsonMatches){
+        try{const decoded=m[1].replace(/\\u0026/g,'&').replace(/\\/g,'');if(!ogImages.includes(decoded))ogImages.push(decoded);}catch(e){}
+      }
+      // edge_sidecar_to_children から複数枚
+      const sidecarMatch=rawHtml.match(/"edge_sidecar_to_children":\{"edges":\[(.*?)\]\}/s);
+      if(sidecarMatch){
+        const sidecarImgs=sidecarMatch[1].matchAll(/"display_url":"(https:\/\/[^"]+)"/g);
+        for(const m of sidecarImgs){
+          try{const decoded=m[1].replace(/\\u0026/g,'&').replace(/\\/g,'');if(!ogImages.includes(decoded))ogImages.push(decoded);}catch(e){}
+        }
+      }
+
+      // 位置情報
+      const locMatch=rawHtml.match(/"location":\{"id":"[^"]*","has_public_page":[^,]*,"name":"([^"]+)"/)||
+                     rawHtml.match(/"location_name":"([^"]+)"/);
+      if(locMatch) ogLocation=locMatch[1];
+
+      // lat/lng
+      const latMatch=rawHtml.match(/"lat":([-\d.]+)/);
+      const lngMatch=rawHtml.match(/"lng":([-\d.]+)/);
+      if(latMatch&&lngMatch){
+        document.getElementById('fLat').value=latMatch[1];
+        document.getElementById('fLng').value=lngMatch[1];
+        // 逆ジオコーディング
+        try{
+          const rev=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latMatch[1]}&lon=${lngMatch[1]}&format=json&accept-language=ja`);
+          const rd=await rev.json();
+          const addr=rd.address||{};
+          if(addr.country) document.getElementById('fCountry').value=addr.country;
+          const pref=addr.state||addr.province||addr.region||addr.county||'';
+          if(pref) document.getElementById('fPrefecture').value=pref;
+          const place=addr.city||addr.town||addr.village||addr.suburb||addr.neighbourhood||ogLocation||'';
+          if(place) document.getElementById('fArea').value=place;
+          document.getElementById('fAreaStatus').textContent=`✓ 位置情報を取得: ${addr.country||''}${pref?' / '+pref:''}`;
+        }catch(e){
+          if(ogLocation) document.getElementById('fArea').value=ogLocation;
+          document.getElementById('fAreaStatus').textContent=`✓ 場所: ${ogLocation}`;
+        }
+      } else if(ogLocation){
+        document.getElementById('fArea').value=ogLocation;
+        document.getElementById('fAreaStatus').textContent=`📍 場所名: ${ogLocation}`;
+      }
+
+      if(ogImages.length>0||oembedOk) break;
+    }catch(e){continue;}
+  }
+
+  // 画像をマージ（重複排除）
+  ogImages.forEach(u=>{
+    if(!instaAllImages.find(x=>x.url===u)){
+      const isVid=/reel|video/i.test(url);
+      instaAllImages.push({url:u, type: isVid&&instaAllImages.length===0?'video':'image'});
+    }
+  });
+
+  if(instaAllImages.length>0){
+    renderInstaGrid(instaAllImages);
+    // 最初の画像を自動選択
+    toggleInstaImage(0);
+    statusEl.textContent=`✓ ${instaAllImages.length}枚の画像を検出しました。使用する画像を選択してください。`;
+    if(ogLocation||document.getElementById('fLat').value) statusEl.textContent+=' 位置情報も取得しました。';
+  } else {
+    statusEl.textContent='⚠ 画像の自動取得に失敗しました。Instagramはログイン状態やプロキシの制限により取得できない場合があります。手動で画像URLを入力してください。';
+    // 通常の画像入力UIを表示
+    const imgArea=document.getElementById('imgArea');
+    const imgUrlInput=document.getElementById('fImgUrl');
+    if(imgArea) imgArea.style.display='block';
+    if(imgUrlInput) imgUrlInput.style.display='block';
+  }
+}
+
+function renderInstaGrid(images){
+  const grid=document.getElementById('instaImgGrid');if(!grid)return;
+  if(!images.length){grid.innerHTML='';return;}
+  grid.innerHTML=images.map((img,i)=>`
+    <div class="insta-thumb-wrap${instaSelectedImages.includes(img.url)?' selected':''}" id="instaThumb${i}" onclick="toggleInstaImage(${i})">
+      <img src="${esc(img.url)}" onerror="this.parentElement.style.opacity='.3'" loading="lazy">
+      ${img.type==='video'?'<div class="insta-vid-badge">▶ 動画</div>':''}
+      <div class="insta-sel-num">${instaSelectedImages.indexOf(img.url)+1||''}</div>
+    </div>
+  `).join('');
+}
+
+function toggleInstaImage(idx){
+  const img=instaAllImages[idx];if(!img)return;
+  const selIdx=instaSelectedImages.indexOf(img.url);
+  if(selIdx>=0){
+    instaSelectedImages.splice(selIdx,1);
+  } else {
+    instaSelectedImages.push(img.url);
+  }
+  // fImgUrlに最初の選択画像をセット（プレビュー用）
+  if(instaSelectedImages.length>0){
+    document.getElementById('fImgUrl').value=instaSelectedImages[0];
+  } else {
+    document.getElementById('fImgUrl').value='';
+  }
+  renderInstaGrid(instaAllImages);
+  // ヒントを更新
+  const hint=document.getElementById('instaImgHint');
+  if(hint) hint.textContent=instaSelectedImages.length
+    ?`${instaSelectedImages.length}枚選択中（1枚目がサムネイルになります）`
+    :'サムネイルにしたい画像をタップして選択してください。';
+}
+
+// clearFormにInstagram初期化を追加用フック
+function resetInstaSelector(){
+  instaSelectedImages=[];instaAllImages=[];
+  const grid=document.getElementById('instaImgGrid');if(grid)grid.innerHTML='';
+  const hint=document.getElementById('instaImgHint');
+  if(hint) hint.textContent='情報取得後に画像一覧が表示されます。サムネイルにしたい画像をタップして選択してください。';
+  const imgArea=document.getElementById('imgArea');
+  const imgUrlInput=document.getElementById('fImgUrl');
+  if(imgArea) imgArea.style.display='block';
+  if(imgUrlInput) imgUrlInput.style.display='block';
+}
+
+// ════════════════════════════════════════════════
 // FORM HELPERS
 // ════════════════════════════════════════════════
 function setType(t){
   currentType=t;
-  ['x','web','youtube','tiktok','memo'].forEach(tt=>{
-    const el=document.getElementById('type'+tt.charAt(0).toUpperCase()+tt.slice(1));
+  ['x','instagram','web','youtube','tiktok','memo'].forEach(tt=>{
+    const key='type'+tt.charAt(0).toUpperCase()+tt.slice(1);
+    // instagram → typeInsta
+    const elId=tt==='instagram'?'typeInsta':key;
+    const el=document.getElementById(elId);
     if(el) el.classList.toggle('active',tt===t);
   });
   document.getElementById('urlRow').style.display=t==='memo'?'none':'flex';
-  document.getElementById('xFields').style.display=t==='x'?'contents':'none';
+  document.getElementById('xFields').style.display=(t==='x'||t==='tiktok'||t==='instagram')?'contents':'none';
   document.getElementById('webFields').style.display=t==='web'?'block':'none';
   document.getElementById('ytFields').style.display=t==='youtube'?'block':'none';
-  // TikTok: x用フィールドを流用（作者名・ハンドル）
-  if(t==='tiktok'){
-    document.getElementById('xFields').style.display='contents';
-  }
   document.getElementById('summaryField').style.display=t==='web'?'block':'none';
   document.getElementById('watchLaterLabel').style.display=(t==='youtube'||t==='tiktok')?'inline-flex':'none';
   document.getElementById('ytWatchedLabel').style.display='none';
   document.getElementById('statusBar').style.display='none';
-  const ph={x:'https://x.com/username/status/...',web:'https://example.com/article...',youtube:'https://youtube.com/watch?v=...',tiktok:'https://www.tiktok.com/@user/video/...',memo:''};
+  // Instagram専用画像セレクター
+  const instaUI=document.getElementById('instaImageSelector');
+  const normalImgUI=document.getElementById('imgArea')?.parentElement;
+  if(instaUI) instaUI.style.display=t==='instagram'?'block':'none';
+  // 通常画像エリアはInstagramでは非表示
+  const imgAreaWrap=document.getElementById('imgArea');
+  if(imgAreaWrap){
+    imgAreaWrap.style.display=t==='instagram'?'none':'block';
+    const imgUrlInput=document.getElementById('fImgUrl');
+    if(imgUrlInput) imgUrlInput.style.display=t==='instagram'?'none':'block';
+  }
+  const ph={x:'https://x.com/username/status/...',instagram:'https://www.instagram.com/p/XXXXX/',web:'https://example.com/article...',youtube:'https://youtube.com/watch?v=...',tiktok:'https://www.tiktok.com/@user/video/...',memo:''};
   const urlIn=document.getElementById('urlIn');
   if(urlIn) urlIn.placeholder=ph[t]||'';
 }
@@ -2103,6 +2374,7 @@ function clearForm(){
   document.getElementById('imgPh').style.display='flex';
   document.getElementById('fAreaStatus').textContent='';
   document.getElementById('statusBar').style.display='none';
+  resetInstaSelector();
   fSel.clear();renderPicker('formPicker',fSel);setType('x');
 }
 
@@ -2602,6 +2874,7 @@ function renderSettings(){
   if(statsWrap) statsWrap.innerHTML=`
     <div>総クリップ数: <b>${posts.length}</b></div>
     <div>Xポスト: <b>${posts.filter(p=>p.type==='x').length}</b></div>
+    <div>Instagram: <b>${posts.filter(p=>p.type==='instagram').length}</b></div>
     <div>Web記事: <b>${posts.filter(p=>p.type==='web').length}</b></div>
     <div>YouTube: <b>${yt.length}</b>（未視聴: <b>${yt.filter(p=>p.youtube_status!=='watched').length}</b>、あとで見る: <b>${yt.filter(p=>p.watch_later).length}</b>）</div>
     <div>メモ: <b>${posts.filter(p=>p.type==='memo').length}</b></div>
