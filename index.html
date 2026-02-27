@@ -309,6 +309,14 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .yt-embed-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;margin-bottom:1rem;}
 .yt-embed-wrap iframe{position:absolute;inset:0;width:100%;height:100%;}
 
+/* ─── LIGHTBOX ─── */
+#lightbox{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;cursor:zoom-out;}
+#lightbox.open{display:flex;}
+#lightbox img{max-width:92vw;max-height:88vh;object-fit:contain;border-radius:6px;box-shadow:0 8px 48px rgba(0,0,0,.6);user-select:none;}
+#lbClose{position:fixed;top:1rem;right:1rem;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:40px;height:40px;color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+#lbClose:hover{background:rgba(255,255,255,.28);}
+.img-zoomable{cursor:zoom-in;}
+
 /* ─── INSTAGRAM IMAGE SELECTOR ─── */
 .insta-thumb-wrap{width:80px;height:80px;border-radius:8px;cursor:pointer;border:3px solid transparent;transition:all .18s;position:relative;flex-shrink:0;overflow:hidden;background:#f0f0f0;}
 .insta-thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -411,6 +419,82 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
 .hrs-title{font-size:.76rem;font-weight:500;color:#92400e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
 .hrs-date{font-family:'DM Mono',monospace;font-size:.6rem;color:#a16207;}
 .hrs-dismiss{background:transparent;border:none;color:#a16207;cursor:pointer;font-size:.75rem;padding:.1rem;flex-shrink:0;}
+
+/* ─── TRAVEL PLANNER ─── */
+.tp-wrap{max-width:980px;margin:0 auto;padding:1.5rem 1rem 6rem;}
+.tp-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;}
+.tp-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;}
+.tp-plans-list{display:flex;flex-direction:column;gap:.65rem;margin-bottom:1.25rem;}
+.tp-plan-card{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;cursor:pointer;transition:box-shadow .15s;}
+.tp-plan-card:hover{box-shadow:var(--shadow-md);}
+.tp-plan-name{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;margin-bottom:.2rem;}
+.tp-plan-meta{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--ink3);}
+.tp-new-btn{background:var(--ink);color:#fff;border:none;border-radius:8px;padding:.6rem 1.4rem;font-size:.82rem;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.tp-new-btn:hover{background:var(--accent);}
+/* プランエディタ */
+.tp-editor{display:none;}
+.tp-editor.open{display:block;}
+.tp-back-btn{background:transparent;border:1px solid var(--line);border-radius:6px;padding:.4rem .9rem;font-size:.76rem;cursor:pointer;color:var(--ink2);margin-bottom:1rem;}
+.tp-days-wrap{display:flex;flex-direction:column;gap:1rem;}
+.tp-day{background:var(--white);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.tp-day-head{background:var(--ink);color:#fff;padding:.6rem 1rem;display:flex;align-items:center;gap:.65rem;}
+.tp-day-label{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;}
+.tp-day-date{background:rgba(255,255,255,.15);border:none;border-radius:4px;color:#fff;font-size:.72rem;padding:.2rem .5rem;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+.tp-day-date:focus{outline:none;background:rgba(255,255,255,.25);}
+.tp-day-del{background:transparent;border:none;color:rgba(255,255,255,.5);cursor:pointer;margin-left:auto;font-size:.85rem;}
+.tp-items{padding:.6rem .7rem;display:flex;flex-direction:column;gap:.45rem;min-height:48px;}
+.tp-item{background:var(--off);border-radius:8px;padding:.55rem .75rem;display:flex;align-items:flex-start;gap:.6rem;position:relative;}
+.tp-item.dragging{opacity:.4;}
+.tp-item-drag{cursor:grab;color:var(--ink3);font-size:.9rem;flex-shrink:0;margin-top:.1rem;}
+.tp-item-body{flex:1;min-width:0;}
+.tp-item-title{font-size:.82rem;font-weight:500;color:var(--ink);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tp-item-sub{font-size:.68rem;color:var(--ink3);margin-top:.1rem;}
+.tp-item-badge{display:inline-block;font-size:.58rem;padding:1px 6px;border-radius:8px;margin-right:.3rem;}
+.tp-item-pri{display:flex;gap:.25rem;margin-top:.35rem;}
+.tp-pri-btn{background:transparent;border:1px solid var(--line);border-radius:10px;font-size:.62rem;padding:.1rem .5rem;cursor:pointer;color:var(--ink3);}
+.tp-pri-btn.active-high{background:#fee2e2;border-color:#fca5a5;color:#dc2626;}
+.tp-pri-btn.active-mid{background:#fff7ed;border-color:#fed7aa;color:#ea580c;}
+.tp-pri-btn.active-low{background:#f0fdf4;border-color:#bbf7d0;color:#16a34a;}
+.tp-item-del{background:transparent;border:none;color:var(--ink3);cursor:pointer;font-size:.8rem;flex-shrink:0;padding:.1rem;}
+.tp-add-row{padding:.4rem .7rem .7rem;display:flex;gap:.4rem;flex-wrap:wrap;}
+.tp-add-clip-btn{background:transparent;border:1px dashed var(--line);border-radius:6px;padding:.3rem .75rem;font-size:.72rem;color:var(--ink3);cursor:pointer;}
+.tp-add-clip-btn:hover{border-color:var(--accent);color:var(--accent);}
+.tp-add-custom-btn{background:var(--accent-light);border:1px solid var(--accent);border-radius:6px;padding:.3rem .75rem;font-size:.72rem;color:var(--accent);cursor:pointer;}
+.tp-add-day-btn{background:transparent;border:2px dashed var(--line);border-radius:10px;padding:.75rem;text-align:center;font-size:.78rem;color:var(--ink3);cursor:pointer;margin-top:.5rem;}
+.tp-add-day-btn:hover{border-color:var(--accent);color:var(--accent);}
+/* クリップ選択モーダル */
+.tp-clip-modal{position:fixed;inset:0;z-index:1500;display:none;}
+.tp-clip-modal.open{display:flex;flex-direction:column;}
+.tp-clip-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);}
+.tp-clip-panel{position:relative;z-index:1;background:var(--white);border-radius:14px 14px 0 0;margin-top:auto;max-height:82vh;display:flex;flex-direction:column;}
+.tp-clip-head{padding:.9rem 1rem .6rem;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:.6rem;}
+.tp-clip-search{flex:1;background:var(--off);border:1px solid var(--line);border-radius:6px;padding:.38rem .65rem;font-size:.82rem;font-family:'Noto Sans JP',sans-serif;outline:none;}
+.tp-clip-close{background:transparent;border:none;font-size:.85rem;cursor:pointer;color:var(--ink3);}
+.tp-clip-list{overflow-y:auto;flex:1;padding:.5rem;}
+.tp-clip-item{display:flex;align-items:center;gap:.6rem;padding:.45rem .5rem;border-radius:6px;cursor:pointer;}
+.tp-clip-item:hover{background:var(--off);}
+.tp-clip-item.selected{background:var(--accent-light);}
+.tp-clip-thumb{width:42px;height:42px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--line);}
+.tp-clip-info{flex:1;min-width:0;}
+.tp-clip-name{font-size:.8rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tp-clip-tag{font-size:.65rem;color:var(--ink3);}
+.tp-clip-confirm{padding:.7rem 1rem;border-top:1px solid var(--line);}
+.tp-clip-confirm button{width:100%;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:.65rem;font-size:.85rem;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+/* カスタムアイテム入力 */
+.tp-custom-row{padding:.5rem .7rem;display:flex;gap:.4rem;}
+.tp-custom-input{flex:1;background:var(--off);border:1px solid var(--line);border-radius:6px;padding:.38rem .65rem;font-size:.8rem;font-family:'Noto Sans JP',sans-serif;outline:none;}
+.tp-custom-type{background:var(--off);border:1px solid var(--line);border-radius:6px;padding:.38rem .5rem;font-size:.76rem;font-family:'Noto Sans JP',sans-serif;color:var(--ink);outline:none;cursor:pointer;}
+.tp-custom-add{background:var(--ink);color:#fff;border:none;border-radius:6px;padding:.38rem .85rem;font-size:.76rem;cursor:pointer;}
+/* サマリーバー */
+.tp-summary{background:var(--off);border-radius:8px;padding:.7rem 1rem;margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;}
+.tp-summary-item{font-size:.75rem;color:var(--ink2);}
+.tp-summary-item b{color:var(--ink);}
+/* プラン名編集 */
+.tp-plan-name-input{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;background:transparent;border:none;border-bottom:2px solid var(--accent);outline:none;width:100%;max-width:400px;padding:.2rem 0;}
+@media(max-width:768px){
+  .tp-wrap{padding:1rem .75rem 5rem;}
+  .tp-day-head{flex-wrap:wrap;gap:.4rem;}
+}
 </style>
 </head>
 <body>
@@ -438,6 +522,7 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('home')">🏠 Home</button>
   <button class="tab-btn" onclick="switchTab('add')">＋ Add</button>
+  <button class="tab-btn" onclick="switchTab('travel')">✈️ Trip</button>
   <button class="tab-btn" onclick="switchTab('settings')">⚙ Settings</button>
 </div>
 
@@ -662,6 +747,52 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
   </div>
 </div>
 
+<!-- ═════════════ TRAVEL PLANNER TAB ═════════════ -->
+<div class="tab-pane" id="tab-travel">
+  <div class="tp-wrap">
+    <!-- プラン一覧 -->
+    <div id="tpListView">
+      <div class="tp-header">
+        <div class="tp-title">✈️ 旅行プランナー</div>
+        <button class="tp-new-btn" onclick="tpNewPlan()">＋ 新しいプラン</button>
+      </div>
+      <div id="tpPlansList"></div>
+      <div id="tpEmptyMsg" style="text-align:center;padding:3rem 1rem;color:var(--ink3);font-size:.85rem;display:none">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">✈️</div>
+        <div>まだプランがありません</div>
+        <div style="font-size:.75rem;margin-top:.35rem">「新しいプラン」から旅行を作成しましょう</div>
+      </div>
+    </div>
+    <!-- プランエディタ -->
+    <div id="tpEditor" class="tp-editor">
+      <button class="tp-back-btn" onclick="tpBackToList()">← プラン一覧に戻る</button>
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap">
+        <input class="tp-plan-name-input" id="tpPlanNameInput" placeholder="プラン名を入力...">
+        <button onclick="tpSavePlan()" style="background:var(--ink);color:#fff;border:none;border-radius:6px;padding:.4rem 1rem;font-size:.76rem;cursor:pointer;font-family:'Noto Sans JP',sans-serif">保存</button>
+        <button onclick="tpDeletePlan()" style="background:transparent;border:1px solid #fca5a5;border-radius:6px;padding:.4rem .8rem;font-size:.72rem;color:#dc2626;cursor:pointer">削除</button>
+      </div>
+      <div class="tp-summary" id="tpSummary"></div>
+      <div class="tp-days-wrap" id="tpDaysWrap"></div>
+      <div class="tp-add-day-btn" onclick="tpAddDay()">＋ 日程を追加</div>
+    </div>
+  </div>
+</div>
+
+<!-- Travel: クリップ選択モーダル -->
+<div class="tp-clip-modal" id="tpClipModal">
+  <div class="tp-clip-overlay" onclick="tpCloseClipModal()"></div>
+  <div class="tp-clip-panel">
+    <div class="tp-clip-head">
+      <input class="tp-clip-search" id="tpClipSearch" placeholder="クリップを検索..." oninput="tpRenderClipList()">
+      <button class="tp-clip-close" onclick="tpCloseClipModal()">✕ 閉じる</button>
+    </div>
+    <div class="tp-clip-list" id="tpClipList"></div>
+    <div class="tp-clip-confirm">
+      <button onclick="tpConfirmClips()">選択したクリップを追加</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═════════════ SETTINGS TAB ═════════════ -->
 <div class="tab-pane" id="tab-settings">
   <div class="settings-wrap">
@@ -864,11 +995,20 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
     <button class="bn-btn" id="bnAdd" onclick="onBnAdd()">
       <span class="bn-icon">＋</span><span>追加</span>
     </button>
+    <button class="bn-btn" id="bnTravel" onclick="switchTab('travel');bnActive('bnTravel')">
+      <span class="bn-icon">✈️</span><span>Trip</span>
+    </button>
     <button class="bn-btn" id="bnSettings" onclick="switchTab('settings');bnActive('bnSettings')">
       <span class="bn-icon">⚙</span><span>設定</span>
     </button>
   </div>
 </nav>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lbClose" onclick="closeLightbox()">✕</button>
+  <img id="lbImg" src="" alt="">
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -976,18 +1116,34 @@ function switchTab(tab){
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
-  ['home','add','settings'].forEach((t,i)=>{
+  ['home','add','travel','settings'].forEach((t,i)=>{
     if(t===tab) document.querySelectorAll('.tab-btn')[i]?.classList.add('active');
   });
-  // ボトムナビ同期
-  const bnMap={home:'bnHome',add:'bnAdd',settings:'bnSettings'};
+  const bnMap={home:'bnHome',add:'bnAdd',travel:'bnTravel',settings:'bnSettings'};
   document.querySelectorAll('.bn-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(bnMap[tab])?.classList.add('active');
   if(tab==='home') renderHome();
   if(tab==='settings') renderSettings();
-  // タブ切り替え時に常に最上部へ
+  if(tab==='travel') tpRenderList();
   window.scrollTo({top:0,behavior:'smooth'});
 }
+
+// ════════════════════════════════════════════════
+// LIGHTBOX
+// ════════════════════════════════════════════════
+function openLightbox(src){
+  const lb=document.getElementById('lightbox');
+  const img=document.getElementById('lbImg');
+  if(!lb||!img||!src) return;
+  img.src=src;
+  lb.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeLightbox(){
+  document.getElementById('lightbox')?.classList.remove('open');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeLightbox();});
 
 function bnActive(id){
   document.querySelectorAll('.bn-btn').forEach(b=>b.classList.remove('active'));
@@ -1235,6 +1391,329 @@ async function qsSave(){
 }
 
 // ════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// TRAVEL PLANNER
+// ════════════════════════════════════════════════
+const TP_STORAGE_KEY='xclip_travel_plans';
+let tpPlans=[];         // [{id,name,days:[{id,date,items:[]}]}]
+let tpCurrentId=null;   // 編集中プランID
+let tpTargetDayId=null; // クリップ追加先のday ID
+let tpClipSelected=new Set(); // 選択中クリップID
+
+const TP_ITEM_TYPES=[
+  {value:'spot',label:'📍 スポット',emoji:'📍'},
+  {value:'food',label:'🍽 グルメ',emoji:'🍽'},
+  {value:'hotel',label:'🏨 ホテル',emoji:'🏨'},
+  {value:'transport',label:'🚗 移動',emoji:'🚗'},
+  {value:'flight',label:'✈️ フライト',emoji:'✈️'},
+  {value:'activity',label:'🎯 アクティビティ',emoji:'🎯'},
+  {value:'shopping',label:'🛍 ショッピング',emoji:'🛍'},
+  {value:'other',label:'📝 その他',emoji:'📝'},
+];
+
+// ---------- ストレージ ----------
+function tpLoad(){
+  try{tpPlans=JSON.parse(localStorage.getItem(TP_STORAGE_KEY)||'[]');}
+  catch(e){tpPlans=[];}
+}
+function tpSave(){
+  localStorage.setItem(TP_STORAGE_KEY,JSON.stringify(tpPlans));
+}
+
+// ---------- プラン一覧 ----------
+function tpRenderList(){
+  tpLoad();
+  document.getElementById('tpListView').style.display='block';
+  document.getElementById('tpEditor').classList.remove('open');
+  const wrap=document.getElementById('tpPlansList');
+  const empty=document.getElementById('tpEmptyMsg');
+  if(!tpPlans.length){wrap.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  wrap.innerHTML=tpPlans.map(plan=>{
+    const totalItems=plan.days.reduce((s,d)=>s+d.items.length,0);
+    const dateRange=tpGetDateRange(plan);
+    return `<div class="tp-plan-card" onclick="tpOpenPlan('${plan.id}')">
+      <div class="tp-plan-name">${esc(plan.name||'無題のプラン')}</div>
+      <div class="tp-plan-meta">${dateRange?dateRange+' · ':''}${plan.days.length}日間 · ${totalItems}件</div>
+    </div>`;
+  }).join('');
+}
+
+function tpGetDateRange(plan){
+  const dates=plan.days.map(d=>d.date).filter(Boolean).sort();
+  if(!dates.length) return '';
+  if(dates.length===1) return dates[0];
+  return dates[0]+' 〜 '+dates[dates.length-1];
+}
+
+// ---------- 新規プラン ----------
+function tpNewPlan(){
+  const id='tp'+Date.now();
+  const plan={id,name:'新しい旅行プラン',days:[{id:'td'+Date.now(),date:'',items:[]}]};
+  tpPlans.unshift(plan);
+  tpSave();
+  tpOpenPlan(id);
+}
+
+// ---------- プランを開く ----------
+function tpOpenPlan(id){
+  tpLoad();
+  tpCurrentId=id;
+  const plan=tpPlans.find(p=>p.id===id);
+  if(!plan) return;
+  document.getElementById('tpListView').style.display='none';
+  document.getElementById('tpEditor').classList.add('open');
+  document.getElementById('tpPlanNameInput').value=plan.name||'';
+  tpRenderEditor();
+}
+
+function tpBackToList(){
+  tpSavePlan();
+  tpRenderList();
+}
+
+// ---------- プラン保存 ----------
+function tpSavePlan(){
+  const plan=tpPlans.find(p=>p.id===tpCurrentId);
+  if(!plan) return;
+  plan.name=document.getElementById('tpPlanNameInput').value.trim()||'無題のプラン';
+  tpSave();
+  toast('プランを保存しました','ok');
+}
+
+function tpDeletePlan(){
+  if(!confirm('このプランを削除しますか？')) return;
+  tpPlans=tpPlans.filter(p=>p.id!==tpCurrentId);
+  tpSave();
+  tpRenderList();
+}
+
+// ---------- エディタ描画 ----------
+function tpRenderEditor(){
+  const plan=tpPlans.find(p=>p.id===tpCurrentId);
+  if(!plan) return;
+
+  // サマリー
+  const totalItems=plan.days.reduce((s,d)=>s+d.items.length,0);
+  const spots=plan.days.flatMap(d=>d.items).filter(i=>i.itemType==='spot'||i.clipId).length;
+  const hotels=plan.days.flatMap(d=>d.items).filter(i=>i.itemType==='hotel').length;
+  document.getElementById('tpSummary').innerHTML=`
+    <div class="tp-summary-item">📅 <b>${plan.days.length}</b> 日間</div>
+    <div class="tp-summary-item">📍 <b>${spots}</b> スポット</div>
+    ${hotels?`<div class="tp-summary-item">🏨 <b>${hotels}</b> 宿泊</div>`:''}
+    <div class="tp-summary-item">合計 <b>${totalItems}</b> 件</div>
+  `;
+
+  // 日程リスト
+  const wrap=document.getElementById('tpDaysWrap');
+  wrap.innerHTML=plan.days.map((day,di)=>tpDayHTML(day,di)).join('');
+
+  // ドラッグ&ドロップ設定
+  wrap.querySelectorAll('.tp-item').forEach(el=>tpBindDrag(el));
+}
+
+function tpDayHTML(day,di){
+  const itemsHTML=day.items.map((item,ii)=>tpItemHTML(item,day.id,ii)).join('');
+  return `<div class="tp-day" id="tpDay_${day.id}">
+    <div class="tp-day-head">
+      <span class="tp-day-label">DAY ${di+1}</span>
+      <input type="date" class="tp-day-date" value="${day.date||''}" onchange="tpSetDayDate('${day.id}',this.value)" title="日程">
+      <span style="font-size:.7rem;color:rgba(255,255,255,.6);flex:1">${day.date?new Date(day.date).toLocaleDateString('ja-JP',{month:'short',day:'numeric',weekday:'short'}):'日程未定'}</span>
+      <button class="tp-day-del" onclick="tpDeleteDay('${day.id}')" title="この日程を削除">🗑</button>
+    </div>
+    <div class="tp-items" id="tpItems_${day.id}" ondragover="event.preventDefault()" ondrop="tpDrop(event,'${day.id}')">
+      ${itemsHTML||`<div style="text-align:center;font-size:.72rem;color:var(--ink3);padding:.5rem">アイテムを追加してください</div>`}
+    </div>
+    <div class="tp-add-row">
+      <button class="tp-add-clip-btn" onclick="tpOpenClipModal('${day.id}')">＋ クリップから追加</button>
+      <button class="tp-add-custom-btn" onclick="tpShowCustomInput('${day.id}')">＋ カスタム追加</button>
+    </div>
+    <div class="tp-custom-row" id="tpCustomRow_${day.id}" style="display:none">
+      <select class="tp-custom-type" id="tpCustomType_${day.id}">
+        ${TP_ITEM_TYPES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}
+      </select>
+      <input class="tp-custom-input" id="tpCustomInput_${day.id}" placeholder="場所名・メモ..." onkeydown="if(event.key==='Enter')tpAddCustomItem('${day.id}')">
+      <button class="tp-custom-add" onclick="tpAddCustomItem('${day.id}')">追加</button>
+    </div>
+  </div>`;
+}
+
+function tpItemHTML(item,dayId,idx){
+  const post=item.clipId?posts.find(p=>p.id===item.clipId):null;
+  const title=item.title||(post?.author||'');
+  const sub=item.sub||(post?[post.handle,post.area].filter(Boolean).join(' · '):'');
+  const imgSrc=item.imgSrc||(post?.image||'')||(post?.type==='youtube'?`https://img.youtube.com/vi/${getYtId(post.url||'')}/mqdefault.jpg`:'');
+  const typeInfo=TP_ITEM_TYPES.find(t=>t.value===(item.itemType||'spot'))||TP_ITEM_TYPES[0];
+  const priCls={high:'active-high',mid:'active-mid',low:'active-low'};
+  const pri=item.priority||'mid';
+  const tagColor=post?.tags?.[0]?tags.find(t=>t.id===post.tags[0])?.color||'#999':'#999';
+
+  return `<div class="tp-item" id="tpItem_${dayId}_${idx}" draggable="true"
+      ondragstart="tpDragStart(event,'${dayId}',${idx})"
+      ondragend="tpDragEnd(event)">
+    <span class="tp-item-drag">⠿</span>
+    <div class="tp-item-body">
+      <div style="display:flex;align-items:center;gap:.4rem">
+        ${imgSrc?`<img src="${esc(imgSrc)}" style="width:36px;height:36px;border-radius:5px;object-fit:cover;flex-shrink:0;cursor:zoom-in" onclick="openLightbox('${esc(imgSrc)}')" onerror="this.style.display='none'" loading="lazy">`:''}
+        <div style="min-width:0">
+          <div class="tp-item-title">
+            <span class="tp-item-badge" style="background:${typeInfo.emoji?'transparent':'#eee'}">${typeInfo.emoji}</span>${esc(title||'無題')}
+          </div>
+          ${sub?`<div class="tp-item-sub">${esc(sub)}</div>`:''}
+        </div>
+      </div>
+      <div class="tp-item-pri">
+        <button class="tp-pri-btn${pri==='high'?' active-high':''}" onclick="tpSetPriority('${dayId}',${idx},'high')">🔴 高</button>
+        <button class="tp-pri-btn${pri==='mid'?' active-mid':''}" onclick="tpSetPriority('${dayId}',${idx},'mid')">🟡 中</button>
+        <button class="tp-pri-btn${pri==='low'?' active-low':''}" onclick="tpSetPriority('${dayId}',${idx},'low')">🟢 低</button>
+        ${post?`<button class="tp-pri-btn" onclick="openDetail('${post.id}')" style="margin-left:auto">詳細 →</button>`:''}
+      </div>
+    </div>
+    <button class="tp-item-del" onclick="tpDeleteItem('${dayId}',${idx})">✕</button>
+  </div>`;
+}
+
+// ---------- 日程操作 ----------
+function tpSetDayDate(dayId,val){
+  const plan=tpPlans.find(p=>p.id===tpCurrentId);if(!plan)return;
+  const day=plan.days.find(d=>d.id===dayId);if(!day)return;
+  day.date=val;tpSave();tpRenderEditor();
+}
+function tpDeleteDay(dayId){
+  const plan=tpPlans.find(p=>p.id===tpCurrentId);if(!plan)return;
+  if(plan.days.length<=1){toast('最低1日程は必要です','err');return;}
+  if(!confirm('この日程を削除しますか？'))return;
+  plan.days=plan.days.filter(d=>d.id!==dayId);
+  tpSave();tpRenderEditor();
+}
+function tpAddDay(){
+  const plan=tpPlans.find(p=>p.id===tpCurrentId);if(!plan)return;
+  plan.days.push({id:'td'+Date.now(),date:'',items:[]});
+  tpSave();tpRenderEditor();
+  // 最下部にスクロール
+  setTimeout(()=>document.getElementById('tpDaysWrap').lastElementChild?.scrollIntoView({behavior:'smooth'}),100);
+}
+
+// ---------- アイテム操作 ----------
+function tpSetPriority(dayId,idx,pri){
+  const plan=tpPlans.find(p=>p.id===tpCurrentId);if(!plan)return;
+  const day=plan.days.find(d=>d.id===dayId);if(!day)return;
+  if(day.items[idx]) day.items[idx].priority=pri;
+  tpSave();tpRenderEditor();
+}
+function tpDeleteItem(dayId,idx){
+  const plan=tpPlans.find(p=>p.id===tpCurrentId);if(!plan)return;
+  const day=plan.days.find(d=>d.id===dayId);if(!day)return;
+  day.items.splice(idx,1);
+  tpSave();tpRenderEditor();
+}
+
+// ---------- カスタムアイテム ----------
+function tpShowCustomInput(dayId){
+  const row=document.getElementById('tpCustomRow_'+dayId);
+  if(!row)return;
+  row.style.display=row.style.display==='none'?'flex':'none';
+  if(row.style.display==='flex') document.getElementById('tpCustomInput_'+dayId)?.focus();
+}
+function tpAddCustomItem(dayId){
+  const plan=tpPlans.find(p=>p.id===tpCurrentId);if(!plan)return;
+  const day=plan.days.find(d=>d.id===dayId);if(!day)return;
+  const input=document.getElementById('tpCustomInput_'+dayId);
+  const typeEl=document.getElementById('tpCustomType_'+dayId);
+  const title=(input?.value||'').trim();
+  if(!title){toast('名前を入力してください','err');return;}
+  day.items.push({
+    id:'ti'+Date.now(),
+    clipId:null,
+    itemType:typeEl?.value||'spot',
+    title,priority:'mid'
+  });
+  if(input) input.value='';
+  tpSave();tpRenderEditor();
+}
+
+// ---------- クリップ選択モーダル ----------
+function tpOpenClipModal(dayId){
+  tpTargetDayId=dayId;
+  tpClipSelected=new Set();
+  document.getElementById('tpClipSearch').value='';
+  document.getElementById('tpClipModal').classList.add('open');
+  tpRenderClipList();
+}
+function tpCloseClipModal(){
+  document.getElementById('tpClipModal').classList.remove('open');
+  tpTargetDayId=null;
+  tpClipSelected.clear();
+}
+function tpRenderClipList(){
+  const q=(document.getElementById('tpClipSearch')?.value||'').toLowerCase();
+  const filtered=posts.filter(p=>{
+    if(q&&!p.author.toLowerCase().includes(q)&&!p.content.toLowerCase().includes(q)&&!(p.area||'').toLowerCase().includes(q)) return false;
+    return true;
+  }).slice(0,60);
+  document.getElementById('tpClipList').innerHTML=filtered.map(p=>{
+    const imgSrc=p.image||(p.type==='youtube'?`https://img.youtube.com/vi/${getYtId(p.url)}/mqdefault.jpg`:'');
+    const tagStr=(p.tags||[]).map(id=>tags.find(t=>t.id===id)?.name||'').filter(Boolean).join(', ');
+    const areaStr=[p.country,p.prefecture,p.area].filter(Boolean).join(' › ');
+    const sel=tpClipSelected.has(p.id);
+    return `<div class="tp-clip-item${sel?' selected':''}" onclick="tpToggleClip('${p.id}')">
+      ${imgSrc
+        ?`<img class="tp-clip-thumb" src="${esc(imgSrc)}" onerror="this.style.display='none'" loading="lazy">`
+        :`<div class="tp-clip-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem">${typeBadge(p.type)}</div>`}
+      <div class="tp-clip-info">
+        <div class="tp-clip-name">${esc(p.author)}</div>
+        <div class="tp-clip-tag">${areaStr||tagStr||p.type}</div>
+      </div>
+      ${sel?'<span style="color:var(--accent);font-size:1rem">✓</span>':''}
+    </div>`;
+  }).join('')||'<div style="text-align:center;padding:2rem;color:var(--ink3);font-size:.8rem">該当するクリップがありません</div>';
+}
+function tpToggleClip(id){
+  if(tpClipSelected.has(id)) tpClipSelected.delete(id);
+  else tpClipSelected.add(id);
+  tpRenderClipList();
+}
+function tpConfirmClips(){
+  if(!tpClipSelected.size){toast('クリップを選択してください','err');return;}
+  const plan=tpPlans.find(p=>p.id===tpCurrentId);if(!plan)return;
+  const day=plan.days.find(d=>d.id===tpTargetDayId);if(!day)return;
+  tpClipSelected.forEach(clipId=>{
+    const post=posts.find(p=>p.id===clipId);
+    const itemType=post?.type==='youtube'||post?.type==='tiktok'?'activity':
+      (post?.area||post?.lat)?'spot':'spot';
+    day.items.push({id:'ti'+Date.now()+Math.random(),clipId,itemType,priority:'mid'});
+  });
+  tpSave();
+  tpCloseClipModal();
+  tpRenderEditor();
+  toast(`${tpClipSelected.size}件追加しました`,'ok');
+}
+
+// ---------- ドラッグ&ドロップ ----------
+let dragSrc={dayId:null,idx:null};
+function tpDragStart(e,dayId,idx){
+  dragSrc={dayId,idx};
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+}
+function tpDragEnd(e){
+  e.currentTarget.classList.remove('dragging');
+}
+function tpDrop(e,targetDayId){
+  e.preventDefault();
+  if(!dragSrc.dayId) return;
+  const plan=tpPlans.find(p=>p.id===tpCurrentId);if(!plan)return;
+  const srcDay=plan.days.find(d=>d.id===dragSrc.dayId);
+  const tgtDay=plan.days.find(d=>d.id===targetDayId);
+  if(!srcDay||!tgtDay) return;
+  const [item]=srcDay.items.splice(dragSrc.idx,1);
+  tgtDay.items.push(item);
+  dragSrc={dayId:null,idx:null};
+  tpSave();tpRenderEditor();
+}
+function tpBindDrag(el){}// placeholder
+
+// ════════════════════════════════════════════════
 // RENDER ALL
 // ════════════════════════════════════════════════
 function renderAll(){renderSide();renderPickers();renderHome();updateStats();renderMobileFilterBar();}
@@ -1417,7 +1896,7 @@ function locateMe(){
       // マップビューに即切り替えてズーム
       if(viewMode==='map'){
         // すでにマップなら即ズーム
-        if(map) map.setView([myLat,myLng],14,{animate:true});
+        if(map) map.setView([myLat,myLng],10,{animate:true});
         renderMap();
       } else {
         setView('map');
@@ -1615,7 +2094,7 @@ function cardHTML(p){
   const reminderEl=reminders.filter(r=>r.post_id===p.id&&!r.done).length?`<span style="font-size:.65rem;color:var(--yellow);background:#fff8e1;padding:1px 6px;border-radius:10px">🔔</span>`:'';
   return `<div class="card">
     ${favFlag}
-    ${imgSrc?`<div class="card-img-wrap"><img src="${esc(imgSrc)}" onerror="this.parentElement.style.display='none'" alt="" loading="lazy"></div>`:''}
+    ${imgSrc?`<div class="card-img-wrap"><img src="${esc(imgSrc)}" onerror="this.parentElement.style.display='none'" alt="" loading="lazy" class="img-zoomable" onclick="openLightbox('${esc(imgSrc)}')"></div>`:''}
     <div class="card-body">
       <div class="card-meta">
         <div class="c-avatar">${(p.author||'?').charAt(0).toUpperCase()}</div>
@@ -1712,7 +2191,7 @@ function renderMap(){
   if(myLat){
     const icon=L.divIcon({className:'',html:'<div style="width:18px;height:18px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 2px 10px rgba(59,130,246,.6)"></div>',iconSize:[18,18],iconAnchor:[9,9]});
     L.marker([myLat,myLng],{icon,zIndexOffset:1000}).addTo(map).bindPopup('📍 現在地');
-    map.setView([myLat,myLng],14,{animate:true});
+    map.setView([myLat,myLng],10,{animate:true});
   }
   // エリアフィルター適用
   let filtered=getFiltered().filter(p=>p.lat&&p.lng);
