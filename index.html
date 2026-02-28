@@ -66,7 +66,7 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .mfb-pill.active{background:var(--ink);border-color:var(--ink);color:#fff;}
 .mfb-pill.yt-pill.active{background:#2563eb;border-color:#2563eb;color:#fff;}
 .mfb-pill.fav-pill.active{background:#f59e0b;border-color:#f59e0b;color:#fff;}
-.mfb-expand{display:none;padding:.35rem 1rem .5rem;gap:.3rem;flex-wrap:wrap;border-bottom:1px solid var(--line);}
+.mfb-expand{display:none;padding:.4rem 1rem .55rem;gap:.4rem;flex-wrap:wrap;border-bottom:1px solid var(--line);align-items:flex-start;}
 .mfb-expand.open{display:flex;}
 .mfb-ep{flex-shrink:0;padding:.3rem .8rem;border-radius:16px;border:1.5px solid var(--line);background:var(--off);color:var(--ink2);font-size:.76rem;cursor:pointer;white-space:nowrap;transition:all .15s;font-family:'Noto Sans JP',sans-serif;display:inline-flex;align-items:center;gap:.3rem;}
 .mfb-ep.active{color:#fff !important;border-color:transparent !important;}
@@ -306,6 +306,8 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .modal-close{background:var(--off);border:1px solid var(--line);border-radius:4px;padding:.22rem .6rem;cursor:pointer;font-size:.76rem;color:var(--ink2);}
 .detail-img-wrap{width:100%;background:#f8f8f8;border-radius:4px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:1rem;max-height:320px;}
 .detail-img-wrap img{max-width:100%;max-height:320px;object-fit:contain;}
+.detail-img-wrap.img-zoomable{cursor:zoom-in;}
+.detail-img-wrap.img-zoomable:hover{opacity:.92;}
 .yt-embed-wrap{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;margin-bottom:1rem;}
 .yt-embed-wrap iframe{position:absolute;inset:0;width:100%;height:100%;}
 
@@ -681,6 +683,28 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
             <div class="fg-full"><label class="fl">動画タイトル</label><input class="fi" id="fYtTitle"></div>
             <div><label class="fl">チャンネル名</label><input class="fi" id="fYtChannel"></div>
           </div>
+          <!-- プレイリスト一括取得 -->
+          <div style="margin-top:.75rem;background:var(--off);border-radius:8px;padding:.75rem .85rem;border:1px solid var(--line)">
+            <div style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink3);margin-bottom:.5rem">▶ プレイリスト一括取得</div>
+            <div style="display:flex;gap:.4rem;margin-bottom:.4rem;flex-wrap:wrap">
+              <input class="fi" id="ytApiKey" placeholder="YouTube API Key（Google Cloud Console で無料取得）" style="flex:1;min-width:180px;font-size:.74rem">
+              <button class="btn-ghost" onclick="fetchYtPlaylist()" style="font-size:.74rem;white-space:nowrap">▶ 取得</button>
+            </div>
+            <div style="font-size:.68rem;color:var(--ink3);line-height:1.6">
+              URLにプレイリストIDが含まれていれば自動検出。
+              <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:var(--blue)">APIキーの取得方法</a>
+            </div>
+            <div id="ytPlStatus" style="font-size:.72rem;color:var(--accent);margin-top:.35rem;display:none"></div>
+            <div id="ytPlResults" style="margin-top:.5rem;display:none">
+              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem">
+                <span style="font-size:.72rem;color:var(--ink2)" id="ytPlCount"></span>
+                <button onclick="ytPlSelectAll()" style="background:transparent;border:1px solid var(--line);border-radius:4px;font-size:.68rem;padding:.15rem .5rem;cursor:pointer;color:var(--ink3)">全選択</button>
+                <button onclick="ytPlDeselectAll()" style="background:transparent;border:1px solid var(--line);border-radius:4px;font-size:.68rem;padding:.15rem .5rem;cursor:pointer;color:var(--ink3)">全解除</button>
+                <button onclick="ytPlSaveSelected()" style="background:var(--ink);color:#fff;border:none;border-radius:4px;font-size:.72rem;padding:.2rem .75rem;cursor:pointer;margin-left:auto">選択を保存</button>
+              </div>
+              <div id="ytPlList" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:.3rem"></div>
+            </div>
+          </div>
         </div>
         <div class="fg-full"><label class="fl">本文・内容</label><textarea class="fta" id="fContent" placeholder="内容..."></textarea></div>
         <div class="fg-full" id="summaryField" style="display:none"><label class="fl">✨ AI要約</label><textarea class="fta" id="fSummary" style="min-height:55px"></textarea></div>
@@ -786,9 +810,19 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
       <input class="tp-clip-search" id="tpClipSearch" placeholder="クリップを検索..." oninput="tpRenderClipList()">
       <button class="tp-clip-close" onclick="tpCloseClipModal()">✕ 閉じる</button>
     </div>
+    <!-- タグ・エリアフィルター -->
+    <div style="padding:.45rem .75rem;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:.35rem;align-items:center">
+      <select id="tpTagFilter" onchange="tpRenderClipList()" style="background:var(--off);border:1px solid var(--line);border-radius:5px;padding:.28rem .45rem;font-size:.72rem;font-family:'Noto Sans JP',sans-serif;color:var(--ink);outline:none;cursor:pointer;max-width:130px">
+        <option value="">🏷 すべてのタグ</option>
+      </select>
+      <select id="tpAreaFilter" onchange="tpRenderClipList()" style="background:var(--off);border:1px solid var(--line);border-radius:5px;padding:.28rem .45rem;font-size:.72rem;font-family:'Noto Sans JP',sans-serif;color:var(--ink);outline:none;cursor:pointer;max-width:130px">
+        <option value="">📍 すべてのエリア</option>
+      </select>
+      <span id="tpFilterCount" style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--ink3);margin-left:auto"></span>
+    </div>
     <div class="tp-clip-list" id="tpClipList"></div>
     <div class="tp-clip-confirm">
-      <button onclick="tpConfirmClips()">選択したクリップを追加</button>
+      <button onclick="tpConfirmClips()">選択したクリップを追加（<span id="tpSelCount">0</span>件）</button>
     </div>
   </div>
 </div>
@@ -1528,12 +1562,26 @@ function tpDayHTML(day,di){
       <button class="tp-add-clip-btn" onclick="tpOpenClipModal('${day.id}')">＋ クリップから追加</button>
       <button class="tp-add-custom-btn" onclick="tpShowCustomInput('${day.id}')">＋ カスタム追加</button>
     </div>
-    <div class="tp-custom-row" id="tpCustomRow_${day.id}" style="display:none">
-      <select class="tp-custom-type" id="tpCustomType_${day.id}">
-        ${TP_ITEM_TYPES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}
-      </select>
-      <input class="tp-custom-input" id="tpCustomInput_${day.id}" placeholder="場所名・メモ..." onkeydown="if(event.key==='Enter')tpAddCustomItem('${day.id}')">
-      <button class="tp-custom-add" onclick="tpAddCustomItem('${day.id}')">追加</button>
+    <div class="tp-custom-row" id="tpCustomRow_${day.id}" style="display:none;flex-direction:column;gap:.4rem;padding:.5rem .7rem;background:var(--off);border-radius:0 0 10px 10px;border-top:1px solid var(--line)">
+      <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+        <select class="tp-custom-type" id="tpCustomType_${day.id}" style="flex-shrink:0">
+          ${TP_ITEM_TYPES.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}
+        </select>
+        <input class="tp-custom-input" id="tpCustomInput_${day.id}" placeholder="場所名・メモ..." style="flex:1;min-width:140px" onkeydown="if(event.key==='Enter')tpAddCustomItem('${day.id}')">
+      </div>
+      <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center">
+        <span style="font-size:.7rem;color:var(--ink3);white-space:nowrap">🕐 時間</span>
+        <input type="time" class="tp-custom-input" id="tpCustomTimeFrom_${day.id}" style="width:110px;flex-shrink:0" title="開始時間">
+        <span style="font-size:.7rem;color:var(--ink3)">〜</span>
+        <input type="time" class="tp-custom-input" id="tpCustomTimeTo_${day.id}" style="width:110px;flex-shrink:0" title="終了時間">
+      </div>
+      <div style="display:flex;gap:.35rem">
+        <input class="tp-custom-input" id="tpCustomMapUrl_${day.id}" placeholder="🗺 GoogleマップURL（任意）" style="flex:1;font-size:.72rem">
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:.35rem">
+        <button class="tp-custom-add" onclick="tpAddCustomItem('${day.id}')">追加</button>
+        <button onclick="tpShowCustomInput('${day.id}')" style="background:transparent;border:1px solid var(--line);border-radius:6px;padding:.28rem .65rem;font-size:.72rem;cursor:pointer;color:var(--ink3)">閉じる</button>
+      </div>
     </div>
   </div>`;
 }
@@ -1544,22 +1592,26 @@ function tpItemHTML(item,dayId,idx){
   const sub=item.sub||(post?[post.handle,post.area].filter(Boolean).join(' · '):'');
   const imgSrc=item.imgSrc||(post?.image||'')||(post?.type==='youtube'?`https://img.youtube.com/vi/${getYtId(post.url||'')}/mqdefault.jpg`:'');
   const typeInfo=TP_ITEM_TYPES.find(t=>t.value===(item.itemType||'spot'))||TP_ITEM_TYPES[0];
-  const priCls={high:'active-high',mid:'active-mid',low:'active-low'};
   const pri=item.priority||'mid';
-  const tagColor=post?.tags?.[0]?tags.find(t=>t.id===post.tags[0])?.color||'#999':'#999';
+  // 時間表示
+  const timeStr=(item.timeFrom||item.timeTo)?[item.timeFrom,item.timeTo].filter(Boolean).join(' 〜 '):'';
+  // マップURL
+  const mapUrl=item.mapUrl||(post?.map_url||'');
 
   return `<div class="tp-item" id="tpItem_${dayId}_${idx}" draggable="true"
       ondragstart="tpDragStart(event,'${dayId}',${idx})"
       ondragend="tpDragEnd(event)">
     <span class="tp-item-drag">⠿</span>
     <div class="tp-item-body">
-      <div style="display:flex;align-items:center;gap:.4rem">
-        ${imgSrc?`<img src="${esc(imgSrc)}" style="width:36px;height:36px;border-radius:5px;object-fit:cover;flex-shrink:0;cursor:zoom-in" onclick="openLightbox('${esc(imgSrc)}')" onerror="this.style.display='none'" loading="lazy">`:''}
-        <div style="min-width:0">
+      <div style="display:flex;align-items:flex-start;gap:.4rem">
+        ${imgSrc?`<img src="${esc(imgSrc)}" style="width:38px;height:38px;border-radius:5px;object-fit:cover;flex-shrink:0;cursor:zoom-in" onclick="openLightbox('${esc(imgSrc)}')" onerror="this.style.display='none'" loading="lazy">`:''}
+        <div style="min-width:0;flex:1">
           <div class="tp-item-title">
-            <span class="tp-item-badge" style="background:${typeInfo.emoji?'transparent':'#eee'}">${typeInfo.emoji}</span>${esc(title||'無題')}
+            <span style="margin-right:.2rem">${typeInfo.emoji}</span>${esc(title||'無題')}
           </div>
           ${sub?`<div class="tp-item-sub">${esc(sub)}</div>`:''}
+          ${timeStr?`<div class="tp-item-sub">🕐 ${esc(timeStr)}</div>`:''}
+          ${mapUrl?`<div class="tp-item-sub"><a href="${esc(mapUrl)}" target="_blank" rel="noopener" style="color:var(--blue);font-size:.67rem" onclick="event.stopPropagation()">🗺 地図を開く</a></div>`:''}
         </div>
       </div>
       <div class="tp-item-pri">
@@ -1612,23 +1664,34 @@ function tpDeleteItem(dayId,idx){
 function tpShowCustomInput(dayId){
   const row=document.getElementById('tpCustomRow_'+dayId);
   if(!row)return;
-  row.style.display=row.style.display==='none'?'flex':'none';
-  if(row.style.display==='flex') document.getElementById('tpCustomInput_'+dayId)?.focus();
+  const isOpen=row.style.display!=='none'&&row.style.display!=='';
+  row.style.display=isOpen?'none':'flex';
+  if(!isOpen) document.getElementById('tpCustomInput_'+dayId)?.focus();
 }
 function tpAddCustomItem(dayId){
   const plan=tpPlans.find(p=>p.id===tpCurrentId);if(!plan)return;
   const day=plan.days.find(d=>d.id===dayId);if(!day)return;
   const input=document.getElementById('tpCustomInput_'+dayId);
   const typeEl=document.getElementById('tpCustomType_'+dayId);
+  const timeFrom=document.getElementById('tpCustomTimeFrom_'+dayId)?.value||'';
+  const timeTo=document.getElementById('tpCustomTimeTo_'+dayId)?.value||'';
+  const mapUrl=document.getElementById('tpCustomMapUrl_'+dayId)?.value.trim()||'';
   const title=(input?.value||'').trim();
   if(!title){toast('名前を入力してください','err');return;}
   day.items.push({
     id:'ti'+Date.now(),
     clipId:null,
     itemType:typeEl?.value||'spot',
-    title,priority:'mid'
+    title,priority:'mid',
+    timeFrom,timeTo,mapUrl,
   });
   if(input) input.value='';
+  const tfEl=document.getElementById('tpCustomTimeFrom_'+dayId);
+  const ttEl=document.getElementById('tpCustomTimeTo_'+dayId);
+  const muEl=document.getElementById('tpCustomMapUrl_'+dayId);
+  if(tfEl) tfEl.value='';
+  if(ttEl) ttEl.value='';
+  if(muEl) muEl.value='';
   tpSave();tpRenderEditor();
 }
 
@@ -1638,6 +1701,19 @@ function tpOpenClipModal(dayId){
   tpClipSelected=new Set();
   document.getElementById('tpClipSearch').value='';
   document.getElementById('tpClipModal').classList.add('open');
+  // タグセレクト初期化
+  const tagSel=document.getElementById('tpTagFilter');
+  if(tagSel){
+    tagSel.innerHTML='<option value="">🏷 すべてのタグ</option>'+
+      tags.filter(t=>!t.parent_id).map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  }
+  // エリアセレクト初期化（国レベル）
+  const areaSel=document.getElementById('tpAreaFilter');
+  if(areaSel){
+    const countries=[...new Set(posts.map(p=>p.country).filter(Boolean))].sort();
+    areaSel.innerHTML='<option value="">📍 すべてのエリア</option>'+
+      countries.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  }
   tpRenderClipList();
 }
 function tpCloseClipModal(){
@@ -1647,30 +1723,43 @@ function tpCloseClipModal(){
 }
 function tpRenderClipList(){
   const q=(document.getElementById('tpClipSearch')?.value||'').toLowerCase();
+  const tagF=document.getElementById('tpTagFilter')?.value||'';
+  const areaF=document.getElementById('tpAreaFilter')?.value||'';
+
   const filtered=posts.filter(p=>{
-    if(q&&!p.author.toLowerCase().includes(q)&&!p.content.toLowerCase().includes(q)&&!(p.area||'').toLowerCase().includes(q)) return false;
+    if(q&&!p.author.toLowerCase().includes(q)&&!p.content.toLowerCase().includes(q)&&!(p.area||'').toLowerCase().includes(q)&&!(p.country||'').toLowerCase().includes(q)) return false;
+    if(tagF&&!(p.tags||[]).includes(tagF)) return false;
+    if(areaF&&p.country!==areaF) return false;
     return true;
-  }).slice(0,60);
+  }).slice(0,80);
+
+  const countEl=document.getElementById('tpFilterCount');
+  if(countEl) countEl.textContent=filtered.length+'件';
+  const selCountEl=document.getElementById('tpSelCount');
+  if(selCountEl) selCountEl.textContent=tpClipSelected.size;
+
   document.getElementById('tpClipList').innerHTML=filtered.map(p=>{
     const imgSrc=p.image||(p.type==='youtube'?`https://img.youtube.com/vi/${getYtId(p.url)}/mqdefault.jpg`:'');
-    const tagStr=(p.tags||[]).map(id=>tags.find(t=>t.id===id)?.name||'').filter(Boolean).join(', ');
+    const tagStr=(p.tags||[]).map(id=>{const t=tags.find(t=>t.id===id);return t?`<span style="color:${t.color};font-size:.6rem">●</span> ${t.name}`:''}).filter(Boolean).join(' ');
     const areaStr=[p.country,p.prefecture,p.area].filter(Boolean).join(' › ');
     const sel=tpClipSelected.has(p.id);
     return `<div class="tp-clip-item${sel?' selected':''}" onclick="tpToggleClip('${p.id}')">
       ${imgSrc
-        ?`<img class="tp-clip-thumb" src="${esc(imgSrc)}" onerror="this.style.display='none'" loading="lazy">`
-        :`<div class="tp-clip-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem">${typeBadge(p.type)}</div>`}
+        ?`<img class="tp-clip-thumb" src="${esc(imgSrc)}" onerror="this.style.background='var(--line)'" loading="lazy">`
+        :`<div class="tp-clip-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.1rem;background:var(--off)">${typeBadge(p.type)}</div>`}
       <div class="tp-clip-info">
         <div class="tp-clip-name">${esc(p.author)}</div>
-        <div class="tp-clip-tag">${areaStr||tagStr||p.type}</div>
+        <div class="tp-clip-tag">${areaStr?'📍 '+areaStr:(tagStr||p.type)}</div>
       </div>
-      ${sel?'<span style="color:var(--accent);font-size:1rem">✓</span>':''}
+      ${sel?'<span style="color:var(--accent);font-size:1.1rem;font-weight:700;flex-shrink:0">✓</span>':''}
     </div>`;
   }).join('')||'<div style="text-align:center;padding:2rem;color:var(--ink3);font-size:.8rem">該当するクリップがありません</div>';
 }
 function tpToggleClip(id){
   if(tpClipSelected.has(id)) tpClipSelected.delete(id);
   else tpClipSelected.add(id);
+  const selCountEl=document.getElementById('tpSelCount');
+  if(selCountEl) selCountEl.textContent=tpClipSelected.size;
   tpRenderClipList();
 }
 function tpConfirmClips(){
@@ -1776,25 +1865,39 @@ function renderMobileFilterBar(){
   const parentTags=tags.filter(t=>!t.parent_id);
   const childTags=tags.filter(t=>t.parent_id);
   let html='';
+
   parentTags.forEach(pt=>{
     const children=childTags.filter(c=>c.parent_id===pt.id);
     const active=tagFilter===pt.id;
     const bg=active?pt.color:`${pt.color}18`;
     const border=active?pt.color:`${pt.color}55`;
     const color=active?'#fff':pt.color;
-    html+=`<button class="mfb-ep${active?' active':''}" style="background:${bg};border-color:${border};color:${color}" onclick="mfbTag('${pt.id}')">
-      <span style="width:7px;height:7px;border-radius:50%;background:${active?'rgba(255,255,255,.8)':pt.color};flex-shrink:0;display:inline-block"></span>${esc(pt.name)}
-    </button>`;
-    children.forEach(ct=>{
-      const ca=tagFilter===ct.id;
-      const cbg=ca?ct.color:`${ct.color}12`;
-      const cborder=ca?ct.color:`${ct.color}44`;
-      const ccolor=ca?'#fff':ct.color;
-      html+=`<button class="mfb-ep${ca?' active':''}" style="background:${cbg};border-color:${cborder};color:${ccolor};padding-left:.6rem" onclick="mfbTag('${ct.id}')">
-        <span style="width:5px;height:5px;border-radius:50%;background:${ca?'rgba(255,255,255,.8)':ct.color};flex-shrink:0;display:inline-block"></span>└ ${esc(ct.name)}
+
+    if(children.length){
+      // 子タグがある場合：親タグ行＋子タグをインデントでグループ表示
+      html+=`<div style="display:flex;flex-direction:column;gap:.2rem;flex-shrink:0">`;
+      html+=`<button class="mfb-ep${active?' active':''}" style="background:${bg};border-color:${border};color:${color}" onclick="mfbTag('${pt.id}')">
+        <span style="width:7px;height:7px;border-radius:50%;background:${active?'rgba(255,255,255,.8)':pt.color};flex-shrink:0;display:inline-block"></span>${esc(pt.name)}
       </button>`;
-    });
+      html+=`<div style="display:flex;flex-wrap:wrap;gap:.2rem;padding-left:.5rem;border-left:2px solid ${pt.color}44">`;
+      children.forEach(ct=>{
+        const ca=tagFilter===ct.id;
+        const cbg=ca?ct.color:`${ct.color}12`;
+        const cborder=ca?ct.color:`${ct.color}44`;
+        const ccolor=ca?'#fff':ct.color;
+        html+=`<button class="mfb-ep${ca?' active':''}" style="background:${cbg};border-color:${cborder};color:${ccolor};font-size:.68rem;padding:.22rem .6rem" onclick="mfbTag('${ct.id}')">
+          <span style="width:5px;height:5px;border-radius:50%;background:${ca?'rgba(255,255,255,.8)':ct.color};flex-shrink:0;display:inline-block"></span>${esc(ct.name)}
+        </button>`;
+      });
+      html+=`</div></div>`;
+    } else {
+      // 子タグなし：単独ボタン
+      html+=`<button class="mfb-ep${active?' active':''}" style="background:${bg};border-color:${border};color:${color};flex-shrink:0" onclick="mfbTag('${pt.id}')">
+        <span style="width:7px;height:7px;border-radius:50%;background:${active?'rgba(255,255,255,.8)':pt.color};flex-shrink:0;display:inline-block"></span>${esc(pt.name)}
+      </button>`;
+    }
   });
+
   const mfbTags=document.getElementById('mfbTags');
   if(mfbTags) mfbTags.innerHTML=html;
   document.querySelectorAll('#mfbMain .mfb-pill[data-f]').forEach(el=>el.classList.toggle('active',el.dataset.f===curFilter));
@@ -2094,7 +2197,7 @@ function cardHTML(p){
   const reminderEl=reminders.filter(r=>r.post_id===p.id&&!r.done).length?`<span style="font-size:.65rem;color:var(--yellow);background:#fff8e1;padding:1px 6px;border-radius:10px">🔔</span>`:'';
   return `<div class="card">
     ${favFlag}
-    ${imgSrc?`<div class="card-img-wrap"><img src="${esc(imgSrc)}" onerror="this.parentElement.style.display='none'" alt="" loading="lazy" class="img-zoomable" onclick="openLightbox('${esc(imgSrc)}')"></div>`:''}
+    ${imgSrc?`<div class="card-img-wrap"><img src="${esc(imgSrc)}" onerror="this.parentElement.style.display='none'" alt="" loading="lazy"></div>`:''}
     <div class="card-body">
       <div class="card-meta">
         <div class="c-avatar">${(p.author||'?').charAt(0).toUpperCase()}</div>
@@ -2275,7 +2378,7 @@ function getDetailHTML(p){
   const gmapUrl=p.map_url||(areaStr?`https://www.google.com/maps/search/${encodeURIComponent(areaStr)}`:'');
   let ytSection='';
   if(p.type==='youtube'&&p.url){const vid=getYtId(p.url);ytSection=`<div class="yt-embed-wrap"><iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe></div>`;}
-  const imgSection=(!ytSection&&p.image)?`<div class="detail-img-wrap"><img src="${esc(p.image)}" onerror="this.parentElement.style.display='none'" alt=""></div>`:'';
+  const imgSection=(!ytSection&&p.image)?`<div class="detail-img-wrap img-zoomable" onclick="openLightbox('${esc(p.image)}')" title="クリックで拡大"><img src="${esc(p.image)}" onerror="this.parentElement.style.display='none'" alt=""></div>`:'';
   return `
     ${ytSection}${imgSection}
     <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.9rem">
@@ -2504,6 +2607,149 @@ async function savePost(){
 // ════════════════════════════════════════════════
 // FETCH FROM URL
 // ════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// YOUTUBE PLAYLIST BULK IMPORT
+// ════════════════════════════════════════════════
+let ytPlItems=[];    // [{videoId,title,channel,thumb,selected}]
+
+function getYtPlaylistId(url){
+  // URL例: https://www.youtube.com/playlist?list=PLxxx
+  // または動画URL内の list= パラメータ
+  try{
+    const u=new URL(url);
+    return u.searchParams.get('list')||null;
+  }catch(e){return null;}
+}
+
+async function fetchYtPlaylist(){
+  const url=(document.getElementById('urlIn')?.value||'').trim();
+  const apiKey=(document.getElementById('ytApiKey')?.value||'').trim();
+  const status=document.getElementById('ytPlStatus');
+  const results=document.getElementById('ytPlResults');
+
+  if(!apiKey){
+    status.style.display='block';
+    status.textContent='⚠ YouTube API Keyを入力してください';
+    return;
+  }
+  const plId=getYtPlaylistId(url);
+  if(!plId){
+    status.style.display='block';
+    status.textContent='⚠ URLにプレイリストID（list=...）が見つかりません';
+    return;
+  }
+
+  status.style.display='block';
+  status.textContent='取得中...';
+  results.style.display='none';
+  ytPlItems=[];
+
+  try{
+    let pageToken='';
+    let total=0;
+    do{
+      const endpoint=`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${plId}&key=${apiKey}${pageToken?'&pageToken='+pageToken:''}`;
+      const r=await fetch(endpoint);
+      if(!r.ok){
+        const e=await r.json();
+        throw new Error(e.error?.message||'API Error');
+      }
+      const d=await r.json();
+      (d.items||[]).forEach(item=>{
+        const sn=item.snippet;
+        if(sn.resourceId?.videoId&&sn.title!=='Deleted video'&&sn.title!=='Private video'){
+          ytPlItems.push({
+            videoId:sn.resourceId.videoId,
+            title:sn.title,
+            channel:sn.videoOwnerChannelTitle||'',
+            thumb:sn.thumbnails?.medium?.url||sn.thumbnails?.default?.url||`https://img.youtube.com/vi/${sn.resourceId.videoId}/mqdefault.jpg`,
+            selected:true,
+          });
+        }
+      });
+      pageToken=d.nextPageToken||'';
+      total=d.pageInfo?.totalResults||ytPlItems.length;
+    }while(pageToken&&ytPlItems.length<500); // 最大500件
+
+    status.textContent=`✓ ${ytPlItems.length}件の動画を検出しました`;
+    document.getElementById('ytPlCount').textContent=`${ytPlItems.length}件（${ytPlItems.filter(v=>v.selected).length}件選択中）`;
+    results.style.display='block';
+    ytPlRenderList();
+  }catch(e){
+    status.textContent='⚠ 取得エラー: '+e.message+' （APIキーまたはURLを確認してください）';
+  }
+}
+
+function ytPlRenderList(){
+  const list=document.getElementById('ytPlList');
+  if(!list) return;
+  list.innerHTML=ytPlItems.map((v,i)=>`
+    <div style="display:flex;align-items:center;gap:.5rem;padding:.3rem .35rem;border-radius:6px;background:${v.selected?'var(--accent-light)':'var(--off)'}">
+      <input type="checkbox" ${v.selected?'checked':''} onchange="ytPlItems[${i}].selected=this.checked;ytPlUpdateCount();ytPlRenderList()" style="flex-shrink:0;accent-color:var(--accent)">
+      <img src="${esc(v.thumb)}" style="width:56px;height:32px;object-fit:cover;border-radius:3px;flex-shrink:0" onerror="this.style.display='none'" loading="lazy">
+      <div style="min-width:0;flex:1">
+        <div style="font-size:.76rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(v.title)}</div>
+        <div style="font-size:.65rem;color:var(--ink3)">${esc(v.channel)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function ytPlUpdateCount(){
+  const sel=ytPlItems.filter(v=>v.selected).length;
+  const el=document.getElementById('ytPlCount');
+  if(el) el.textContent=`${ytPlItems.length}件（${sel}件選択中）`;
+}
+function ytPlSelectAll(){ytPlItems.forEach(v=>v.selected=true);ytPlUpdateCount();ytPlRenderList();}
+function ytPlDeselectAll(){ytPlItems.forEach(v=>v.selected=false);ytPlUpdateCount();ytPlRenderList();}
+
+async function ytPlSaveSelected(){
+  const selected=ytPlItems.filter(v=>v.selected);
+  if(!selected.length){toast('動画を選択してください','err');return;}
+  if(!confirm(`${selected.length}件の動画を一括保存しますか？`)) return;
+
+  const status=document.getElementById('ytPlStatus');
+  status.textContent=`0 / ${selected.length} 保存中...`;
+
+  // 現在のフォームのタグ・エリアを引き継ぐ
+  const selectedTags=new Set([...fSel]);
+  fSel.forEach(tid=>{
+    const t=tags.find(t=>t.id===tid);
+    if(t?.parent_id&&!selectedTags.has(t.parent_id)) selectedTags.add(t.parent_id);
+  });
+
+  let saved=0;
+  const errs=[];
+  for(const v of selected){
+    const now=Date.now()+saved;
+    const p={
+      id:'p'+now,
+      url:`https://www.youtube.com/watch?v=${v.videoId}`,
+      created_at:now,
+      author:v.title,
+      handle:v.channel,
+      content:'',memo:'',
+      image:`https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg`,
+      tags:[...selectedTags],
+      area:null,country:null,prefecture:null,lat:null,lng:null,
+      type:'youtube',summary:null,
+      youtube_status:'unwatch',youtube_priority:false,
+      is_favorite:false,watch_later:true,
+    };
+    try{
+      await sb('posts','POST',p);
+      posts.unshift(mapPost({...p}));
+      saved++;
+      status.textContent=`${saved} / ${selected.length} 保存中...`;
+    }catch(e){errs.push(v.title);}
+  }
+  renderAll();
+  status.textContent=`✓ ${saved}件保存完了${errs.length?` (${errs.length}件失敗)`:''}`; 
+  toast(`${saved}件のYouTube動画を保存しました ✓`,'ok');
+  ytPlItems=[];
+  document.getElementById('ytPlResults').style.display='none';
+}
+
 async function fetchFromUrl(){
   const url=document.getElementById('urlIn').value.trim();
   if(!url){toast('URLを入力してください','err');return;}
