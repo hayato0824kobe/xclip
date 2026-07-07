@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XCLIP</title>
+<meta name="theme-color" content="#111111">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="XCLIP">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
@@ -364,6 +371,30 @@ header{position:sticky;top:0;z-index:300;background:rgba(250,249,246,.95);backdr
 .qa-save-btn:disabled{opacity:.45;cursor:not-allowed;}
 .qa-detail-link{display:block;text-align:center;font-size:.75rem;color:var(--ink3);margin-top:.6rem;cursor:pointer;text-decoration:underline;}
 
+/* ─── ASK SHEET（どこ行く？） ─── */
+#askSheet{position:fixed;inset:0;z-index:820;display:none;}
+#askSheet.open{display:block;}
+.ask-panel{position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:0 0 env(safe-area-inset-bottom,0);max-height:88vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,1,.28,1);}
+#askSheet.open .ask-panel{transform:translateY(0);}
+@media(min-width:769px){.ask-panel{left:50%;right:auto;width:580px;margin-left:-290px;}}
+.ask-body{padding:1rem 1.25rem;overflow-y:auto;flex:1;min-height:45vh;}
+.ask-input-wrap{display:flex;gap:.5rem;margin-bottom:.75rem;}
+.ask-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem;}
+.ask-chip{background:var(--off);border:1px solid var(--line);border-radius:16px;padding:.35rem .8rem;font-size:.76rem;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:all .15s;}
+.ask-chip:hover{border-color:var(--accent);color:var(--accent);}
+.ask-answer{font-size:.82rem;color:var(--ink2);background:var(--accent-light);border-radius:8px;padding:.55rem .85rem;margin-bottom:.85rem;display:none;line-height:1.6;}
+.ask-answer.show{display:block;}
+.ask-results{display:flex;flex-direction:column;gap:.6rem;padding-bottom:1rem;}
+.ask-card{display:flex;gap:.75rem;background:var(--off);border:1px solid var(--line);border-radius:10px;padding:.65rem .75rem;align-items:center;}
+.ask-card-img{width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0;background:var(--line2);}
+.ask-card-body{flex:1;min-width:0;}
+.ask-card-title{font-size:.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ask-card-sub{font-size:.7rem;color:var(--ink3);margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ask-card-dist{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--accent);margin-top:.15rem;}
+.ask-card-acts{display:flex;flex-direction:column;gap:.3rem;flex-shrink:0;}
+.ask-card-btn{background:#fff;border:1px solid var(--line);border-radius:8px;padding:.3rem .6rem;font-size:.68rem;cursor:pointer;white-space:nowrap;font-family:'Noto Sans JP',sans-serif;}
+.ask-card-btn:hover{border-color:var(--accent);color:var(--accent);}
+
 /* ─── タグなし一覧グループ ─── */
 .untagged-group{background:#fff8f5;border:1.5px dashed #f0c4b4;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;}
 .untagged-group-head{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;}
@@ -526,6 +557,7 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
   <button class="tab-btn" onclick="switchTab('add')">＋ Add</button>
   <button class="tab-btn" onclick="switchTab('travel')">✈️ Trip</button>
   <button class="tab-btn" onclick="switchTab('settings')">⚙ Settings</button>
+  <button class="tab-btn" onclick="openAsk()">🔮 聞く</button>
 </div>
 
 <!-- ACTIVE FILTER BADGE BAR -->
@@ -1021,6 +1053,30 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
   </div>
 </div>
 
+<!-- ═════════════ ASK SHEET（どこ行く？） ═════════════ -->
+<div id="askSheet">
+  <div class="qa-overlay" onclick="closeAsk()"></div>
+  <div class="ask-panel">
+    <div class="qa-handle"></div>
+    <div class="qa-head">
+      <div>
+        <div class="qa-title">🔮 どこ行く？</div>
+        <div style="font-size:.7rem;color:var(--ink3);margin-top:.1rem">保存したクリップの中から質問に答えます</div>
+      </div>
+      <button class="qa-close" onclick="closeAsk()">✕</button>
+    </div>
+    <div class="ask-body">
+      <div class="ask-input-wrap">
+        <input class="qa-url-input" id="askInput" placeholder="例: 現在地から近いカフェは？" onkeydown="if(event.key==='Enter')askRun()">
+        <button class="qa-fetch-btn" onclick="askRun()">聞く</button>
+      </div>
+      <div class="ask-chips" id="askChips"></div>
+      <div class="ask-answer" id="askAnswer"></div>
+      <div class="ask-results" id="askResults"></div>
+    </div>
+  </div>
+</div>
+
 <nav id="bottomNav">
   <div class="bn-inner">
     <button class="bn-btn active" id="bnHome" onclick="switchTab('home');bnActive('bnHome')">
@@ -1028,6 +1084,9 @@ input[type=color]{border:none;background:transparent;cursor:pointer;width:22px;h
     </button>
     <button class="bn-btn" id="bnAdd" onclick="onBnAdd()">
       <span class="bn-icon">＋</span><span>追加</span>
+    </button>
+    <button class="bn-btn" id="bnAsk" onclick="openAsk()">
+      <span class="bn-icon">🔮</span><span>聞く</span>
     </button>
     <button class="bn-btn" id="bnTravel" onclick="switchTab('travel');bnActive('bnTravel')">
       <span class="bn-icon">✈️</span><span>Trip</span>
@@ -1225,6 +1284,7 @@ function openQuickAdd(){
 }
 
 function closeQuickAdd(){
+  qsCancelAuto(true);
   document.getElementById('quickAddSheet').classList.remove('open');
 }
 
@@ -1256,7 +1316,7 @@ async function qsOnPaste(){
   setTimeout(async()=>{
     qsOnInput();
     const url=(document.getElementById('qsUrl')||{}).value?.trim();
-    if(url&&!qsFetching) await qsFetch();
+    if(url&&!qsFetching){await qsFetch();qsAutoSave();}
   },80);
 }
 
@@ -1305,7 +1365,7 @@ async function qsFetch(){
         ?'✓ Instagram情報を取得しました（詳細フォームで複数画像を選択できます）'
         :'⚠ 詳細情報取得失敗。URLのみ保存します';
 
-    }else if(type==='x'){
+    }else if(type==='youtube'){
       const vid=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/)?.[1]||'';
       try{
         const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
@@ -1392,6 +1452,7 @@ async function qsFetch(){
 }
 
 async function qsSave(){
+  qsCancelAuto(true);
   const urlEl=document.getElementById('qsUrl');
   const url=(urlEl?.value||'').trim();
   if(!url){toast('URLを入力してください','err');return;}
@@ -3698,6 +3759,186 @@ document.getElementById('detailDrawerInner')?.addEventListener('touchend',e=>{
   const dy=e.changedTouches[0].clientY-touchStartY;
   if(dy>60) closeDrawer();
 },{passive:true});
+
+
+// ════════════════════════════════════════════════
+// ASK（🔮 どこ行く？コンシェルジュ）
+// ════════════════════════════════════════════════
+function openAsk(){
+  document.getElementById('askSheet').classList.add('open');
+  renderAskChips();
+}
+function closeAsk(){document.getElementById('askSheet').classList.remove('open');}
+
+function renderAskChips(){
+  const el=document.getElementById('askChips'); if(!el) return;
+  const topTags=tags.filter(t=>!t.parent_id).slice(0,6);
+  const prefs=[...new Set(posts.map(p=>p.prefecture).filter(Boolean))].slice(0,4);
+  el.innerHTML=
+    '<button class="ask-chip" onclick="askPreset(\'near\')">📍 近くのお店</button>'+
+    '<button class="ask-chip" onclick="askPreset(\'random\')">🎲 どこか決めて</button>'+
+    '<button class="ask-chip" onclick="askPreset(\'fav\')">⭐ お気に入り</button>'+
+    '<button class="ask-chip" onclick="askPreset(\'later\')">📌 気になってる所</button>'+
+    topTags.map(t=>`<button class="ask-chip" style="border-color:${t.color};color:${t.color}" onclick="askRun('${esc(t.name)}')">🏷 ${esc(t.name)}</button>`).join('')+
+    prefs.map(pr=>`<button class="ask-chip" onclick="askRun('${esc(pr)}')">📍 ${esc(pr)}</button>`).join('');
+}
+
+function askPreset(k){
+  const map={near:'現在地から近いおすすめは？',random:'どこか1つ決めて',fav:'お気に入りは？',later:'気になってる所は？'};
+  const inp=document.getElementById('askInput'); if(inp) inp.value=map[k]||'';
+  askRun();
+}
+
+function askGetLocation(){
+  return new Promise(res=>{
+    if(myLat!==null){res(true);return;}
+    if(!navigator.geolocation){res(false);return;}
+    navigator.geolocation.getCurrentPosition(
+      pos=>{myLat=pos.coords.latitude;myLng=pos.coords.longitude;res(true);},
+      ()=>res(false),
+      {enableHighAccuracy:true,timeout:10000,maximumAge:60000}
+    );
+  });
+}
+
+function askScore(p){
+  let s=0;
+  if(p.is_favorite)s+=3;
+  if(p.watch_later)s+=2;
+  if(p.lat&&p.lng)s+=1;
+  if(p.tags&&p.tags.length)s+=1;
+  s+=Math.max(0,1-(Date.now()-p.createdAt)/(180*864e5));
+  return s;
+}
+
+async function askRun(preset){
+  const inp=document.getElementById('askInput');
+  if(preset&&inp) inp.value=preset;
+  const q=(preset||inp?.value||'').trim();
+  const ansEl=document.getElementById('askAnswer'), resEl=document.getElementById('askResults');
+  if(!q||!ansEl||!resEl) return;
+  ansEl.className='ask-answer show'; ansEl.textContent='考え中...'; resEl.innerHTML='';
+
+  const useGeo=/近|現在地|そば|歩|ここから/.test(q);
+  const wantRandom=/ランダム|決めて|どれか|どこか|何か/.test(q);
+  const wantFav=/お気に入り|好き|定番/.test(q);
+  const wantLater=/まだ|行ってない|行きたい|気になっ|気になる|あとで/.test(q);
+  const kmM=q.match(/(\d+(?:\.\d+)?)\s*(?:km|キロ)/i); const kmLimit=kmM?parseFloat(kmM[1]):null;
+
+  const qLow=q.toLowerCase();
+  const matchTags=tags.filter(t=>t.name&&t.name.length>=2&&qLow.includes(t.name.toLowerCase()));
+  const prefList=[...new Set(posts.map(p=>p.prefecture).filter(Boolean))];
+  const ctryList=[...new Set(posts.map(p=>p.country).filter(Boolean))];
+  const matchPref=prefList.find(pr=>{const base=pr.replace(/[都道府県]$/,'');return base&&q.includes(base);});
+  const matchCtry=ctryList.find(c=>c&&q.includes(c));
+
+  let geoOK=false;
+  if(useGeo) geoOK=await askGetLocation();
+
+  let list=posts.slice();
+  if(matchTags.length) list=list.filter(p=>p.tags&&matchTags.some(t=>p.tags.includes(t.id)));
+  if(matchPref) list=list.filter(p=>p.prefecture===matchPref);
+  if(matchCtry&&!matchPref) list=list.filter(p=>p.country===matchCtry);
+  if(wantFav) list=list.filter(p=>p.is_favorite);
+  if(wantLater) list=list.filter(p=>p.watch_later);
+  if(!matchTags.length&&!matchPref&&!matchCtry&&!wantFav&&!wantLater&&!wantRandom&&!useGeo){
+    const kw=q.replace(/[はがのにでをともっと？?。、!！\s]+/g,' ').split(' ').filter(w=>w.length>=2);
+    if(kw.length) list=list.filter(p=>{const hay=[p.author,p.handle,p.content,p.memo,p.area,p.prefecture].join(' ').toLowerCase();return kw.some(w=>hay.includes(w.toLowerCase()));});
+  }
+
+  if(useGeo&&geoOK){
+    list=list.filter(p=>p.lat&&p.lng).map(p=>({...p,_d:haversine(myLat,myLng,p.lat,p.lng)}));
+    if(kmLimit) list=list.filter(p=>p._d<=kmLimit);
+    list.sort((a,b)=>a._d-b._d);
+  }else{
+    list.sort((a,b)=>askScore(b)-askScore(a));
+  }
+
+  if(wantRandom&&list.length) list=[list[Math.floor(Math.random()*Math.min(list.length,20))]];
+
+  const shown=list.slice(0,8);
+  let parts=[];
+  if(useGeo) parts.push(geoOK?'📍 現在地から近い順':'⚠️ 位置情報が取れなかったためおすすめ順');
+  if(matchTags.length) parts.push('🏷 '+matchTags.map(t=>t.name).join('・'));
+  if(matchPref) parts.push('📍 '+matchPref); else if(matchCtry) parts.push('📍 '+matchCtry);
+  if(wantFav) parts.push('⭐ お気に入り');
+  if(wantLater) parts.push('📌 気になってる所');
+  if(kmLimit) parts.push(kmLimit+'km以内');
+  if(wantRandom) parts.push('🎲 ランダムに1つ');
+  ansEl.textContent=shown.length
+    ?`${parts.join(' ／ ')||'おすすめ順'} — ${list.length}件見つかりました`
+    :'条件に合うクリップが見つかりませんでした。エリアや位置情報・タグを登録しておくと精度が上がります。';
+  resEl.innerHTML=shown.map(askCardHTML).join('');
+}
+
+function askMapUrl(p){
+  if(p.map_url) return p.map_url;
+  if(p.lat&&p.lng) return 'https://www.google.com/maps/search/?api=1&query='+p.lat+','+p.lng;
+  return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([p.author,p.area||p.prefecture||''].filter(Boolean).join(' '));
+}
+
+function askCardHTML(p){
+  const dist=(p._d!==undefined&&p._d!==Infinity)?`<div class="ask-card-dist">📍 ${p._d<10?p._d.toFixed(1):Math.round(p._d)} km</div>`:'';
+  const tagNames=(p.tags||[]).map(id=>tags.find(t=>t.id===id)?.name).filter(Boolean).slice(0,3).join(' · ');
+  const img=p.image
+    ?`<img class="ask-card-img" src="${esc(p.image)}" onerror="this.style.visibility='hidden'">`
+    :`<div class="ask-card-img" style="display:flex;align-items:center;justify-content:center;font-size:1.3rem">${p.is_favorite?'⭐':'📍'}</div>`;
+  return `<div class="ask-card">${img}
+    <div class="ask-card-body">
+      <div class="ask-card-title">${p.is_favorite?'⭐ ':''}${esc(p.author||p.url)}</div>
+      <div class="ask-card-sub">${esc([tagNames,p.area||p.prefecture].filter(Boolean).join(' — '))}</div>
+      ${dist}
+    </div>
+    <div class="ask-card-acts">
+      <button class="ask-card-btn" onclick="closeAsk();openDetail('${p.id}')">詳細</button>
+      <button class="ask-card-btn" onclick="window.open('${askMapUrl(p)}','_blank')">🗺 地図</button>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════
+// クイック保存: 自動保存（貼り付け→取得→3秒後に保存）
+// ════════════════════════════════════════════════
+let qsAutoTimer=null;
+function qsAutoSave(){
+  qsCancelAuto(true);
+  if(!document.getElementById('quickAddSheet').classList.contains('open')) return;
+  let n=3;
+  const status=document.getElementById('qsStatus');
+  const tick=()=>{
+    if(!document.getElementById('quickAddSheet').classList.contains('open')){qsCancelAuto(true);return;}
+    if(n<=0){qsAutoTimer=null;qsSave();return;}
+    if(status){status.innerHTML='✅ <b>'+n+'秒後に自動保存</b>します <button onclick="qsCancelAuto()" style="margin-left:.5rem;background:#fff;border:1px solid var(--line);border-radius:6px;padding:.15rem .6rem;font-size:.7rem;cursor:pointer">キャンセル</button>';status.className='qa-status show';}
+    n--;qsAutoTimer=setTimeout(tick,1000);
+  };
+  tick();
+}
+function qsCancelAuto(silent){
+  if(qsAutoTimer){clearTimeout(qsAutoTimer);qsAutoTimer=null;
+    if(!silent){const s=document.getElementById('qsStatus');if(s){s.textContent='自動保存を止めました。メモを書いたら「保存する」を押してください';s.className='qa-status show';}}
+  }
+}
+
+// ════════════════════════════════════════════════
+// PWA: Service Worker & 共有起動（?url= / ?add= / ?text=）
+// ════════════════════════════════════════════════
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+(function(){
+  document.getElementById('qsMemo')?.addEventListener('focus',()=>qsCancelAuto());
+  const q=new URLSearchParams(location.search);
+  let shared=q.get('url')||q.get('add')||'';
+  if(!shared&&q.get('text')){const m=q.get('text').match(/https?:\/\/\S+/);if(m)shared=m[0];}
+  if(shared){
+    history.replaceState(null,'',location.pathname);
+    setTimeout(async()=>{
+      openQuickAdd();
+      const el=document.getElementById('qsUrl');
+      if(el){el.value=shared;qsOnInput();await qsFetch();qsAutoSave();}
+    },400);
+  }
+})();
 
 init();
 </script>
